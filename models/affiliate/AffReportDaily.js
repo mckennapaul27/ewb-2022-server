@@ -1,0 +1,20 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const AffReportDaily = new Schema({ 
+    epi: Number,
+    date: Date,
+    period: String,
+    clicks: Number,
+    registrations: Number,
+    transValue: Number,
+    brand: String,
+    belongsTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'partner',
+        required: false
+    }
+});
+
+
+module.exports = mongoose.model('affreportdaily', AffReportDaily);

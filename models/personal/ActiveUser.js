@@ -1,0 +1,97 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const ActiveUser = new Schema({ 
+    paymentDetails: {
+        EUR: {
+            brand: String,
+            email: String,
+            name: String,
+            accountId: String
+        },
+        USD: {
+            brand: String,
+            email: String
+        }
+    },
+    dealTier: {
+        Neteller: [{
+            level: Number,
+            minVol: Number,
+            maxVol: Number,
+            cashback: Number
+        }],
+        Skrill: [{
+            level: Number,
+            minVol: Number,
+            maxVol: Number,
+            cashback: Number
+        }],
+        ecoPayz: [{
+            level: Number,
+            minVol: Number,
+            maxVol: Number,
+            cashback: Number
+        }]
+    },    
+    stats: {
+        balance: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+        commission: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+        cashback: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+        payments: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+        requested: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+    },
+    accounts: {
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'account'
+        }]
+    },
+    belongsTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        required: false
+    }, // below are new fields for subaffiliate    
+    friends: {
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'activeuser'
+        }]
+    },    
+    referredByUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'activeuser'
+    }    
+});
+
+module.exports = mongoose.model('activeuser', ActiveUser);

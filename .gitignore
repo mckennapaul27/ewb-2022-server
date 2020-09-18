@@ -1,0 +1,8 @@
+.idea/*
+node_modules/*
+
+.DS_Store
+config.js
+/seed
+/seed/seed.js
+.env
