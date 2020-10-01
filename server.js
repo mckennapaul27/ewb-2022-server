@@ -22,7 +22,7 @@ const {
     PORT,
     options,
     corsOptions
-} = require('./config')
+} = require('./config/config')
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());                                     

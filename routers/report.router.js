@@ -26,22 +26,6 @@ router.get('/get-user', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-
-// function getNotifications (req, res) {
-//     const token = getToken(req.headers);
-//     if (token) {
-//         let pageLimit = 5; // 4, 4, 4
-//         let skippage = pageLimit * (req.query.page - 1); // with increments of one = 5 * (1 - 1) = 0 |  5 * (2 - 1) = 5 | 5 * (3 - 1) = 10;
-//         Notification.find({ belongsTo: req.params._id }).select('message read type createdAt').sort('-createdAt').skip(skippage).limit(pageLimit).lean()
-//         .then(async notifications => {
-//             const total = await Notification.countDocuments({ belongsTo: req.params._id }).select('read').lean();
-//             const unRead = await Notification.countDocuments({ belongsTo: req.params._id, read: false }).select('read').lean();
-//             return res.status(200).send({ notifications, total, unRead });
-//         })
-//         .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
-//     } else return res.status(403).send({ msg: 'Unauthorised' });
-// };
-
 function mapRegexQueryFromObj (query) {
     for (let key in query) {
         if (query.hasOwnProperty(key)) {
@@ -49,7 +33,7 @@ function mapRegexQueryFromObj (query) {
         }
     }
     return query;
-}
+};
 
 
 // report/test - testing for react-table population
@@ -61,7 +45,7 @@ router.post('/test', async (req, res) => {
     let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
     
     mapRegexQueryFromObj(query); // turn react-table query into regex query
-    
+    // NEED TO ADD SELECT AND LEAN
     const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // data for pagination
     const pageCount = await Report.countDocuments(query); // total documents to create pageCount 
     const brands = await Report.distinct('brand'); // number of distinct brands in reports collection for select filter
@@ -88,7 +72,7 @@ router.post('/accountId/table', async (req, res) => {
     let { sort, query } = req.body;
     let skippage = pageSize * (pageIndex);
 
-    const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); 
+    const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // NEED TO ADD SELECT AND LEAN
     const pageCount = await Report.countDocuments(query);
 
     return res.send({ reports, pageCount });
@@ -97,7 +81,7 @@ router.post('/accountId/table', async (req, res) => {
 // report/accountId/chart
 router.post('/accountId/chart', async (req, res) => {
     let { months, query } = req.body;
-    const reports = await Report.find(query).where({ month: { $in: months } } ).sort({ lastUpdate: 1 });
+    const reports = await Report.find(query).where({ month: { $in: months } } ).sort({ lastUpdate: 1 });// NEED TO ADD SELECT AND LEAN
     return res.send({ reports });
 });
 

@@ -14,20 +14,30 @@ router.get('/get-user', passport.authenticate('jwt', {
 }), (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-        User.findById(req.user._id, { password: 0 })
-        .then(user => {
-            return res.status(200).send(user)
-        }).catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+        User.findById(req.user._id).select('name email userId _id activeUser').lean()
+        .then(user => res.status(200).send(user))
+        .catch((err) => {
+            console.log(err)
+            return res.status(500).send({ msg: 'Server error: Please contact support' })
+        })
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
 // /user/update-user
 router.post('/update-user', passport.authenticate('jwt', {
     session: false
-}), (req, res) => {
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-
+        const { name, email, _id } = req.body; // receives these regardless of any change through 
+        let exists = await User.countDocuments({ email: email }).select('email').lean() // check if user exists        
+        if (exists > 0) return res.status(400).send({ msg: `Account already exists with email ${email}` });
+        User.findByIdAndUpdate(_id, {
+            email,
+            name
+        }, { new: true }).select('name email userId _id activeUser').lean()
+        .then(updatedUser => res.status(201).send({ msg: 'You have successfully updated your settings.', updatedUser }))
+        .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
@@ -40,6 +50,14 @@ router.get('/get-notifications/:_id', passport.authenticate('jwt', {
 router.get('/update-notifications/:_id', passport.authenticate('jwt', {
     session: false
 }), updateNotifications, getNotifications)
+
+async function updateNotifications (req, res, next) {
+    const token = getToken(req.headers);
+    if (token) {
+        await Notification.updateMany({ belongsTo: req.params._id }, { read: true });
+        next()
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+};
 
 function getNotifications (req, res) {
     const token = getToken(req.headers);
@@ -56,13 +74,7 @@ function getNotifications (req, res) {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 };
 
-async function updateNotifications (req, res, next) {
-    const token = getToken(req.headers);
-    if (token) {
-        await Notification.updateMany({ belongsTo: req.params._id }, { read: true });
-        next()
-    } else return res.status(403).send({ msg: 'Unauthorised' });
-}
+
 
 
 // const Notification = new Schema({ 

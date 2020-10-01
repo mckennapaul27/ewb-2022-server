@@ -7,8 +7,8 @@ const Payment = new Schema({
         type: String,
         default: 'Requested'
     },
-    requestDate: Date,
-    paidDate: Date,
+    requestDate: { type: Number, default: Date.now },
+    paidDate: Number,
     transactionId: String,
     currency: String,
     belongsTo: {

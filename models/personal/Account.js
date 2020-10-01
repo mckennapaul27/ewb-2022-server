@@ -8,7 +8,7 @@ const Account = new Schema({
             type: String,
             unique: true
         },
-        regDate: Date,
+        regDate: { type: Number, default: Date.now },
         country: String,
         currency: String
     },

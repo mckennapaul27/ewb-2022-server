@@ -36,7 +36,8 @@ router.post('/create-new-user', async (req, res) => {
         })
         .then(user => {
             const token = jwt.sign(user.toJSON(), secret);
-            return User.findById(user._id).select('name email userId _id').lean()
+            return User.findById(user._id).select('name email userId _id activeUser').lean()
+            // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
             .then(async user => {
                 await createUserNotification(welcome(user))
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
@@ -57,6 +58,7 @@ router.post('/user-login', (req, res) => {
                 if (isMatch && !err) {
                     const token = jwt.sign(user.toJSON(), secret);
                     return User.findById(user._id).select('name email userId _id').lean()
+                   
                     .then(user => res.status(200).send({ user, token: 'jwt ' + token })) // we need to include jwt + token rather than just send token on it's on because passport authenticates by looking for jwt in the middleware)                    
                 } else return res.status(401).send({ msg: 'Authentication failed. Incorrect password' })
             })

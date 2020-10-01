@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcrypt');
 
 const UserCounter = require('./UserCounter');
+const ActiveUser = require('../personal/ActiveUser');
 
 const Schema = mongoose.Schema;
 
@@ -13,7 +14,7 @@ const User = new Schema({
         type: Number,
         unique: true
     },
-    regDate: { type: Date, default: Date.now },
+    regDate: { type: Number, default: Date.now },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     facebookProvider: {
@@ -24,6 +25,10 @@ const User = new Schema({
         id: String,
         token: String
     },
+    activeUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'activeuser'
+    }
 })
 
 // pre save hook to has password and generate userId
@@ -33,6 +38,8 @@ User.pre('save', function (next) {
     bcrypt.hash(user.password, 10)
     .then(async hash => {
         const userId = await getNextSequence('userid');
+        const activeUser = await createActiveUser(user._id);
+        user.activeUser = activeUser;
         user.userId = userId;
         user.password = hash;
         next()
@@ -50,22 +57,24 @@ User.methods.checkPassword = function (password, callback) {
 
 // google login
 User.statics.upsertGoogleUser = function(accessToken, refreshToken, profile, cb) {
-    const userObj = this;
-    return userObj.findOne({ 'googleProvider.id': profile.id }, async function(err, existingUser) {
+    const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
+    return userModelCopy.findOne({ 'googleProvider.id': profile.id }, async function(err, existingUser) {
         if (err) return next(err);
         else if (!existingUser) { // no user was found, lets create a new one
             const userId = await getNextSequence('userid');
-            const newUser = new userObj({      
+            const newUser = new userModelCopy({      
                 name: `${profile._json.given_name} ${profile._json.family_name}`,        
                 email: profile.emails[0].value,          
-                userId,                
+                userId,         
                 googleProvider: {
                     id: profile.id,
                     token: accessToken
                 }
             });
-            newUser.save(function(error, savedUser) {
+            newUser.save(async function(error, savedUser) {
                 if (error) return error;
+                const activeUser = await createActiveUser(savedUser._id); 
+                await userModelCopy.findOneAndUpdate({ _id: savedUser._id }, { activeUser }, { new: true });
                 return cb(error, savedUser);
             });
         } else return cb(err, existingUser);
@@ -74,22 +83,26 @@ User.statics.upsertGoogleUser = function(accessToken, refreshToken, profile, cb)
 
 // facebook login
 User.statics.upsertFbUser = function (accessToken, refreshToken, profile, cb) {
-    const userObj = this;
-    return userObj.findOne({ 'facebookProvider.id': profile.id }, async function (err, existingUser) {
+    const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
+    return userModelCopy.findOne({ 'facebookProvider.id': profile.id }, async function (err, existingUser) {
         if (err) return next(err);
         else if (!existingUser) {
             const userId = await getNextSequence('userid');
-            const newUser = new userObj({      
+            const activeUser = await createActiveUser(user._id);
+            const newUser = new userModelCopy({      
                 name: `${profile.name.givenName} ${profile.name.familyName}`,        
                 email: profile.emails[0].value,
                 userId,                
+                activeUser,
                 facebookProvider: {
                     id: profile.id,
                     token: accessToken
                 }
             });
-            newUser.save(function(error, savedUser) {
+            newUser.save(async function(error, savedUser) {
                 if (error) return error;
+                const activeUser = await createActiveUser(savedUser._id); 
+                await userModelCopy.findOneAndUpdate({ _id: savedUser._id }, { activeUser }, { new: true });
                 return cb(error, savedUser);
             });
         } else return cb(err, existingUser)
@@ -108,6 +121,17 @@ function getNextSequence (name) {
         )
     }) 
 };
+
+// create new ActiveUser with default dealTiers
+function createActiveUser (_id) {
+    return new Promise(resolve => {
+        resolve(
+            ActiveUser.create({
+                belongsTo: _id
+            })
+        )
+    })
+}
 
 
 // Get time in locale by passing in actual date so in this case would be moment.tz(dateToPass, 'Europe/London') using moment-timezone

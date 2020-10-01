@@ -8,22 +8,21 @@ const Application = new Schema({
         unique: true
     },
     email: String,
-    status: {
+    tagged: {
         type: String,
         default: 'Pending'
     },
-    upgradeStatus: {
-        type: String,
-        default: 'Not upgraded'
-    },
+    upgradeStatus: { type: String, default: 'Not upgraded' }, 
+    availableUpgrade: {
+        status: String,
+        valid: { type: Boolean, default: true }
+    }, 
+    requestCount: { type: Number, default: 1 }, // every time user requests we can  $inc: { requestCount: 1 } }, to make sure they don't keep requesting
     currency: String,
-    dateAdded: {
-        type: Date,
-        default: Date.now
-    },
+    dateAdded: { type: Number, default: Date.now },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'affpartner',
+        ref: 'activeuser',
         required: false
     }
 });

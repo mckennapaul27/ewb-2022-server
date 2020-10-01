@@ -41,16 +41,47 @@ describe('API endpoints', () => {
                 chai.request(app) 
                     .post(`/auth/create-new-user`)                        
                     .send(user)  
-                    .end(async (err, res) => {
-                        if (err) console.log(err);
+                    .end((err, res) => {
+                        if (err) return err;
                         res.should.have.status(201);
                         expect(res.body).to.have.property('token');
                         res.body.token.should.be.a('string');
                         res.body.user.name.should.be.a('string');
-                        res.body.user.email.should.be.a('string');                
+                        res.body.user.email.should.be.a('string');   
+                        expect(res.body.user).to.have.property('activeUser');
                     done()    
                 })
             });
+            it('Should save a user with email "testing@test.com" / password "1" which we can use for testing', done => {
+                let user = {
+                    name: 'Paul McKenna',
+                    email: 'testing@test.com',
+                    password: '1'
+                }
+                chai.request(app) 
+                    .post(`/auth/create-new-user`)                        
+                    .send(user)  
+                    .end((err, res) => {
+                        if (err) return err;  
+                        expect(res.body.user).to.have.property('activeUser');         
+                    done()    
+                })
+            })
+            it('Should create an ActiveUser document and correctly populate the fields', done => {
+                let user = {
+                    name: chance.name(),
+                    email: chance.email(),
+                    password: chance.word()
+                }
+                chai.request(app) 
+                    .post(`/auth/create-new-user`)                        
+                    .send(user)  
+                    .end((err, res) => {
+                        if (err) return err;  
+                        expect(res.body.user).to.have.property('activeUser');         
+                    done()    
+                })
+            })
             it('should return the next userId in the sequence and save it', (done) => {
                 let user = {
                     name: chance.name(),
@@ -61,7 +92,7 @@ describe('API endpoints', () => {
                     .post(`/auth/create-new-user`)                        
                     .send(user)  
                     .end(async (err, res) => {
-                        if (err) console.log(err);
+                        if (err) return err;
                         const uniqueUsers = await User.countDocuments({ userId: res.body.user.userId });
                         expect(uniqueUsers).to.eql(1)
                     done()    
@@ -77,7 +108,7 @@ describe('API endpoints', () => {
                     .post(`/auth/create-new-user`)                        
                     .send(user)  
                     .end((err, res) => {
-                        if (err) console.log(err);
+                        if (err) return err;
                         else res.should.have.status(500);                               
                     done()    
                 })
@@ -97,7 +128,7 @@ describe('API endpoints', () => {
                     .post('/auth/user-login')
                     .send(userToLogin)
                     .end((err, res) => {
-                        if (err) console.log(err)
+                        if (err) return err
                         else {
                             res.should.have.status(200);
                             expect(res.body).to.have.property('token');
@@ -121,7 +152,7 @@ describe('API endpoints', () => {
                     .post('/auth/user-login')
                     .send(userToLogin)
                     .end((err, res) => {
-                        if (err) console.log(err)
+                        if (err) return err
                         else {
                             res.should.have.status(401);
                             expect(res.body.msg).to.eql('Authentication failed. Incorrect password')
@@ -136,7 +167,7 @@ describe('API endpoints', () => {
                 chai.request(app)
                 .get('/auth/client-ids')
                 .end((err, res) => {
-                    if (err) console.log(err);
+                    if (err) return err;
                     else {
                         expect(res.body.RECAPTCHA_KEY).to.be.a('string');
                         expect(res.body.GOOGLE_CLIENT_ID).to.be.a('string');
@@ -154,7 +185,7 @@ describe('API endpoints', () => {
                     .post('/auth/forgot-password')
                     .send({ email: result.body.user.email })
                     .end((err, res) => {
-                        if (err) console.log(err);
+                        if (err) return err;
                         User.findById(res.body._id)
                         .then(user => {
                             res.should.have.status(201);
@@ -180,7 +211,7 @@ describe('API endpoints', () => {
                         .post('/auth/reset-password')
                         .send({ token: res.body.token, password: 'abcdef' })
                         .end((err, res) => {
-                            if (err) console.log(err);
+                            if (err) return err;
                             res.should.have.status(201)
                             expect(res.body.msg).to.eql('Password successfully reset. Please login')
                             expect(res.body.user.email).to.eql(result.body.user.email)
@@ -192,7 +223,7 @@ describe('API endpoints', () => {
                 }).catch(e => done(e))
             })
         })
-        // describe('/GET /')
+        
     })
 })
 

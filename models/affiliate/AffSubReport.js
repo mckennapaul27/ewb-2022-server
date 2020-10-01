@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const AffSubReport = new Schema({ 
-    date: Date,
+    date: Date, // first day of month
     month: String,
     brand: String,
     email: String,

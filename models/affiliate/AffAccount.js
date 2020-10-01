@@ -15,7 +15,7 @@ const AffAccount = new Schema({
         type: String,
         default: 'Click to request VIP'
     },
-    dateAdded: Date, // date added is when they linked to ewalletbooster partner account so essentially when the applicaion is confirmed.
+    dateAdded: { type: Number, default: Date.now },
     accountEmail: String,
     reports: [{
         type: mongoose.Schema.Types.ObjectId,

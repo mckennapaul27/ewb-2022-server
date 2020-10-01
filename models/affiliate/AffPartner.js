@@ -57,7 +57,8 @@ const AffPartner = new Schema({
     },
     siteId: {
         type: Number,
-        unique: true
+        unique: true,
+        required: false
     },
     stats: {
         balance: [{

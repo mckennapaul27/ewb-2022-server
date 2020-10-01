@@ -1,0 +1,80 @@
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+require('../auth/passport')(passport);
+const dayjs = require('dayjs')
+const { getToken } = require('../utils/token.utils')
+const {
+    Application
+} = require('../models/personal');
+const { initialUpgrades } = require('../config/deals')
+
+// /application/get-applications
+router.get('/get-applications', passport.authenticate('jwt', {
+    session: false
+}), getApplications);
+
+//  /application/request-upgrade/:_id`)
+router.post('/request-upgrade/:_id', passport.authenticate('jwt', {
+    session: false
+}), async (req, res, next) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const vipRequest = await Application.findByIdAndUpdate(req.params._id, {
+            upgradeStatus: `Requested ${dayjs().format('MMM D, YY')}`,
+            availableUpgrade: {
+                status: `Requested ${req.body.requested}`,
+                valid: false
+            },
+            $inc: { requestCount: 1 } 
+        }, { new: true }).select('availableUpgrade.status accountId')
+        req.vipRequest = vipRequest;
+        next();
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+}, getApplications);
+
+// /application/create-new-application
+router.post('/create-new-application', passport.authenticate('jwt', {
+    session: false
+}), async (req, res, next) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, email, currency, activeUser, brand } = req.body;
+        const newApplication = await Application.create({
+            brand,
+            accountId,
+            email, 
+            currency,
+            upgradeStatus: `Requested ${dayjs().format('MMM D, YY')}`,
+            availableUpgrade: {
+                status: `Requested ${initialUpgrades[brand]}`,
+                valid: false
+            },
+            belongsTo: activeUser,
+            $inc: { requestCount: 1 } 
+        })
+        req.newApplication = newApplication;
+        next();
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+}, getApplications);
+
+
+// returns applications
+function getApplications (req, res) {
+    const token = getToken(req.headers);
+    if (token) {
+        const vipRequest = req.vipRequest ? req.vipRequest : null;
+        const newApplication = req.newApplication ? req.newApplication : null;
+        const msg = 
+            req.vipRequest 
+            ? `${req.vipRequest.availableUpgrade.status} for ${req.vipRequest.accountId}` 
+            : req.newApplication 
+            ? `${req.newApplication.availableUpgrade.status} for ${req.newApplication.accountId}` 
+            : '';
+        Application.find({  }) // need to include belongsTo
+        .then(applications => res.status(200).send({ applications, vipRequest, newApplication, msg }))
+        .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+};
+
+module.exports = router;

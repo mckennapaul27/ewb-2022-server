@@ -17,10 +17,7 @@ const AffApplication = new Schema({
         default: 'Not upgraded'
     },
     currency: String,
-    dateAdded: {
-        type: Date,
-        default: Date.now
-    },
+    dateAdded: { type: Number, default: Date.now },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner',

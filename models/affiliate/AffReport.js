@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 const AffReport = new Schema({ 
     date: {
         type: Date,
-        required: true
+        required: true // first day of month
     },
     month: String,
-    lastUpdate: Date,
+    lastUpdate: { type: Number, default: Date.now },
     brand: String,
     email: String,
     account: {

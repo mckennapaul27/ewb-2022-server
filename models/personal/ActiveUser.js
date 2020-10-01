@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const { defaultDealOne, defaultDealTwo, activeUserStats } = require('../../config/deals');
+
 const ActiveUser = new Schema({ 
     paymentDetails: {
         EUR: {
@@ -80,8 +82,8 @@ const ActiveUser = new Schema({
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
-        required: false
-    }, // below are new fields for subaffiliate    
+        required: true
+    }, 
     friends: {
         type: [{
             type: mongoose.Schema.Types.ObjectId,
@@ -93,5 +95,15 @@ const ActiveUser = new Schema({
         ref: 'activeuser'
     }    
 });
+
+// pre save hook to generate dealTier's for personal dashboard
+ActiveUser.pre('save', function (next) {
+    const activeUser = this;
+    activeUser.dealTier.Neteller = defaultDealOne;
+    activeUser.dealTier.Skrill = defaultDealOne;
+    activeUser.dealTier.ecoPayz = defaultDealTwo;
+    activeUser.stats = activeUserStats;
+    next();   
+})
 
 module.exports = mongoose.model('activeuser', ActiveUser);
