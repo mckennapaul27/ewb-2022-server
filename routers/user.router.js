@@ -5,8 +5,11 @@ require('../auth/passport')(passport);
 const { getToken } = require('../utils/token.utils')
 const {
     User,
-    Notification
+    UserNotification
 } = require('../models/common/index');
+const {
+    ActiveUserNotification
+} = require('../models/personal/index')
 
 // /user/get-user
 router.get('/get-user', passport.authenticate('jwt', {
@@ -41,6 +44,15 @@ router.post('/update-user', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
+// /user/get-new-notifications/:_id
+router.get('/get-new-notifications/:_id', passport.authenticate('jwt', { 
+    session: false 
+}), async (req, res) => {
+    const unRead = await UserNotification.countDocuments({ belongsTo: req.params._id, read: false }).select('read').lean();
+    return res.status(200).send({ unRead });
+});
+
+
 // /user/get-notifications/:_id?page=number
 router.get('/get-notifications/:_id', passport.authenticate('jwt', { 
     session: false 
@@ -49,25 +61,25 @@ router.get('/get-notifications/:_id', passport.authenticate('jwt', {
 // /user/update-notifications/:_id'
 router.get('/update-notifications/:_id', passport.authenticate('jwt', {
     session: false
-}), updateNotifications, getNotifications)
+}), updateNotifications, getNotifications);
 
 async function updateNotifications (req, res, next) {
     const token = getToken(req.headers);
     if (token) {
-        await Notification.updateMany({ belongsTo: req.params._id }, { read: true });
-        next()
+        await UserNotification.updateMany({ belongsTo: req.params._id }, { read: true });
+        next();
     } else return res.status(403).send({ msg: 'Unauthorised' });
 };
 
 function getNotifications (req, res) {
     const token = getToken(req.headers);
     if (token) {
-        let pageLimit = 5; // 4, 4, 4
+        let pageLimit = 10; // 4, 4, 4
         let skippage = pageLimit * (req.query.page - 1); // with increments of one = 5 * (1 - 1) = 0 |  5 * (2 - 1) = 5 | 5 * (3 - 1) = 10;
-        Notification.find({ belongsTo: req.params._id }).select('message read type createdAt').sort('-createdAt').skip(skippage).limit(pageLimit).lean()
+        UserNotification.find({ belongsTo: req.params._id }).select('message read type createdAt').sort('-createdAt').skip(skippage).limit(pageLimit).lean()
         .then(async notifications => {
-            const total = await Notification.countDocuments({ belongsTo: req.params._id }).select('read').lean();
-            const unRead = await Notification.countDocuments({ belongsTo: req.params._id, read: false }).select('read').lean();
+            const total = await UserNotification.countDocuments({ belongsTo: req.params._id }).select('read').lean();
+            const unRead = await UserNotification.countDocuments({ belongsTo: req.params._id, read: false }).select('read').lean();
             return res.status(200).send({ notifications, total, unRead });
         })
         .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))

@@ -90,7 +90,7 @@ const ActiveUser = new Schema({
             ref: 'activeuser'
         }]
     },    
-    referredByUser: {
+    referredBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'activeuser'
     }    

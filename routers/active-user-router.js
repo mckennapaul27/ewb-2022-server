@@ -14,7 +14,6 @@ const {
     Payment,
     Report
 } = require('../models/personal');
-const { compareSync } = require('bcrypt');
 
 
 // /active-user/get-active-user/:_id

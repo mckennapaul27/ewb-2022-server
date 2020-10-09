@@ -24,27 +24,33 @@ const { welcome, welcomeSocial } = require('../utils/notifications-list')
 
 // /auth/create-new-user 
 router.post('/create-new-user', async (req, res) => {
-    let { name, email, password } = req.body;
+    let { name, email, password, country, referredByUser } = req.body;
     let exists = await User.countDocuments({ email: req.body.email }).select('email').lean() // check if user exists
     if (!name || !password || !email) return res.status(500).send({ msg: 'Missing fields. Please enter and try again' });    
     else if (exists > 0) return res.status(400).send({ msg: `${email} already exists. Please login.` })
     else {
+
+        const referredBy = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId').lean()).userId : null; // referred by userId
+        const referredByActiveUser = referredByUser ? (await User.findOne({ userId: referredByUser }).select('activeUser').lean()).activeUser : null; // referred by activeuser _id
+
         return User.create({
             name,
             email,
-            password
+            password,
+            country,
+            referredBy,
+            referredByActiveUser
         })
         .then(user => {
             const token = jwt.sign(user.toJSON(), secret);
-            return User.findById(user._id).select('name email userId _id activeUser').lean()
-            // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
+            return User.findById(user._id).select('name email userId _id activeUser').lean()  // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
             .then(async user => {
-                await createUserNotification(welcome(user))
+                await createUserNotification(welcome(user)); 
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
-            .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+            .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
         })
-        .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+        .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     }
 });
 
@@ -63,7 +69,7 @@ router.post('/user-login', (req, res) => {
                 } else return res.status(401).send({ msg: 'Authentication failed. Incorrect password' })
             })
         }
-    }).catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+    }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
 });
 
 // /auth/forgot-password
@@ -84,9 +90,9 @@ router.post('/forgot-password', (req, res) => {
             .then(([ token, user ]) => {
                 // send email /reset-password?token=' + token;
                 return res.status(201).send({ msg: 'Kindly check your email for further instructions', _id: user._id, token }) // sending _id for testing purposes
-            }).catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+            }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
         })
-    }).catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+    }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
 });
 
 // /auth/reset-password
@@ -106,8 +112,9 @@ router.post('/reset-password', (req, res) => {
                 resetPasswordToken: null
             }, { new: true })
             .then((user) => res.status(201).send({ msg: 'Password successfully reset. Please login', user }))
-            .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
-        }).catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+            .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
+        })
+        .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     })
 });
 
@@ -117,8 +124,8 @@ router.route('/google-login') // Login to google using support@ewalletbooster.co
     session: false
 }), async (req, res, next) => {
     if (!req.user) return res.send(401, 'User not authenticated');
-    req.auth = { id: req.user.id };    
-    await createUserNotification(welcomeSocial(req.user))
+    req.auth = { id: req.user.id };   
+    await createUserNotification(welcomeSocial(req.user)) 
     next();
 }, generateToken, sendToken);
 
@@ -142,7 +149,7 @@ router.get('/client-ids', (req, res) => {
 router.post('/verify-recaptcha', (req, res) => { // https://www.google.com/recaptcha/admin/site/343237064 using mckennapaul27@gmail.com
     return axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${req.body['g-recaptcha-response']}`)
     .then((google) => res.status(200).send(google.data.success))
-    .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+    .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
 });
 
 module.exports = router;

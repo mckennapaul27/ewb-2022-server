@@ -11,21 +11,34 @@ module.exports = function () {
     // google
     passport.use(new GoogleTokenStrategy({
        clientID: process.env.GOOGLE_CLIENT_ID,
-       clientSecret: process.env.GOOGLE_CLIENT_SECRET
-    },
-    function (accessToken, refreshToken, profile, done) {
-        User.upsertGoogleUser(accessToken, refreshToken, profile, function (err, user) {
+       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+       passReqToCallback: true // passing in extra params
+    }, async function (req, accessToken, refreshToken, profile, done) {
+
+        const { referredByUser } = req.body;
+
+        const referredBy = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId').lean()).userId : null; // referred by userId
+        const referredByActiveUser = referredByUser ? (await User.findOne({ userId: referredByUser }).select('activeUser').lean()).activeUser : null; // referred by activeuser _id
+        
+        User.upsertGoogleUser(referredBy, referredByActiveUser, accessToken, refreshToken, profile, function (err, user) {
             return done(err, user);
         });
     }));
+
     // facebook
     passport.use(new FacebookTokenStrategy({
         clientID: process.env.FB_APP_ID,
         clientSecret: process.env.FB_APP_SECRET,
-        callbackURL: process.env.FB_CALLBACK
-    },
-    function (accessToken, refreshToken, profile, done) {
-            User.upsertFbUser(accessToken, refreshToken, profile, function (err, user) {
+        callbackURL: process.env.FB_CALLBACK,
+        passReqToCallback: true // passing in extra params
+    }, async function (req, accessToken, refreshToken, profile, done) {
+
+        const { referredByUser } = req.body;
+
+        const referredBy = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId').lean()).userId : null;
+        const referredByActiveUser = referredByUser ? (await User.findOne({ userId: referredByUser }).select('activeUser').lean()).activeUser : null;
+
+        User.upsertFbUser(referredBy, referredByActiveUser, accessToken, refreshToken, profile, function (err, user) {
             return done(err, user);
         });
     }));

@@ -4,7 +4,7 @@ const ms = require('ms');
 
 const Schema = mongoose.Schema;
 
-const Notification = new Schema({ 
+const UserNotification = new Schema({ 
     message: String,
     read: { 
         type: Boolean, 
@@ -18,13 +18,13 @@ const Notification = new Schema({
     },    
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
+        ref: 'user', 
         required: true
     }
 });
 
 
-Notification.index({ 'createdAt': 1 }, { 'expireAfterSeconds' : ms('14 days') / 1000 }) // have to divide between 1000 to get seconds for expireAfterSeconds - NOT milliseconds
+UserNotification.index({ 'createdAt': 1 }, { 'expireAfterSeconds' : ms('14 days') / 1000 }) // have to divide between 1000 to get seconds for expireAfterSeconds - NOT milliseconds
 
 
 // Notes
@@ -54,4 +54,4 @@ Notification.index({ 'createdAt': 1 }, { 'expireAfterSeconds' : ms('14 days') / 
 //     console.log('indexes:', indexes);
 // }).catch(console.error);
 
-module.exports = mongoose.model('notification', Notification);
+module.exports = mongoose.model('usernotification', UserNotification);

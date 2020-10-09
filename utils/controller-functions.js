@@ -1,16 +1,10 @@
-const {
-    Notification
-} = require('../models/common/index')
-const UserCounter = require('../models/common/UserCounter')
+const { UserNotification } = require('../models/common/index');
 
-// create notification
-const createUserNotification = ({ message, type, belongsTo }) => Notification.create({ message, type, belongsTo })
-
-
-
+// create notification that belongs to User
+const createUserNotification = ({ message, type, belongsTo }) => UserNotification.create({ message, type, belongsTo })
 
 module.exports = {
-    createUserNotification
+    createUserNotification,
 }
 
 

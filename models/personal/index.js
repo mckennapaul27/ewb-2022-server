@@ -3,5 +3,5 @@ module.exports = {
     ActiveUser: require('./ActiveUser'),
     Application: require('./Application'),
     Payment: require('./Payment'),
-    Report: require('./Report')
+    Report: require('./Report'),
 }
