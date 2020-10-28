@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 
 const UserCounter = require('./UserCounter');
 const ActiveUser = require('../personal/ActiveUser');
+const AffPartner = require('../affiliate/AffPartner');
 
 const Schema = mongoose.Schema;
 
@@ -26,44 +27,47 @@ const User = new Schema({
         id: String,
         token: String
     },
+    referredBy: { // will be userId of referrer
+        type: Number,
+    },
+    // ** activeuser fields ** 
     activeUser: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'activeuser',
         required: true
-    },
-    referredBy: { // will be userId of referrer
-        type: Number,
-    },
+    },   
     referredByActiveUser: { // will be activeuser _id of referrer
         type: mongoose.Schema.Types.ObjectId,
         ref: 'activeuser'
     },
+    // ** affpartner fields **
+    partner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'affpartner',
+        required: true
+    },
+    referredByPartner: { // will be activeuser _id of referrer
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'affpartner'
+    },
 
 })
 
-// pre save hook to has password and generate userId
+// using pre validate instead of pre save otherwise it will fail because activeUser is required: true
 User.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
-
     const user = this;
-
     if (!user.isModified('password')) return next();
-
     bcrypt.hash(user.password, 10)
     .then(async hash => {
-        
         const userId = await getNextSequence('userid');
         const activeUser = await createActiveUser(user._id, user.referredByActiveUser);
-       
+        const partner = await createAffPartner(user._id, user.referredByPartner);
+        user.partner = partner;
         user.activeUser = activeUser;
         user.userId = userId;
         user.password = hash;
-       
         next();
-
-    }).catch(err => {
-        console.log(err)
-        return next(err)
-    })
+    }).catch(err => next(err))
 })
 
 
@@ -76,7 +80,7 @@ User.methods.checkPassword = function (password, callback) {
 }
 
 // google login
-User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, accessToken, refreshToken, profile, cb) {
+User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, referredByPartner, accessToken, refreshToken, profile, cb) {
     const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
     return userModelCopy.findOne({ 'googleProvider.id': profile.id }, async function(err, existingUser) {
         if (err) return next(err);
@@ -87,12 +91,14 @@ User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, acces
                 email: profile.emails[0].value,          
                 userId,    
                 referredBy,
-                referredByActiveUser,     
+                referredByActiveUser,   
+                referredByPartner,  
                 googleProvider: {
                     id: profile.id,
                     token: accessToken
                 }
             });
+            newUser.partner = await createAffPartner(newUser._id, referredByPartner);
             newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser); 
             newUser.save(async function(error, savedUser) {
                 if (error) return error;
@@ -103,7 +109,7 @@ User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, acces
 };
 
 // facebook login
-User.statics.upsertFbUser = function (referredBy, referredByActiveUser, accessToken, refreshToken, profile, cb) {
+User.statics.upsertFbUser = function (referredBy, referredByActiveUser, referredByPartner, accessToken, refreshToken, profile, cb) {
     const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
     return userModelCopy.findOne({ 'facebookProvider.id': profile.id }, async function (err, existingUser) {
         if (err) return next(err);
@@ -115,11 +121,13 @@ User.statics.upsertFbUser = function (referredBy, referredByActiveUser, accessTo
                 userId,    
                 referredBy,
                 referredByActiveUser,   
+                referredByPartner,  
                 facebookProvider: {
                     id: profile.id,
                     token: accessToken
                 }
             });
+            newUser.partner = await createAffPartner(newUser._id, referredByPartner);
             newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser); 
             newUser.save(async function(error, savedUser) {
                 if (error) return error;
@@ -149,6 +157,13 @@ async function createActiveUser (belongsTo, referredBy) { // creates new activeu
     return newActiveUser; // it has to RETURN the new active user, otherwise it won't work as the await await createActiveUser() expects activeUser to be returned.
 };
 
+
+// create new AffPartner
+async function createAffPartner (belongsTo, referredBy) {
+    const newAffPartner = await AffPartner.create({ belongsTo, referredBy });
+    if (newAffPartner.referredBy) await AffPartner.findByIdAndUpdate(newAffPartner.referredBy, { $push: { subPartners: newAffPartner } }, { new: true });
+    return newAffPartner;
+}
 
 module.exports = mongoose.model('user', User);
 

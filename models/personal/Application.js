@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const User = require('../common/User');
-const ActiveUser = require('../personal/ActiveUser');
+const { initialUpgrades } = require('../../config/deals');
+const dayjs = require('dayjs');
 
 const Application = new Schema({ 
     brand: String,
@@ -30,28 +30,12 @@ const Application = new Schema({
     }
 });
 
-// Application.pre('save', function (next) {
-//     const application = this;
-//     if (application.belongsTo) {
-//         const activeUser = ActiveUser.findById(application.belongsTo).select('belongsTo').populate({ path: 'belongsTo', select: 'belongsTo' })
-//         // const user = User.findById(activeUser.belongsTo).select('_id').lean();
-//         console.log(activeUser.belongsTo)
-//     }
-// })
-
-
-// User.pre('save', function (next) {
-//     const user = this;
-//     if (!user.isModified('password')) return next();
-//     bcrypt.hash(user.password, 10)
-//     .then(async hash => {
-//         const userId = await getNextSequence('userid');
-//         const activeUser = await createActiveUser(user._id);
-//         user.activeUser = activeUser;
-//         user.userId = userId;
-//         user.password = hash;
-//         next()
-//     }).catch(err => next(err))
-// })
+Application.pre('save', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+    const a = this; // a = affApplication
+    a.availableUpgrade.status = initialUpgrades[a.brand],
+    a.availableUpgrade.valid = false;
+    a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
+    next();   
+});
 
 module.exports = mongoose.model('application', Application);

@@ -32,7 +32,7 @@ module.exports = {
     sendToken: function (req, res) {
         const token = jwt.sign(req.user.toJSON(), secret);
         res.setHeader('x-auth-token', req.token);
-        return User.findById(req.user._id).select('name email userId _id activeUser').lean()
+        return User.findById(req.user._id).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId' }).lean()
         .then(user => {
             return res.status(200).send({ token: 'jwt ' + token, user });
         })

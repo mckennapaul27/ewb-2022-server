@@ -1,17 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-require('../auth/passport')(passport);
-const { getToken } = require('../utils/token.utils')
+require('../../auth/passport')(passport);
+const { getToken } = require('../../utils/token.utils')
 const {
     User,
     UserNotification
-} = require('../models/common/index');
-const {
-    ActiveUserNotification
-} = require('../models/personal/index')
+} = require('../../models/common/index');
 
-// /user/get-user
+// /common/user/get-user
 router.get('/get-user', passport.authenticate('jwt', {
     session: false
 }), (req, res) => {
@@ -26,7 +23,7 @@ router.get('/get-user', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-// /user/update-user
+// /common/user/update-user
 router.post('/update-user', passport.authenticate('jwt', {
     session: false
 }), async (req, res) => {
@@ -44,7 +41,7 @@ router.post('/update-user', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
-// /user/get-new-notifications/:_id
+// /common/user/get-new-notifications/:_id
 router.get('/get-new-notifications/:_id', passport.authenticate('jwt', { 
     session: false 
 }), async (req, res) => {
@@ -53,12 +50,12 @@ router.get('/get-new-notifications/:_id', passport.authenticate('jwt', {
 });
 
 
-// /user/get-notifications/:_id?page=number
+// /common/user/get-notifications/:_id?page=number
 router.get('/get-notifications/:_id', passport.authenticate('jwt', { 
     session: false 
 }), getNotifications);
 
-// /user/update-notifications/:_id'
+// /common/user/update-notifications/:_id'
 router.get('/update-notifications/:_id', passport.authenticate('jwt', {
     session: false
 }), updateNotifications, getNotifications);
@@ -85,30 +82,5 @@ function getNotifications (req, res) {
         .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     } else return res.status(403).send({ msg: 'Unauthorised' });
 };
-
-
-
-
-// const Notification = new Schema({ 
-//     message: String,
-//     read: { 
-//         type: Boolean, 
-//         default: false 
-//     },
-//     type: String, // is this needed?
-//     createdAt: { 
-//         type: Date, 
-//         default: Date.now, // we don't call this function with Date.now() otherwise it would store it once,       
-//         index: true // Have to include this to make it work
-//     },    
-//     belongsTo: {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: 'user',
-//         required: true
-//     }
-// });
-
-
-
 
 module.exports = router;

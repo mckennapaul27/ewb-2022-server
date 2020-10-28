@@ -14,18 +14,18 @@ const User = require('../models/common/User');
 chai.use(chaiHttp);
 
 describe('API endpoints', () => {
-    before(done => {
-       seedDatabase(done)
-    });
+    // before(done => {
+    //    seedDatabase(done)
+    // });
 
-    // /user endpoints
+    // /common/user endpoints
     describe('/user endpoints', () => {
-        describe('GET /user/get-user', () => {
+        describe('GET /common/user/get-user', () => {
             it('should return the user by accessing req.user from jwt token', (done) => {            
                 createNewUser()
                 .then(result => {
                     chai.request(app)
-                    .get('/user/get-user')
+                    .get('/common/user/get-user')
                     .set({ ['Authorization']: result.body.token })                
                     .end((err, res) => {
                         if (err) console.log(err)
@@ -56,7 +56,7 @@ function createNewUser (storedPassword) {
         password: storedPassword ? storedPassword : chance.word()
     }
     return chai.request(app)
-    .post('/auth/create-new-user')
+    .post('/common/auth/create-new-user')
     .send(user)
     .then(res => res)
     .catch(e => console.log(e))

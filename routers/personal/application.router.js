@@ -1,34 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-require('../auth/passport')(passport);
+require('../../auth/passport')(passport);
 const dayjs = require('dayjs')
-const { getToken } = require('../utils/token.utils')
+const { getToken } = require('../../utils/token.utils')
 const {
     Application,
     ActiveUser
-} = require('../models/personal');
-const { initialUpgrades } = require('../config/deals')
-const { createUserNotification } = require('../utils/controller-functions');
-const { createApplication, updateApplication } = require('../utils/notifications-list');
+} = require('../../models/personal');
+const { createUserNotification } = require('../../utils/controller-functions');
+const { createApplication, updateApplication } = require('../../utils/notifications-list');
+const AffApplication = require('../../models/affiliate/AffApplication');
 
-// /application/get-applications
+// /personal/application/get-applications
 router.get('/get-applications', passport.authenticate('jwt', {
     session: false
 }), getApplications);
 
-//  /application/request-upgrade/:_id`)
+//  /personal/application/request-upgrade/:_id`)
 router.post('/request-upgrade/:_id', passport.authenticate('jwt', {
     session: false
 }), async (req, res, next) => {
     const token = getToken(req.headers);
     if (token) {
         const vipRequest = await Application.findByIdAndUpdate(req.params._id, {
-            upgradeStatus: `Requested ${dayjs().format('MMM D, YY')}`,
-            availableUpgrade: {
-                status: `${req.body.requested}`,
-                valid: false
-            },
+            upgradeStatus: `Requested ${dayjs().format('DD/MM/YYYY')}`,
+            'availableUpgrade.valid': false,
             $inc: { requestCount: 1 } 
         }, { new: true }).select('availableUpgrade.status accountId belongsTo');
         
@@ -41,28 +38,22 @@ router.post('/request-upgrade/:_id', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 }, getApplications);
 
-// /application/create-new-application
+// /personal/application/create-new-application
 router.post('/create-new-application', passport.authenticate('jwt', {
     session: false
 }), async (req, res, next) => {
     const token = getToken(req.headers);
     if (token) {
         const { accountId, email, currency, activeUser, brand } = req.body; 
-        let exists = await Application.countDocuments({ accountId }).select('accountId').lean() // check if user exists        
-        if (exists > 0) return res.status(400).send({ msg: `Application already exists for ${accountId}` });
-        // also check for AffApplication ***
+        let existsOne = await Application.countDocuments({ accountId }).select('accountId').lean() // check if application exists     
+        let existsTwo = await AffApplication.countDocuments({ accountId }).select('accountId').lean() // check if affapplication exists     
+        if (existsOne > 0 || existsTwo > 0) return res.status(400).send({ msg: `Application already exists for ${accountId}` });
         const newApp = await Application.create({
             brand,
             accountId,
             email, 
             currency,
-            upgradeStatus: `Requested ${dayjs().format('MMM D, YY')}`,
-            availableUpgrade: {
-                status: `Requested ${initialUpgrades[brand]}`,
-                valid: false
-            },
-            belongsTo: activeUser,
-            $inc: { requestCount: 1 } 
+            belongsTo: activeUser
         });
         if (newApp.belongsTo) {
             let _id = (await ActiveUser.findById(newApp.belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo

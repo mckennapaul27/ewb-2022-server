@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const { setCurrency } = require('../../config/deals');
 
 const Report = new Schema({
     date: Number, // first day of month
@@ -27,5 +28,12 @@ const Report = new Schema({
         ref: 'activeuser'
     }
 });
+
+// using pre validate to set report currency - very important for calculating balances.
+Report.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+    const report = this;
+    report.account.currency = setCurrency(report.brand);
+    next();
+})
 
 module.exports = mongoose.model('report', Report);

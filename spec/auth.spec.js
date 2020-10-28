@@ -29,9 +29,9 @@ describe('API endpoints', () => {
         clock.restore();
         done();
     })
-    // /auth endpoints
-    describe('/auth endpoints', () => {
-        describe('POST /auth/create-new-user', () => {
+    // /common/auth endpoints
+    describe('/common/auth endpoints', () => {
+        describe('POST /common/auth/create-new-user', () => {
             it('Should correctly save the user', (done) => {
                 let user = {
                     name: chance.name(),
@@ -39,7 +39,7 @@ describe('API endpoints', () => {
                     password: chance.word()
                 }
                 chai.request(app) 
-                    .post(`/auth/create-new-user`)                        
+                    .post(`/common/auth/create-new-user`)                        
                     .send(user)  
                     .end((err, res) => {
                         if (err) return err;
@@ -59,7 +59,7 @@ describe('API endpoints', () => {
                     password: '1'
                 }
                 chai.request(app) 
-                    .post(`/auth/create-new-user`)                        
+                    .post(`/common/auth/create-new-user`)                        
                     .send(user)  
                     .end((err, res) => {
                         if (err) return err;  
@@ -74,7 +74,7 @@ describe('API endpoints', () => {
                     password: chance.word()
                 }
                 chai.request(app) 
-                    .post(`/auth/create-new-user`)                        
+                    .post(`/common/auth/create-new-user`)                        
                     .send(user)  
                     .end((err, res) => {
                         if (err) return err;  
@@ -89,7 +89,7 @@ describe('API endpoints', () => {
                     password: chance.word()
                 }
                 chai.request(app) 
-                    .post(`/auth/create-new-user`)                        
+                    .post(`/common/auth/create-new-user`)                        
                     .send(user)  
                     .end(async (err, res) => {
                         if (err) return err;
@@ -105,7 +105,7 @@ describe('API endpoints', () => {
                     password: chance.word()
                 }
                 chai.request(app) 
-                    .post(`/auth/create-new-user`)                        
+                    .post(`/common/auth/create-new-user`)                        
                     .send(user)  
                     .end((err, res) => {
                         if (err) return err;
@@ -115,7 +115,7 @@ describe('API endpoints', () => {
             });            
         });
     
-        describe('POST /auth/user-login', () => {
+        describe('POST /common/auth/user-login', () => {
             it('should successfully log user in and return jwt token and not return the password', (done) => {
                 let passwordText = chance.word();
                 createNewUser(passwordText)
@@ -125,7 +125,7 @@ describe('API endpoints', () => {
                         password: passwordText
                     }
                     chai.request(app)
-                    .post('/auth/user-login')
+                    .post('/common/auth/user-login')
                     .send(userToLogin)
                     .end((err, res) => {
                         if (err) return err
@@ -149,7 +149,7 @@ describe('API endpoints', () => {
                         password: chance.word()
                     }
                     chai.request(app)
-                    .post('/auth/user-login')
+                    .post('/common/auth/user-login')
                     .send(userToLogin)
                     .end((err, res) => {
                         if (err) return err
@@ -162,10 +162,10 @@ describe('API endpoints', () => {
                 }).catch(e => done(e))
             })
         })
-        describe('GET /auth/client-ids', () => {
+        describe('GET /common/auth/client-ids', () => {
             it('should return google and facebook client ID and google ReCAPTCHA ID', (done) => {
                 chai.request(app)
-                .get('/auth/client-ids')
+                .get('/common/auth/client-ids')
                 .end((err, res) => {
                     if (err) return err;
                     else {
@@ -177,12 +177,12 @@ describe('API endpoints', () => {
                 })
             })
         })
-        describe('POST /auth/forgot-password', () => {
+        describe('POST /common/auth/forgot-password', () => {
             it('should set resetPasswordToken for user when requested', (done) => {
                 createNewUser()
                 .then(result => {
                     chai.request(app)
-                    .post('/auth/forgot-password')
+                    .post('/common/auth/forgot-password')
                     .send({ email: result.body.user.email })
                     .end((err, res) => {
                         if (err) return err;
@@ -199,16 +199,16 @@ describe('API endpoints', () => {
                 }).catch(e => done(e))
             })
         });
-        describe('POST /auth/reset-password', () => {
+        describe('POST /common/auth/reset-password', () => {
             it('should find the user from the resetPasswordToken', (done) => {
                 createNewUser()
                 .then(result => {
                     chai.request(app)
-                    .post('/auth/forgot-password')
+                    .post('/common/auth/forgot-password')
                     .send({ email: result.body.user.email })
                     .then(res => {                        
                         chai.request(app)
-                        .post('/auth/reset-password')
+                        .post('/common/auth/reset-password')
                         .send({ token: res.body.token, password: 'abcdef' })
                         .end((err, res) => {
                             if (err) return err;
@@ -235,7 +235,7 @@ function createNewUser (storedPassword) {
         password: storedPassword ? storedPassword : chance.word()
     }
     return chai.request(app)
-    .post('/auth/create-new-user')
+    .post('/common/auth/create-new-user')
     .send(user)
     .then(res => res)
     .catch(e => console.log(e))

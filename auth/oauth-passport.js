@@ -4,6 +4,8 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const passport = require('passport');
 
 const User = require('../models/common/User');
+const AffPartner = require('../models/affiliate/AffPartner');
+
 const FacebookTokenStrategy = require('passport-facebook-token');
 const GoogleTokenStrategy = require('passport-google-token').Strategy;
 
@@ -15,12 +17,11 @@ module.exports = function () {
        passReqToCallback: true // passing in extra params
     }, async function (req, accessToken, refreshToken, profile, done) {
 
-        const { referredByUser } = req.body;
+        const { referredByUser, networkCode } = req.body;
+        const { activeUser, userId } = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId activeUser').lean()) : { userId: null, activeUser: null  }; // using default object values otherwise it is impossible to destructure { activeUser, userId }
+        const referredByPartner = networkCode ? await AffPartner.findOne({ epi: networkCode }).select('_id').lean() : undefined;
 
-        const referredBy = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId').lean()).userId : null; // referred by userId
-        const referredByActiveUser = referredByUser ? (await User.findOne({ userId: referredByUser }).select('activeUser').lean()).activeUser : null; // referred by activeuser _id
-        
-        User.upsertGoogleUser(referredBy, referredByActiveUser, accessToken, refreshToken, profile, function (err, user) {
+        User.upsertGoogleUser(userId, activeUser, referredByPartner, accessToken, refreshToken, profile, function (err, user) {
             return done(err, user);
         });
     }));
@@ -33,12 +34,11 @@ module.exports = function () {
         passReqToCallback: true // passing in extra params
     }, async function (req, accessToken, refreshToken, profile, done) {
 
-        const { referredByUser } = req.body;
+        const { referredByUser, networkCode } = req.body;
+        const { activeUser, userId } = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId activeUser').lean()) : { userId: null, activeUser: null  }; // using default object values otherwise it is impossible to destructure { activeUser, userId }
+        const referredByPartner = networkCode ? await AffPartner.findOne({ epi: networkCode }).select('_id').lean() : undefined;
 
-        const referredBy = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId').lean()).userId : null;
-        const referredByActiveUser = referredByUser ? (await User.findOne({ userId: referredByUser }).select('activeUser').lean()).activeUser : null;
-
-        User.upsertFbUser(referredBy, referredByActiveUser, accessToken, refreshToken, profile, function (err, user) {
+        User.upsertFbUser(userId, activeUser, referredByPartner, accessToken, refreshToken, profile, function (err, user) {
             return done(err, user);
         });
     }));

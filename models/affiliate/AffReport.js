@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const { setCurrency } = require('../../config/deals');
 
 const AffReport = new Schema({ 
     date: {
-        type: Date,
+        type: Number,
         required: true // first day of month
     },
     month: String,
@@ -18,7 +19,8 @@ const AffReport = new Schema({
         cashback: Number,
         cashbackRate: Number,
         subAffCommission: Number,
-        earnedFee: Number
+        earnedFee: Number,
+        currency: String // this is so we can calculate balances on the aggregation. Very important that we set this according to the brand!!
     },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
@@ -31,5 +33,12 @@ const AffReport = new Schema({
         required: false
     }
 });
+
+// using pre validate to set report currency - very important for calculating balances.
+AffReport.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+    const report = this;
+    report.account.currency = setCurrency(report.brand);
+    next();
+})
 
 module.exports = mongoose.model('affreport', AffReport);

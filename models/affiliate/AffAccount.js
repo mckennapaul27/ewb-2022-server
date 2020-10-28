@@ -7,6 +7,7 @@ const AffAccount = new Schema({
         accountId: String,
         country: String,
         currency: String,  
+        deposits: Number,
         transValue: Number,     
         commission: Number,
         cashback: Number

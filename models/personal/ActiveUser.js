@@ -1,41 +1,30 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const { defaultDealOne, defaultDealTwo, activeUserStats } = require('../../config/deals');
+const { defaultDealOne, defaultDealTwo, defaultStats } = require('../../config/deals');
 
 const ActiveUser = new Schema({ 
     paymentDetails: {
         EUR: {
-            brand: String,
-            email: String,
-            name: String,
-            accountId: String
+            brand: { type: String, default: '' },
+            email: { type: String, default: '' },
+            name: { type: String, default: '' },
+            accountId: { type: String, default: '' },
         },
         USD: {
-            brand: String,
-            email: String
+            brand: { type: String, default: '' },
+            email: { type: String, default: '' },
         }
-    },
-    dealTier: {
-        Neteller: [{
-            level: Number,
-            minVol: Number,
-            maxVol: Number,
-            cashback: Number
-        }],
-        Skrill: [{
-            level: Number,
-            minVol: Number,
-            maxVol: Number,
-            cashback: Number
-        }],
-        ecoPayz: [{
+    },    
+    deals: [{
+        brand: String,
+        rates: [{
             level: Number,
             minVol: Number,
             maxVol: Number,
             cashback: Number
         }]
-    },    
+    }],
     stats: {
         balance: [{
             amount: {
@@ -97,12 +86,12 @@ const ActiveUser = new Schema({
 });
 
 // pre save hook to generate dealTier's for personal dashboard
-ActiveUser.pre('save', function (next) {
+ActiveUser.pre('validate', function (next) {
     const activeUser = this;
-    activeUser.dealTier.Neteller = defaultDealOne;
-    activeUser.dealTier.Skrill = defaultDealOne;
-    activeUser.dealTier.ecoPayz = defaultDealTwo;
-    activeUser.stats = activeUserStats;
+    activeUser.deals.push(defaultDealOne('Neteller'));
+    activeUser.deals.push(defaultDealOne('Skrill'));
+    activeUser.deals.push(defaultDealTwo('ecoPayz'));
+    activeUser.stats = defaultStats;
     next();   
 })
 

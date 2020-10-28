@@ -1,22 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-require('../auth/passport')(passport);
+require('../../auth/passport')(passport);
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
-const { getToken } = require('../utils/token.utils')
+const { getToken } = require('../../utils/token.utils')
 const {
     User,
     Notification,
-} = require('../models/common/index');
+} = require('../../models/common/index');
 const {
     ActiveUser,
     Payment,
     Report
-} = require('../models/personal');
+} = require('../../models/personal');
 
 
-// /active-user/get-active-user/:_id
+// /personal/active-user/get-active-user/:_id
 router.get('/get-active-user/:_id', passport.authenticate('jwt', {
     session: false
 }), (req, res) => {
@@ -28,7 +28,7 @@ router.get('/get-active-user/:_id', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-// /active-user/update-payment-details/:_id
+// /personal/active-user/update-payment-details/:_id
 router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
     session: false
 }), (req, res) => {
@@ -42,8 +42,7 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-// /active-user/fetch-deal-data/:_id
-
+// /personal/active-user/fetch-deal-data/:_id
 router.post('/fetch-deal-data/:_id', passport.authenticate('jwt', {
     session: false
 }), (req, res) => {
@@ -51,7 +50,7 @@ router.post('/fetch-deal-data/:_id', passport.authenticate('jwt', {
     if (token) {
 
         Promise.all([
-            ActiveUser.findById(req.params._id).select('dealTier _id').lean(),
+            ActiveUser.findById(req.params._id).select('deals _id').lean(),
             Report.aggregate([ // including month and brand in query
                 // { $match: { $and: [ { belongsToActiveUser: mongoose.Types.ObjectId(req.params._id) }, { month: req.body.brand }, { brand: req.body.brand } ] } }, 
                 { $project: { 'account.transValue': 1 } }, // selected values to return 1 = true, 0 = false
@@ -67,17 +66,18 @@ router.post('/fetch-deal-data/:_id', passport.authenticate('jwt', {
             const isValid = (arr, value) => arr.length > 0 ? arr[0][value] : 0; // used when _id = null | arr is the aggregate result | value is either cashback or commission
             
             const transValue = isValid(reports, 'transValue');
-            const dealTier = activeUser.dealTier[req.body.brand];            
-           
-            let achievedRate = dealTier.reduce((acc, d) => (transValue >= d.minVol && transValue <= d.maxVol) ? acc += d.cashback : acc, 0);
-            let percentage = (dealTier.map(t => t.cashback).indexOf(achievedRate) + 1) / dealTier.length;
+
+            const deal = (activeUser.deals.find(d => d.brand === req.body.brand)).rates;  
+
+            let achievedRate = deal.reduce((acc, d) => (transValue >= d.minVol && transValue <= d.maxVol) ? acc += d.cashback : acc, 0);
+            let percentage = (deal.map(t => t.cashback).indexOf(achievedRate) + 1) / deal.length;
           
             achievedRate = achievedRate * 100;
             percentage = percentage * 100;
 
-            return res.status(200).send({ dealTier, achievedRate, percentage });
+            return res.status(200).send({ deal, achievedRate, percentage });
         })
-        .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+        .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     } else return res.status(403).send({ msg: 'Unauthorised' })
 })
 

@@ -8,53 +8,59 @@ const express = require('express');
 const router = express.Router();
 
 const passport = require('passport');
-require('../auth/passport')(passport);
-require('../auth/oauth-passport')();
+require('../../auth/passport')(passport);
+require('../../auth/oauth-passport')();
 
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const axios = require('axios');
 
-const { User } = require('../models/common/index');
-const { createUserNotification } = require('../utils/controller-functions');
-const { generateToken, sendToken } = require('../utils/token.utils');
-const { welcome, welcomeSocial } = require('../utils/notifications-list')
+const { User } = require('../../models/common/index');
+const { AffPartner } = require('../../models/affiliate/index');
+const { createUserNotification } = require('../../utils/controller-functions');
+const { generateToken, sendToken } = require('../../utils/token.utils');
+const { welcome, welcomeSocial } = require('../../utils/notifications-list');
 
 
-// /auth/create-new-user 
+// /common/auth/create-new-user 
 router.post('/create-new-user', async (req, res) => {
-    let { name, email, password, country, referredByUser } = req.body;
+    let { name, email, password, country, referredByUser, networkCode, appToken } = req.body; // referredByPartner here is the network code such as 566
     let exists = await User.countDocuments({ email: req.body.email }).select('email').lean() // check if user exists
     if (!name || !password || !email) return res.status(500).send({ msg: 'Missing fields. Please enter and try again' });    
     else if (exists > 0) return res.status(400).send({ msg: `${email} already exists. Please login.` })
     else {
-
-        const referredBy = referredByUser ? (await User.findOne({ userId: referredByUser }).select('userId').lean()).userId : null; // referred by userId
-        const referredByActiveUser = referredByUser ? (await User.findOne({ userId: referredByUser }).select('activeUser').lean()).activeUser : null; // referred by activeuser _id
-
+        const { activeUser, userId } = referredByUser ? await User.findOne({ userId: referredByUser }).select('userId activeUser').lean() : { userId: undefined, activeUser: undefined  }; // using default object values otherwise it is impossible to destructure { activeUser, userId }
+        const referredByPartner = networkCode ? await AffPartner.findOne({ epi: networkCode }).select('_id').lean() : undefined;
         return User.create({
             name,
             email,
             password,
             country,
-            referredBy,
-            referredByActiveUser
+            referredBy: userId,
+            referredByActiveUser: activeUser,
+            referredByPartner
         })
         .then(user => {
             const token = jwt.sign(user.toJSON(), secret);
-            return User.findById(user._id).select('name email userId _id activeUser').lean()  // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
+            return User.findById(user._id).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId' }).lean()  // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
             .then(async user => {
                 await createUserNotification(welcome(user)); 
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
-            .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
+            .catch((err) => {
+                console.log(err)
+                return res.status(500).send({ msg: 'Server error: Please contact support' })
+            })
         })
-        .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
+        .catch((err) => {
+            console.log(err)
+            return res.status(500).send({ msg: 'Server error: Please contact support' })
+        })
     }
 });
 
-// /auth/user-login
+// /common/auth/user-login
 router.post('/user-login', (req, res) => {
     User.findOne({ email: req.body.email }).select('password')
     .then(user => {
@@ -63,8 +69,7 @@ router.post('/user-login', (req, res) => {
             user.checkPassword(req.body.password, function (err, isMatch) {
                 if (isMatch && !err) {
                     const token = jwt.sign(user.toJSON(), secret);
-                    return User.findById(user._id).select('name email userId _id').lean()
-                   
+                    return User.findById(user._id).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId' }).lean()
                     .then(user => res.status(200).send({ user, token: 'jwt ' + token })) // we need to include jwt + token rather than just send token on it's on because passport authenticates by looking for jwt in the middleware)                    
                 } else return res.status(401).send({ msg: 'Authentication failed. Incorrect password' })
             })
@@ -72,7 +77,7 @@ router.post('/user-login', (req, res) => {
     }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
 });
 
-// /auth/forgot-password
+// /common/auth/forgot-password
 router.post('/forgot-password', (req, res) => {
     User.findOne({ email: req.body.email }).lean().select('_id')
     .then(user => {
@@ -95,7 +100,7 @@ router.post('/forgot-password', (req, res) => {
     }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
 });
 
-// /auth/reset-password
+// /common/auth/reset-password
 router.post('/reset-password', (req, res) => {
     User.findOne({ 
         resetPasswordToken: req.body.token,
@@ -118,7 +123,7 @@ router.post('/reset-password', (req, res) => {
     })
 });
 
-// /auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
+// /common/auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
 router.route('/google-login') // Login to google using support@ewalletbooster.com and go to https://console.developers.google.com/apis/credentials?folder=&organizationId=&project=ewalletbooster-login
 .post(passport.authenticate('google-token', {
     session: false
@@ -129,8 +134,8 @@ router.route('/google-login') // Login to google using support@ewalletbooster.co
     next();
 }, generateToken, sendToken);
 
-// /auth/facebook-login
-router.route('/facebook-login') // Go to https://developers.facebook.com/apps/298620334131060/fb-login/settings/ and remember to check callback URI's - /auth or /oauth ?
+// /common/auth/facebook-login
+router.route('/facebook-login') // Go to https://developers.facebook.com/apps/298620334131060/fb-login/settings/ and remember to check callback URI's - /common/auth or /oauth ?
     .post(passport.authenticate('facebook-token', {
         session: false
     }), async (req, res, next) => {
@@ -140,12 +145,12 @@ router.route('/facebook-login') // Go to https://developers.facebook.com/apps/29
         next();
     }, generateToken, sendToken);
 
-// /auth/client-ids
+// /common/auth/client-ids
 router.get('/client-ids', (req, res) => {
     return res.status(200).send({ RECAPTCHA_KEY, GOOGLE_CLIENT_ID, FB_APP_ID })
 });
 
-// /auth/verify-recaptcha
+// /common/auth/verify-recaptcha
 router.post('/verify-recaptcha', (req, res) => { // https://www.google.com/recaptcha/admin/site/343237064 using mckennapaul27@gmail.com
     return axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${req.body['g-recaptcha-response']}`)
     .then((google) => res.status(200).send(google.data.success))
