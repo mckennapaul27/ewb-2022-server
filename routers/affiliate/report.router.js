@@ -61,7 +61,7 @@ router.post('/fetch-reports', passport.authenticate('jwt', {
             return res.status(400).send(err)
         }    
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
-})
+});
 
 // POST /affiliate/report/accountId/table
 router.post('/accountId/table', async (req, res) => {

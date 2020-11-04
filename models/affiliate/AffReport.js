@@ -17,10 +17,12 @@ const AffReport = new Schema({
         transValue: Number,
         commission: Number,
         cashback: Number,
+        commissionRate: Number, // need to start storing this in data so that we can access in react-table filters
         cashbackRate: Number,
         subAffCommission: Number,
         earnedFee: Number,
-        currency: String // this is so we can calculate balances on the aggregation. Very important that we set this according to the brand!!
+        currency: String, // this is so we can calculate balances on the aggregation. Very important that we set this according to the brand!!
+        profit: Number // need to start storing this in data so that we can access in react-table filters
     },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,

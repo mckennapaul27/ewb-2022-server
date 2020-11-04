@@ -15,9 +15,8 @@ const AffApplication = new Schema({
     upgradeStatus: { type: String, default: 'Not upgraded' },
     availableUpgrade: {
         status: String,
-        valid: { type: Boolean, default: true }
+        valid: { type: Boolean, default: false }
     }, 
-    vipExpiry: Number, 
     requestCount: { type: Number, default: 1 }, // every time user requests we can  $inc: { requestCount: 1 } }, to make sure they don't keep requesting
     currency: String,
     dateAdded: { type: Number, default: Date.now },

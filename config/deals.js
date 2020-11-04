@@ -54,6 +54,15 @@ const initialUpgrades = {
     MuchBetter: '-'
 };
 
+const nextUpgrades = {
+    Neteller: [
+        { Gold: 50000, Platinum: 500000, Diamond: 1000000 }
+    ],
+    Skrill: [],
+    ecoPayz: [],
+    MuchBetter: []
+}
+
 const brandCurrency = {
     'Neteller': 'USD',
     'Skrill': 'USD',
@@ -104,5 +113,6 @@ module.exports = {
     affiliateDealOne,
     affiliateDealTwo,
     initialUpgrades,
-    setCurrency
+    setCurrency,
+    nextUpgrades
 }

@@ -9,14 +9,16 @@ const Report = new Schema({
     brand: String,
     account: {
         accountId: String,  
-        deposits: { type: Number, default: 0 },
-        transValue: { type: Number, default: 0 },
-        commission: { type: Number, default: 0 },
-        cashback: { type: Number, default: 0 },
-        cashbackRate: { type: Number, default: 0 },
-        rafCashback: { type: Number, default: 0 },
-        earnedFee: { type: Number, default: 0 },
-        currency: String // this is so we can calculate balances per currency
+        deposits: Number,
+        transValue: Number,
+        commission: Number,
+        cashback: Number,
+        cashbackRate: Number,
+        commissionRate: Number, // need to start storing this in data so that we can access in react-table filters
+        rafCashback: Number,
+        earnedFee: Number,
+        currency: String, // this is so we can calculate balances per currency,
+        profit: Number // need to start storing this in data so that we can access in react-table filters
     },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,

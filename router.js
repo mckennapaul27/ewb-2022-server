@@ -6,7 +6,7 @@ const affiliateRouter = require('./routers/affiliate/index');
 const commonRouter = require('./routers/common/index');
 const personalRouter = require('./routers/personal/index');
 
-// router.use('/admin', adminRouter);
+router.use('/admin', adminRouter);
 router.use('/affiliate', affiliateRouter);
 router.use('/common', commonRouter);
 router.use('/personal', personalRouter);

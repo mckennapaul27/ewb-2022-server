@@ -49,12 +49,10 @@ router.post('/create-new-user', async (req, res) => {
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
             .catch((err) => {
-                console.log(err)
                 return res.status(500).send({ msg: 'Server error: Please contact support' })
             })
         })
         .catch((err) => {
-            console.log(err)
             return res.status(500).send({ msg: 'Server error: Please contact support' })
         })
     }

@@ -46,7 +46,7 @@ const User = new Schema({
         ref: 'affpartner',
         required: true
     },
-    referredByPartner: { // will be activeuser _id of referrer
+    referredByPartner: { // will be partner _id of referrer
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner'
     },

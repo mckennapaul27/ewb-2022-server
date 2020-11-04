@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
-const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount'];
+const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name'];
 const keysToConvertToMongooseId = ['belongsTo', 'belongsToPartner'];
+const populatedFieldQueries = ['partner.epi'];
 
 function mapRegexQueryFromObj (query) { // have to complete this on backend - doesn't format regex on front-end;
     for (let key in query) {
@@ -28,7 +29,24 @@ function mapQueryForAggregate (query) { // this for aggreation when we need to h
     return query;
 };
 
+function isPopulatedValue (query) {
+    for (let key in query) {
+        if (populatedFieldQueries.includes(key)) return true;
+        else return false;
+    }
+}
+
+// const pipeline = [
+//     { $lookup: {
+
+//     } }
+// ]
+
 module.exports = {
     mapRegexQueryFromObj,
-    mapQueryForAggregate
+    mapQueryForAggregate,
+    isPopulatedValue
 }
+
+// REGEX ONLY WORKS ON STRINGS - NOT NUMBERS 
+// https://stackoverflow.com/questions/30722650/mongoose-find-regexp-for-number-type-field

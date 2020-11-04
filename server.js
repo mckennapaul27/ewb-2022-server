@@ -5,14 +5,17 @@ const express = require('express');
 const app = express();
 const session = require('express-session');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const mongoose = require('mongoose');
 // mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
 
+const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const moment = require('moment-timezone');
+const fileUpload = require('express-fileupload');
 
 const routes = require('./router');
 
@@ -24,11 +27,13 @@ const {
     corsOptions
 } = require('./config/config')
 
+app.use(fileUpload());
 app.use(cors(corsOptions));
+app.use(helmet());
+app.use(cookieParser());
 app.use(bodyParser.json());                                     
-app.use(bodyParser.urlencoded({ extended: true }));               
+app.use(bodyParser.urlencoded({ extended: false }));               
 app.use(bodyParser.text());                                    
-app.use(bodyParser.json({ type: 'application/json'})); 
 app.use(express.static('public'));
 app.use(passport.initialize());
 app.use('/', routes); 
