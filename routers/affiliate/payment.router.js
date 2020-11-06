@@ -52,6 +52,7 @@ function updateBalances (req, res) { // After next() is called on createPayment(
                 commission: { $sum: '$account.commission' }
             }}, 
         ])
+        // Need to add subpartner reports
     ])
     .then(([ payments, reports ]) => {
         
@@ -97,7 +98,6 @@ router.post('/fetch-payments', passport.authenticate('jwt', {
         let { sort, query } = req.body;
         let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
         query = mapRegexQueryFromObj(query);    
-        console.log(query)      
         try {
             const payments = await AffPayment.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize)
             const pageCount = await AffPayment.countDocuments(query);

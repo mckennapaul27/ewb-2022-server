@@ -13,19 +13,9 @@ const AffPayment = new Schema({
     currency: String,
     brand: String,
     paymentAccount: String, // can be email for Skrill, Neteller & ecoPayz and phoneCode + phoneNumber for MuchBetter and wallet address for BTC
-    details: { //
-        currency: String,
-        brand: String,
-        email: String,
-        address: String,
-        name: String,
-        accountId: String,
-        phoneCode: String,
-        phoneNumber: String,
-    },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'partner',
+        ref: 'affpartner',
         required: false
     }
 });

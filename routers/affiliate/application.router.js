@@ -78,7 +78,6 @@ async function getApplications (req, res) {
             const statuses = await AffApplication.distinct('status');       
             return res.status(200).send({ applications, pageCount, brands, statuses  }); 
         } catch (err) {
-            console.log(err)
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
