@@ -8,6 +8,7 @@ const AffApplication = new Schema({
     brand: String,
     accountId: { type: String, unique: true },
     email: String,
+    siteId: Number,
     status: {
         type: String,
         default: 'Pending'
@@ -27,7 +28,7 @@ const AffApplication = new Schema({
     }
 });
 
-AffApplication.pre('save', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+AffApplication.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
     const a = this; // a = affApplication
     a.availableUpgrade.status = initialUpgrades[a.brand],
     a.availableUpgrade.valid = false;

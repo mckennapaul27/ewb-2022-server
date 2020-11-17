@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const AffReportMonthly = new Schema({ 
-    date: Date,
+    date: Number,
     month: String,
     lastUpdate: Date,
     brand: String,
@@ -11,6 +11,9 @@ const AffReportMonthly = new Schema({
     cashback: Number,
     cashbackRate: Number,
     subAffCommission: Number,
+    commissionRate: Number,
+    currency: String,
+    profit: Number,
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner',

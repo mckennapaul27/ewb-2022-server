@@ -37,12 +37,28 @@ const AffPartner = new Schema({
         }]
     }],
     brandAssets: [{
-        brand: { type: String, unique: true, sparse: true, required: false },
-        siteId: { type: String, unique: true, sparse: true, required: false },
-        link: { type: String, default: '' }
+        brand: { 
+            type: String, 
+            unique: true, 
+            sparse: true, 
+            required: false 
+        },
+        siteId: { 
+            type: String, 
+            unique: true, 
+            sparse: true, 
+            required: false 
+        },
+        link: { 
+            type: String, 
+            default: '' 
+        }
     }],
     revShareActive: { type: Boolean, default: false },
-    fixedDealActive: { type: Boolean, default: false },
+    fixedDealActive: { 
+        isActive: { type: Boolean, default: false },
+        rate: Number,
+    },
     epi: { type: Number, required: true, unique: true },
     
     stats: {
@@ -54,6 +70,13 @@ const AffPartner = new Schema({
             currency: String
         }],
         commission: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+        subCommission: [{
             amount: {
                 type: Number,
                 default: 0
@@ -90,7 +113,7 @@ const AffPartner = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affaccount'
     }],
-    statistics: [{
+    statistics: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affstats'
     }],
@@ -112,7 +135,7 @@ const AffPartner = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner'
     }],
-    subAffReports: [{
+    subAffReports: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affsubreport'
     }],

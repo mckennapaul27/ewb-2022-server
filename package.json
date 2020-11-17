@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "nodemonConfig": {
+    "ignore": [
+      "queries/files/*"
+    ],
+    "delay": "2500"
+  },
   "scripts": {
     "start": "nodemon server.js",
     "dev": "NODE_ENV=dev nodemon server.js",
@@ -12,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async-each-series": "^1.1.0",
     "axios": "^0.19.2",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
@@ -41,8 +48,11 @@
     "passport-google-token": "^0.1.2",
     "passport-jwt": "^4.0.0",
     "sinon": "^9.0.3",
+    "superagent": "^6.1.0",
+    "superagent-proxy": "^2.1.0",
     "uuid": "^8.3.0",
-    "v": "^0.3.0"
+    "v": "^0.3.0",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "mocha": "^8.1.0"

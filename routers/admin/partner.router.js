@@ -23,6 +23,7 @@ const {
 } = require('../../models/personal/index');
 
 const { mapRegexQueryFromObj, isPopulatedValue, mapQueryForAggregate, mapQueryForPopulate } = require('../../utils/helper-functions');
+const { uploadAffReports } = require('../../queries/ecopayz-account-report');
 
 
 // POST /admin/partner/get-partner
@@ -48,7 +49,7 @@ router.post('/update-deal/:_id', passport.authenticate('admin', {
     if (token) {
         try {
             const partner = await AffPartner.findByIdAndUpdate(req.params._id, {
-                $set: { deals: req.body.deals },
+                deals: req.body.deals
             }, { new: true });
             return res.status(200).send(partner);
         } catch (err) {
@@ -77,9 +78,9 @@ router.post('/fetch-reports', passport.authenticate('admin', {
 
         try {
             if (isPopulatedValue(query)) { // use this way to query for a populated field - in this case, belongsToPartner.epi
-                reports = (await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', match: populateQuery })).filter(a => a.belongsToPartner); // 'epi': query['belongsToPartner.epi] = 'epi': 558
+                reports = (await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', match: populateQuery, populate: { path: 'referredBy', select: 'epi' } })).filter(a => a.belongsToPartner); // 'epi': query['belongsToPartner.epi] = 'epi': 558
             } else {
-                reports = await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', select: 'epi' }).lean();
+                reports = await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', select: 'epi', populate: { path: 'referredBy', select: 'epi' } }).lean();
             };
             const pageCount = await AffReport.countDocuments(searchQuery);
             const brands = await AffReport.distinct('brand'); 
@@ -178,7 +179,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
     const token = getToken(req.headers);
     if (token) {
         let transactionFile = req.files.file;
-        let fileName = path.join(__dirname, '../../csv/transactionFile.csv');
+        let fileName = path.join(__dirname, '../../csv/application-results.csv');
         transactionFile.mv(fileName, function (err) {
             if (err) return res.status(500).send(err);
             let applicationData = [];
@@ -277,6 +278,10 @@ router.post('/update-payment/:_id', passport.authenticate('admin', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 }, updateBalances);
 
+// POST /admin/partner/upload-reports - uploading applications using CSV
+router.post('/upload-reports', passport.authenticate('admin', {
+    session: false
+}), uploadAffReports);
 
 function updateBalances (req, res) { // After next() is called on /update-payment/:_id it comes next to updateBalances()
     return Promise.all([

@@ -8,9 +8,8 @@ const AffReport = new Schema({
         required: true // first day of month
     },
     month: String,
-    lastUpdate: { type: Number, default: Date.now },
+    lastUpdate: { type: Number, default: Date.now }, // The static Date.now() method returns the number of milliseconds elapsed since January 1, 1970 00:00:00 UTC
     brand: String,
-    email: String,
     account: {
         accountId: String,  
         deposits: Number,
@@ -24,6 +23,10 @@ const AffReport = new Schema({
         currency: String, // this is so we can calculate balances on the aggregation. Very important that we set this according to the brand!!
         profit: Number // need to start storing this in data so that we can access in react-table filters
     },
+    siteId: Number,
+    memberId: String,
+    playerId: String,
+    country: String,
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affaccount',
@@ -35,6 +38,8 @@ const AffReport = new Schema({
         required: false
     }
 });
+
+
 
 // using pre validate to set report currency - very important for calculating balances.
 AffReport.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger

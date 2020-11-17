@@ -1,23 +1,15 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const dayjs = require('dayjs');
 
 const AffAccount = new Schema({ 
     brand: String,
-    account: { // this is all time stats for this account
-        accountId: String,
-        country: String,
-        currency: String,  
-        deposits: Number,
-        transValue: Number,     
-        commission: Number,
-        cashback: Number
-    },
+    accountId: String,
     upgradeStatus: {
         type: String,
         default: 'Click to request VIP'
     },
     dateAdded: { type: Number, default: Date.now },
-    accountEmail: String,
     reports: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affreport'
@@ -27,6 +19,12 @@ const AffAccount = new Schema({
         ref: 'affpartner',
         required: false
     }
+});
+
+AffAccount.pre('save', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+    const a = this; // a = affApplication
+    a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
+    next();   
 });
 
 module.exports = mongoose.model('affaccount', AffAccount);
