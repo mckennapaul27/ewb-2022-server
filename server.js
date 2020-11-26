@@ -57,17 +57,21 @@ app.use(express.static('public'));
 app.use(passport.initialize());
 app.use('/', routes); 
 
-cron.schedule('*/10 * * * * *', () => {
-    console.log('running a task every 10 seconds');
+// cron.schedule('*/10 * * * * *', () => {
+//     console.log('running a task every 10 seconds');
     
-    let time = dayjs(Date.now()).format('LTS');
-    let date = startOfMonthX(0);
-    let month = dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
-    // dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
-    // console.log(time, dayjs(date).format('DD/MM/YYYY'), month);
-    console.log(CURRENT_MONTH_NET_ACCOUNT_REPORT())
-    // fetchAccountReport(brand = 'Neteller', month, date)
-}, { timezone: 'Europe/London' });
+//     let time = dayjs(Date.now()).format('LTS');
+//     let date = startOfMonthX(0);
+//     let month = dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
+//     // dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
+//     // console.log(time, dayjs(date).format('DD/MM/YYYY'), month);
+//     console.log(CURRENT_MONTH_NET_ACCOUNT_REPORT())
+//     // fetchAccountReport(brand = 'Neteller', month, date)
+// }, { timezone: 'Europe/London' });
+
+// let date = startOfMonthX(0);
+// let month = dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
+// fetchPlayerRegistrationsReport (brand = 'Skrill', month, date);
 
 // fetchAccountReport(brand = 'Neteller', month = 'November 2020', date = Number(startOfMonthX(0))) // need to configure this so that it resets date
 // fetchACIDReport(brand = 'Neteller')

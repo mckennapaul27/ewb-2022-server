@@ -16,7 +16,8 @@ const {
     AffPartner,
     AffReport,
     AffApplication,
-    AffPayment
+    AffPayment,
+    AffReportMonthly
 } = require('../../models/affiliate/index');
 const {
     Application
@@ -69,19 +70,12 @@ router.post('/fetch-reports', passport.authenticate('admin', {
         let pageIndex = parseInt(req.query.pageIndex);
         let { sort, query } = req.body;
         let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
-        
         let searchQuery = mapRegexQueryFromObj(query);  
-        let populateQuery = mapQueryForPopulate(query);
+        let populateQuery = mapQueryForPopulate(query); // not needed anymore because we added epi and referredByEpi to reports
         let aggregateQuery = mapQueryForAggregate(query); // have to create this for aggregation query because need to make it mongoose.Types.ObjectId   
         
-        let reports;
-
         try {
-            if (isPopulatedValue(query)) { // use this way to query for a populated field - in this case, belongsToPartner.epi
-                reports = (await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', match: populateQuery, populate: { path: 'referredBy', select: 'epi' } })).filter(a => a.belongsToPartner); // 'epi': query['belongsToPartner.epi] = 'epi': 558
-            } else {
-                reports = await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', select: 'epi', populate: { path: 'referredBy', select: 'epi' } }).lean();
-            };
+            const reports = await AffReport.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsToPartner', select: '_id' })
             const pageCount = await AffReport.countDocuments(searchQuery);
             const brands = await AffReport.distinct('brand'); 
             const months = await AffReport.distinct('month');   
@@ -252,6 +246,55 @@ router.post('/fetch-payments', passport.authenticate('admin', {
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' })
+});
+
+// POST /admin/partner/fetch-monthly-reports
+router.post('/fetch-monthly-reports', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        let pageSize = parseInt(req.query.pageSize);
+        let pageIndex = parseInt(req.query.pageIndex);
+        let { sort, query } = req.body;
+        let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
+        let searchQuery = mapRegexQueryFromObj(query);  
+        let aggregateQuery = mapQueryForAggregate(query); // have to create this for aggregation query because need to make it mongoose.Types.ObjectId   
+        
+        try {
+            const reports = await AffReportMonthly.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'belongsTo', select: '_id' })
+            const pageCount = await AffReportMonthly.countDocuments(searchQuery);
+            const brands = await AffReportMonthly.distinct('brand'); 
+            const months = await AffReportMonthly.distinct('month');   
+            const currencies = await AffReportMonthly.distinct('currency');
+            const totals = await AffReportMonthly.aggregate([ 
+                { $match: { $and: [ aggregateQuery ] } }, 
+                { $group: { 
+                        '_id': null, 
+                        commission: { $sum: '$commission' }, 
+                        cashback: { $sum: '$cashback' }, 
+                        volume: { $sum: '$transValue' },
+                        subAffCommission: { $sum: '$subAffCommission' }, 
+                        profit: { $sum: '$profit' } 
+                    } 
+                }
+            ]);  
+            const allTotals = await AffReportMonthly.aggregate([ // all time totals = excludes the $match pipe
+                { $group: { 
+                        '_id': null, 
+                        allCommission: { $sum: '$commission' }, 
+                        allCashback: { $sum: '$cashback' }, 
+                        allVolume: { $sum: '$transValue' },
+                        allSubAffCommission: { $sum: '$subAffCommission' }, 
+                        allProfit: { $sum: '$profit' } 
+                    } 
+                }
+            ]);  
+            return res.status(200).send({ reports, pageCount, brands, months, currencies, totals, allTotals  }); 
+        } catch (err) {
+            return res.status(400).send(err)
+        }    
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
 // POST /admin/partner/update-payment/:_id`, { status });

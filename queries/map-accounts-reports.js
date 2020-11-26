@@ -15,8 +15,6 @@ const {
 
 } = require('../models/common/index');
 const { setCurrency } = require('../config/deals');
-const dayjs = require('dayjs');
-
 const { updatePartnerStats } = require('./map-dashboard-data');
 
 const dataReducer = (results, brand, month, date) => {
@@ -64,7 +62,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                         if (report) { // if existing report for the month = UPDATE IT
                             return AffReport.findByIdAndUpdate(report._id, {
                                 lastUpdate,
-                                account: {
+                                account: {  // these is resetting full account object so remeber to include ALL fields
                                     accountId,  
                                     deposits,
                                     transValue,
@@ -87,7 +85,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                                 country,
                                 belongsTo: existingAccount._id,
                                 belongsToPartner: existingAccount.belongsTo,
-                                account: {
+                                account: {  // these is resetting full account object so remeber to include ALL fields
                                     accountId,  
                                     deposits,
                                     transValue,
@@ -123,7 +121,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                                 country,
                                 belongsTo: newAccount._id,
                                 belongsToPartner: newAccount.belongsTo,
-                                account: {
+                                account: { // these is resetting full account object so remeber to include ALL fields
                                     accountId,  
                                     deposits,
                                     transValue,
@@ -160,7 +158,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                                     country,
                                     belongsTo: newAccount._id,
                                     belongsToPartner: newAccount.belongsTo,
-                                    account: {
+                                    account: {  // these is resetting full account object so remeber to include ALL fields
                                         accountId,  
                                         deposits,
                                         transValue,

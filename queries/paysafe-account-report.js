@@ -53,7 +53,6 @@ const checkData = async (res, brand, month, date) => {
 const mapRawData = async (data, brand, month, date) => {
     const results = data.reduce((acc, item) => {
         acc.push({
-            currency: item.currencysymbol[0],
             memberId: item.memberid[0],
             siteId: item.siteid[0],
             playerId: item.playerid[0],

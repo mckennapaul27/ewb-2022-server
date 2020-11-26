@@ -2,42 +2,15 @@ const mongoose = require('mongoose');
 const { setCurrency } = require('../config/deals');
 const { 
     AffPartner,
-    AffApplication,
-    AffAccount,
     AffPayment,
     AffReport,
     AffReportMonthly,
     AffSubReport 
 } = require('../models/affiliate/index');
 
-const brandQuery = { $in: ['Skrill', 'Neteller', 'ecoPayz'] };
-const currencyBrand = {
-    'USD': { $in: ['Skrill', 'Neteller'] },
-    'EUR': { $in: ['ecoPayz'] }
-}
-
-// const getNetworkShareVolume = async ({ referredBy, month }) => { 
-//     if (referredBy) {
-//         return new Promise(resolve => {
-//             resolve (
-//                 AffPartner.find({ referredBy }).select('_id').lean() // get all partners that have the SAME referredBy as this partner
-//                 .then(partnersReferredBySameNetwork => {
-//                     return partnersReferredBySameNetwork.reduce(async (total, nextPartner) => {
-//                         let acc = await total;
-//                         for await (const report of AffReport.find({ belongsToPartner: nextPartner._id, month }).select('account.transValue').lean()) {
-//                             acc += report.account.transValue;
-//                         };
-//                         return acc;
-//                     }, Promise.resolve(0))
-//                 })
-//             )
-//         });
-//     } else return 0;
-// };
-
 const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({ 'accounts.0': { $exists: true } }).select('-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails')
-
+    // only find() partners that have at least 1 account in the accounts array
     let processStatsOne = arr.reduce(async (previousPartner, nextPartner) => {
         await previousPartner;
         return setCashback(nextPartner, brand, month).then(() => {
@@ -72,21 +45,24 @@ const updatePartnerStats = async (brand, month, date) => {
     });
 };
 
-const getSubPartnerRate = async ({ referredBy }) => {
+const getSubPartnerRate = async ({ referredBy }) => { // finding the partner that referred THIS partner
     if (referredBy) {
-        const rate = await AffPartner.findById(referredBy).select('subPartnerRate').then(p => p.subPartnerRate);
+        const rate = await AffPartner.findById(referredBy).select('subPartnerRate epi').exec();
         return rate;
     } else return 0;
 }
 
-const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive }, brand, month) => {
+const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, epi }, brand, month) => {
 
     return new Promise(resolve => {
         resolve (
             (async () => {
                 const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
                 const reports = await AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue account.commission account.earnedFee').lean(); // only find accounts that have transValue > 0
-                const subPartnerRate = await getSubPartnerRate({ referredBy });
+                const subPartnerRate = (await getSubPartnerRate({ referredBy })).subPartnerRate;
+                // console.log(epi)
+                // const referredByEpi =
+                // console.log(subPartnerRate)
 
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
                     await previousReport;
@@ -198,34 +174,36 @@ const updateMonthlyReport = ({ _id, referredBy, deals }, brand, month, date) => 
                 const subAffCommission = await getSubAffCommissionByBrand({ _id }, brand, month);
                 const commissionRate = commission / transValue;
                 const profit = commission - (cashback + subAffCommission);
-                const currency = setCurrency(brand);
-
-                if (transValue > 0) {
-                    await AffReportMonthly.bulkWrite([
-                        {
-                            updateOne: { 
-                                filter: { belongsTo: _id, month, brand }, 
-                                update: { 
-                                    $set: {
-                                        date,
-                                        month,
-                                        brand,
-                                        lastUpdate: Date.now(),
-                                        transValue,
-                                        commission,
-                                        commissionRate,
-                                        cashback,
-                                        cashbackRate: rate,
-                                        subAffCommission,
-                                        belongsTo: _id,
-                                        profit,
-                                        currency
-                                    }
-                                },
-                                upsert: true // upsert must be placed within updateOne object or every object that is traversed through / https://stackoverflow.com/questions/39988848/trying-to-do-a-bulk-upsert-with-mongoose-whats-the-cleanest-way-to-do-this
-                            },
-                        }
-                    ]);
+                
+                if (transValue > 0) { // can't use await AffReportMonthly.bulkWrite([ here anymore because we need to use .pre('validate') to add parameters
+                    const existingReport = await AffReportMonthly.findOne({ belongsTo: _id, month, brand }).select('_id').lean();
+                    if (existingReport) {
+                        await AffReportMonthly.findByIdAndUpdate(existingReport._id, {
+                            lastUpdate: Date.now(),
+                            transValue,
+                            commission,
+                            commissionRate,
+                            cashback,
+                            cashbackRate: rate,
+                            subAffCommission,
+                            profit
+                        }, { new: true })
+                    } else {
+                        await AffReportMonthly.create({
+                            date,
+                            month,
+                            brand,
+                            lastUpdate: Date.now(),
+                            transValue,
+                            commission,
+                            commissionRate,
+                            cashback,
+                            cashbackRate: rate,
+                            subAffCommission,
+                            belongsTo: _id,
+                            profit
+                        })
+                    };
                 } else return;
             })()
         )
@@ -277,9 +255,10 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
 
                         const aggregateReports = await AffReport.aggregate([
                             { $match: { $and: [ { belongsToPartner: mongoose.Types.ObjectId(nextSubPartner._id)}, { brand }, { month }, { 'account.transValue': { $gt: 0 } } ] } },
-                            { $project: { 'account.cashback': 1, 'account.commission': 1, 'account.transValue': 1, 'account.subAffCommission': 1 } }, // selected values to return 1 = true, 0 = false
+                            { $project: { 'account.cashback': 1, 'account.commission': 1, 'account.transValue': 1, 'account.subAffCommission': 1, 'account.deposits': 1 } }, // selected values to return 1 = true, 0 = false
                             { $group: { 
                                 '_id': null, 
+                                deposits: { $sum: '$account.deposits' },
                                 transValue: { $sum: '$account.transValue' },
                                 cashback: { $sum: '$account.cashback' },
                                 commission: { $sum: '$account.commission' },
@@ -288,7 +267,8 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
                         ]);                       
 
                         if (aggregateReports.length > 0) {
-                            const { transValue, commission, cashback, subAffCommission } = aggregateReports[0];
+                            const { deposits, transValue, commission, cashback, subAffCommission } = aggregateReports[0];
+                            const cashbackRate = cashback / transValue;
                             const subReport = await AffSubReport.bulkWrite([
                                 {
                                     updateOne: { 
@@ -297,12 +277,15 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
                                             $set: {
                                                 date,
                                                 month,
+                                                lastUpdate: Date.now(),
                                                 brand,
                                                 epi: nextSubPartner.epi,
+                                                deposits,
                                                 transValue,
                                                 commission,
                                                 cashback,
                                                 subAffCommission,
+                                                cashbackRate,
                                                 currency: setCurrency(brand),
                                                 belongsTo: _id
                                             }
@@ -311,6 +294,7 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
                                     },
                                 }
                             ]);
+                            console.log(subReport)
                             return new Promise(resolve => resolve(subReport)); // this is important bit - we return a promise that resolves to another promise
                         } else return;
                     }, Promise.resolve());

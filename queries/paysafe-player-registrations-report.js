@@ -7,27 +7,26 @@ require('superagent-proxy')(request);
 const parseString = require('xml2js').parseString;
 const parseStringPromise = util.promisify(parseString);
 
-const { CURRENT_MONTH_NET_PLAYER_REGISTRATIONS_REPORT } = require('./config')
+const { 
+    CURRENT_MONTH_NET_PLAYER_REGISTRATIONS_REPORT,
+    CURRENT_MONTH_SKRILL_PLAYER_REGISTRATIONS_REPORT 
+} = require('./config')
 
 const { formatEpi } = require('../utils/helper-functions');
 const { dataReducer } = require('./map-accounts-reports');
+const { setCurrency } = require('../config/deals');
 
-const fetchPlayerRegistrationsReport = (brand, month, date) => {
-   
-    // (async () => {
-    //     // const a = await AffAccount.deleteMany({ 'account.accountId': { $exists: false } })
-    //     // const b = await AffReport.deleteMany({ 'account.accountId': { $exists: false } })
-    //     // const c = await AffApplication.deleteMany({ 'accountId': { $exists: false } })
-    //     const a = await AffAccount.deleteMany()
-    //     const b = await AffReport.deleteMany()
-    //     const c = await AffApplication.deleteMany()
-    //     console.log(a, b, c)
-    // })()
+const {
+    AffAccount,
+    AffReport,
+    AffApplication,
+    AffPartner
+} = require('../models/affiliate/index');
+
+const fetchPlayerRegistrationsReport = (brand, month, date) => {  
     (async () => {
         try {
-            const res = await request.get(
-                'https://affiliates.neteller.com/api/affreporting.asp?key=317215ee0ba762d19ff8f38ea8431473&reportname=TrafficReport&reportformat=xml&reportmerchantid=1&reportstartdate=2020/11/1&reportenddate=2020/11/12'
-                ).proxy(proxy);
+            const res = await request.get(CURRENT_MONTH_SKRILL_PLAYER_REGISTRATIONS_REPORT()).proxy(proxy);
             checkData(res.text, brand, month, date);
         } catch (err) {
            return err;
@@ -36,7 +35,6 @@ const fetchPlayerRegistrationsReport = (brand, month, date) => {
 };
 
 const checkData = async (res, brand, month, date) => {
-    // console.log(res)
     try {
         const reports = await parseStringPromise(res);
         if (!reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['reportresponse']) {
@@ -47,38 +45,96 @@ const checkData = async (res, brand, month, date) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand, month, date);
     } catch (err) {
-        console.log(err)
         if (err.message === 'Permission denied') setTimeout(() => {
-            fetchPlayerRegistrationsReport (brand, month, date); // need to add fetchData parameters
+            fetchPlayerRegistrationsReport (brand, month, date); // need to add fetchData parameters if it fails api fetch
         }, 500);
     };
 };
 
 const mapRawData = async (data, brand, month, date) => {
-    console.log(data)
-    // data.map(d => {
-    //     console.log(d)
-    //     return d;
-    // })
-
-    // const results = data.reduce((acc, item) => {
-    //     acc.push({
-    //         currency: item.currencysymbol[0],
-    //         memberId: item.memberid[0],
-    //         siteId: item.siteid[0],
-    //         playerId: item.playerid[0],
-    //         accountId: item.merchplayername[0],
-    //         epi: item.affcustomid[0] === '' ? null : formatEpi(item.affcustomid[0]),
-    //         country: item.playercountry[0] === '' ? '' : item.playercountry[0],
-    //         commission: Number(item.Commission[0]),
-    //         transValue: Number(item.Commission[0]) === 0 ? 0 : Number(item.trans_value[0]),
-    //         deposits: Number(item.Deposits[0]),
-    //         earnedFee: Number(item.Nettrans_to_fee[0])
-    //     });
-    //     return acc;
-    // }, []);
-    // return dataReducer(results, brand, month, date);
+    const results = data.reduce((acc, item) => {
+        acc.push({
+            currency: setCurrency(brand),
+            memberId: item.memberid[0],
+            siteId: item.siteid[0],
+            playerId: item.playerid[0],
+            accountId: item.Merchplayername[0],
+            epi: null,
+            country: item.playercountry[0] === '' ? '' : item.playercountry[0],
+            commission: 0,
+            transValue: 0,
+            deposits: 0,
+            earnedFee: 0,
+            cashbackRate: 0,
+            commissionRate: 0
+        });
+        return acc;
+    }, []);
+    return mapPlayerRegistrations(results, brand, month, date); // just follows same entry path as paysafe-account-report 
 };
+
+const mapPlayerRegistrations = async (results, brand, month, date) => {
+    await results.map(async a => {
+        const {
+            currency,
+            memberId,
+            siteId,
+            playerId,
+            accountId,
+            epi,
+            country,
+            transValue,
+            commission,
+            deposits,
+            earnedFee,
+            cashbackRate,
+            commissionRate
+        } = a;
+        try {
+            const existingAccount = await AffAccount.exists({ accountId });
+            const application = await AffApplication.findOne({ accountId }).select('accountId belongsTo').lean();
+            if (!existingAccount && application) {  // if application for account ID exists and AffAccount does not exist
+                const newAccount = await AffAccount.create({ // create new account
+                    brand,
+                    belongsTo: application.belongsTo,
+                    accountId
+                });
+                const newReport = await AffReport.create({ // create new report
+                    date,
+                    month,
+                    brand,
+                    siteId,
+                    memberId,
+                    playerId,
+                    country,
+                    belongsTo: newAccount._id,
+                    belongsToPartner: newAccount.belongsTo,
+                    account: {
+                        accountId,  
+                        deposits,
+                        transValue,
+                        commission,
+                        commissionRate, 
+                        earnedFee,
+                        currency, 
+                        cashbackRate
+                    }
+                });         
+                newAccount.reports.push(newReport); // Push new report to reports array
+                await newAccount.save(); //  and save it
+                await AffApplication.findByIdAndUpdate(application._id, { siteId }); // update original application with siteId
+                await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
+                // send emails and notifications
+               
+            } else return;
+        } catch (error) {
+            console.log('error: ', error)
+        }
+        
+    })
+}
+
+
 
 module.exports = {
     fetchPlayerRegistrationsReport
