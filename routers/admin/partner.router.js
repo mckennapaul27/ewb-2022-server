@@ -42,16 +42,16 @@ router.post('/get-partner', passport.authenticate('admin', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
-// POST /admin/partner/update-deal/:_id
-router.post('/update-deal/:_id', passport.authenticate('admin', {
+// POST /admin/partner/update-partner/:_id
+router.post('/update-partner/:_id', passport.authenticate('admin', {
     session: false
 }), async (req, res) => {
     const token = getToken(req.headers);
+    const update = req.body;
+    console.log(update)
     if (token) {
         try {
-            const partner = await AffPartner.findByIdAndUpdate(req.params._id, {
-                deals: req.body.deals
-            }, { new: true });
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, update, { new: true });
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ msg: 'Server error' })

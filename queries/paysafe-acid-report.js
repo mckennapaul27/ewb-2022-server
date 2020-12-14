@@ -8,8 +8,8 @@ const parseString = require('xml2js').parseString;
 const parseStringPromise = util.promisify(parseString);
 
 const dayjs = require('dayjs');
-
-const { YESTERDAY_ACID_NET_URL } = require('./config')
+const advancedFormat = require('dayjs/plugin/advancedFormat');
+dayjs.extend(advancedFormat);
 const { formatEpi } = require('../utils/helper-functions');
 
 const {
@@ -17,18 +17,19 @@ const {
     AffReportDaily
 } = require('../models/affiliate/index');
 
-const fetchACIDReport = (brand) => {    
+const fetchACIDReport = ({ brand, url }) => {   
+    console.log('here: ', brand, url); 
     (async () => {
         try {
-            const res = await request.get(YESTERDAY_ACID_NET_URL()).proxy(proxy);
-            checkData(res.text, brand);
+            const res = await request.get(url).proxy(proxy);
+            checkData(res.text, brand, url);
         } catch (err) {
            return err;
         }
     })();
 };
 
-const checkData = async (res, brand) => {
+const checkData = async (res, brand, url) => {
     try {
         const reports = await parseStringPromise(res);
         if (!reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['reportresponse']) {
@@ -39,8 +40,9 @@ const checkData = async (res, brand) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand);
     } catch (err) {
+        console.log(err);
         if (err.message === 'Permission denied') setTimeout(() => {
-            fetchACIDReport (brand); // need to add fetchData parameters
+            fetchACIDReport ({ brand, url }); // need to add fetchData parameters
         }, 500);
     };
 };
@@ -48,23 +50,25 @@ const checkData = async (res, brand) => {
 const mapRawData = async (data, brand) => {
     let results = await data.reduce(async (previousPromise, item) => {
         const acc = await previousPromise;
-        const epi = item.affcustomid[0] === '' ? null : formatEpi(item.affcustomid[0])
-        const partner = await AffPartner.findOne({ epi }).select('_id');
-        if (partner) {
-            acc.push({
-                epi,
-                date: Number(dayjs().subtract(1, 'days').format('x')),
-                period: dayjs().subtract(1, 'days').format('DD/MM/YYYY'),
-                clicks: Number(item.clicks[0]),
-                registrations: Number(item.downloads[0]),
-                deposits: Number(item.Deposits[0]),
-                transValue: Number(item.trans_value[0]),
-                commission: Number(item.Commission[0]),
-                brand,
-                belongsTo: partner._id
-            })
-        };
-        return acc;
+        const epi = item.affcustomid[0] === '' ? null : formatEpi(item.affcustomid[0]);
+        if (epi) {
+            const partner = await AffPartner.findOne({ epi }).select('_id');
+            if (partner) {
+                acc.push({
+                    epi,
+                    date: Number(dayjs().subtract(1, 'days').format('x')),
+                    period: dayjs().subtract(1, 'days').format('DD/MM/YYYY'),
+                    clicks: Number(item.clicks[0]),
+                    registrations: Number(item.downloads[0]),
+                    deposits: Number(item.Deposits[0]),
+                    transValue: Number(item.trans_value[0]),
+                    commission: Number(item.Commission[0]),
+                    brand,
+                    belongsTo: partner._id
+                });
+                return acc;
+            } else return acc;
+        } else return acc;
     }, Promise.resolve([]))
     results = results.filter(a => (a.clicks > 0 || a.registrations > 0 || a.transValue > 0 || a.commission > 0)); // filter out reports with no data
     return updateDailyStats(results);

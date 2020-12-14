@@ -10,7 +10,8 @@ const {
 } = require('../../models/affiliate/index');
 const { Application } = require('../../models/personal/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
-const dayjs = require('dayjs')
+const dayjs = require('dayjs');
+const { createAffNotification } = require('../../utils/notifications-functions');
 
 
 // POST /affiliate/application/create
@@ -20,7 +21,8 @@ router.post('/create', passport.authenticate('jwt', {
     const token = getToken(req.headers);
     if (token) {
         try {
-            const applications = await AffApplication.create(req.body.applications);
+            const applications = await AffApplication.create(req.body.applications); // https://mongoosejs.com/docs/api.html#model_Model.create
+            await applications.map(a =>  createAffNotification({ message: `Submitted application for ${a.brand} account ${a.accountId}`, type: 'Application', belongsTo: a.belongsTo }));            
             return res.status(201).send(applications)
         } catch (err) {
             return res.status(400).send({ success: false })
@@ -70,7 +72,7 @@ async function getApplications (req, res) {
         let pageIndex = parseInt(req.query.pageIndex);
         let { sort, query } = req.body;
         let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
-        mapRegexQueryFromObj(query);  
+        query = mapRegexQueryFromObj(query);  
         try {
             const applications = await AffApplication.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).lean();
             const pageCount = await AffApplication.countDocuments(query);

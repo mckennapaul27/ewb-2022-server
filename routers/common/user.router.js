@@ -32,10 +32,10 @@ router.post('/update-user', passport.authenticate('jwt', {
         const { name, email, _id } = req.body; // receives these regardless of any change through 
         let exists = await User.countDocuments({ email: email }).select('email').lean() // check if user exists        
         if (exists > 0) return res.status(400).send({ msg: `Account already exists with email ${email}` });
-        User.findByIdAndUpdate(_id, {
+        User.findByIdAndUpdate(_id, { 
             email,
             name
-        }, { new: true }).select('name email userId _id activeUser').lean()
+        }, { new: true }).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId referredBy' }).lean()
         .then(updatedUser => res.status(201).send({ msg: 'You have successfully updated your settings.', updatedUser }))
         .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     } else return res.status(403).send({ msg: 'Unauthorised' });

@@ -7,13 +7,6 @@ require('superagent-proxy')(request);
 const parseString = require('xml2js').parseString;
 const parseStringPromise = util.promisify(parseString);
 
-const { 
-    CURRENT_MONTH_NET_PLAYER_REGISTRATIONS_REPORT,
-    CURRENT_MONTH_SKRILL_PLAYER_REGISTRATIONS_REPORT 
-} = require('./config')
-
-const { formatEpi } = require('../utils/helper-functions');
-const { dataReducer } = require('./map-accounts-reports');
 const { setCurrency } = require('../config/deals');
 
 const {
@@ -23,18 +16,19 @@ const {
     AffPartner
 } = require('../models/affiliate/index');
 
-const fetchPlayerRegistrationsReport = (brand, month, date) => {  
+const fetchPlayerRegistrationsReport = ({ brand, month, date, url }) => {  
+    console.log('here: ', brand, month, date, url);
     (async () => {
         try {
-            const res = await request.get(CURRENT_MONTH_SKRILL_PLAYER_REGISTRATIONS_REPORT()).proxy(proxy);
-            checkData(res.text, brand, month, date);
+            const res = await request.get(url).proxy(proxy);
+            checkData(res.text, brand, month, date, url);
         } catch (err) {
            return err;
         }
     })();
 };
 
-const checkData = async (res, brand, month, date) => {
+const checkData = async (res, brand, month, date, url) => {
     try {
         const reports = await parseStringPromise(res);
         if (!reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['reportresponse']) {
@@ -45,8 +39,9 @@ const checkData = async (res, brand, month, date) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand, month, date);
     } catch (err) {
+        console.log(err);
         if (err.message === 'Permission denied') setTimeout(() => {
-            fetchPlayerRegistrationsReport (brand, month, date); // need to add fetchData parameters if it fails api fetch
+            fetchPlayerRegistrationsReport ({ brand, month, date, url }); // need to add fetchData parameters if it fails api fetch
         }, 500);
     };
 };
@@ -81,7 +76,6 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
             siteId,
             playerId,
             accountId,
-            epi,
             country,
             transValue,
             commission,
@@ -90,6 +84,7 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
             cashbackRate,
             commissionRate
         } = a;
+        const defaultSiteIds = ['75417', '75418', '40278', '56']; 
         try {
             const existingAccount = await AffAccount.exists({ accountId });
             const application = await AffApplication.findOne({ accountId }).select('accountId belongsTo').lean();
@@ -126,11 +121,49 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                 await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
                 // send emails and notifications
                
+            } else if (!existingAccount && !defaultSiteIds.includes(siteId)) { // if account does not exist and site is neither ['75417', '75418', '40278', '56'] defaults
+                
+                // db.inventory.find( { "instock": { $elemMatch: { qty: 5, warehouse: "A" } } } )
+
+                const partner = await AffPartner.findOne({ brandAssets: { $elemMatch: { brand, siteId } } }).select('_id');
+                // This works >> 'brandAssets.brand': brand, 'brandAssets.siteId': siteId }).select('_id');
+                if (partner) {
+                    const newAccount = await AffAccount.create({ // create new account
+                        brand,
+                        belongsTo: partner._id,
+                        accountId
+                    });
+                    const newReport = await AffReport.create({ // create new report
+                        date,
+                        month,
+                        brand,
+                        siteId,
+                        memberId,
+                        playerId,
+                        country,
+                        belongsTo: newAccount._id,
+                        belongsToPartner: newAccount.belongsTo,
+                        account: {
+                            accountId,  
+                            deposits,
+                            transValue,
+                            commission,
+                            commissionRate, 
+                            earnedFee,
+                            currency, 
+                            cashbackRate
+                        }
+                    }); 
+                    newAccount.reports.push(newReport); // Push new report to reports array
+                    await newAccount.save(); // and save it
+                    await AffApplication.create({ brand, accountId, belongsTo: partner._id, siteId }); // Create new application with siteId
+                    await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
+                    // send emails and notifications
+                } else return;
             } else return;
         } catch (error) {
             console.log('error: ', error)
         }
-        
     })
 }
 

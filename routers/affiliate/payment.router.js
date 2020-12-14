@@ -82,7 +82,7 @@ function updateBalances (req, res) { // After next() is called on createPayment(
                 arrayFilters: [{ 'el.currency': req.body.currency }],
                 new: true
         })
-        .then(() => res.status(201).send({ newPayment: req.newPayment, msg: `You have requested ${req.body.currency} ${req.body.amount} ` }))
+        .then(() => res.status(201).send({ newPayment: req.newPayment, msg: `You have requested ${req.body.currency} ${req.body.amount.toFixed(2)} ` }))
         .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
     })
 };

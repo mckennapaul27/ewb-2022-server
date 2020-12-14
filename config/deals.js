@@ -44,6 +44,10 @@ const defaultStats = {
     requested: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' }
+    ],
+    subCommission: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
     ]
 };
 

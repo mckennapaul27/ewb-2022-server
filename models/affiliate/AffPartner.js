@@ -5,18 +5,6 @@ const { affiliateDealOne, affiliateDealTwo, defaultStats } = require('../../conf
 const AffCounter = require('../affiliate/AffCounter');
 
 const AffPartner = new Schema({ 
-    // paymentDetails: {
-    //     EUR: {
-    //         brand: { type: String, default: '' },
-    //         email: { type: String, default: '' },
-    //         name: { type: String, default: '' },
-    //         accountId: { type: String, default: '' },
-    //     },
-    //     USD: {
-    //         brand: { type: String, default: '' },
-    //         email: { type: String, default: '' },
-    //     }
-    // },
     paymentDetails: [{ // array of currency options so that they can add as many as they like
         currency: String,
         brand: String,
@@ -36,23 +24,10 @@ const AffPartner = new Schema({
             cashback: Number
         }]
     }],
-    brandAssets: [{
-        brand: { 
-            type: String, 
-            unique: true, 
-            sparse: true, 
-            required: false 
-        },
-        siteId: { 
-            type: String, 
-            unique: true, 
-            sparse: true, 
-            required: false 
-        },
-        link: { 
-            type: String, 
-            default: '' 
-        }
+    brandAssets: [{ 
+        brand: String,
+        siteId: String, 
+        link: String
     }],
     revShareActive: { type: Boolean, default: false },
     fixedDealActive: { 
@@ -105,7 +80,7 @@ const AffPartner = new Schema({
             currency: String
         }],
     },
-    notifications: [{
+    notifications: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affnotification'
     }],
@@ -131,11 +106,11 @@ const AffPartner = new Schema({
     subPartnerRate: { type: Number, default: 0.10 },
     isSubPartner: { type: Boolean, default: false },
     isOfficialPartner: { type: Boolean, default: false },
-    subPartners: [{
+    subPartners: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner'
     }],
-    subAffReports: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
+    subAffReports: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR - CURRENTLY USING IN USER.JS BUT NOT SURE IT IS NEEDED
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affsubreport'
     }],

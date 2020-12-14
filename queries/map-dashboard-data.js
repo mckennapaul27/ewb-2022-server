@@ -1,4 +1,11 @@
 const mongoose = require('mongoose');
+
+const dayjs = require('dayjs');
+const localizedFormat = require('dayjs/plugin/localizedFormat');
+const advancedFormat = require('dayjs/plugin/advancedFormat');
+dayjs.extend(advancedFormat);
+dayjs.extend(localizedFormat); // https://day.js.org/docs/en/plugin/localized-format
+
 const { setCurrency } = require('../config/deals');
 const { 
     AffPartner,
@@ -8,9 +15,18 @@ const {
     AffSubReport 
 } = require('../models/affiliate/index');
 
+const { createAffNotification } = require('../utils/notifications-functions');
+
 const updatePartnerStats = async (brand, month, date) => {
-    let arr = await AffPartner.find({ 'accounts.0': { $exists: true } }).select('-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails')
-    // only find() partners that have at least 1 account in the accounts array
+    let arr = await AffPartner.find({ 
+        $or: [  // only find() partners that have at least 1 account in the accounts array or have referred subpartners
+            { isSubPartner: true }, 
+            { 'accounts.0': { $exists: true } }
+        ] 
+    }).select('-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails');
+
+    createAffNotification({ message: `Your reports were updated on ${dayjs().format('LLLL')}`, type: 'Report', isGeneral: true });
+   
     let processStatsOne = arr.reduce(async (previousPartner, nextPartner) => {
         await previousPartner;
         return setCashback(nextPartner, brand, month).then(() => {
@@ -60,9 +76,6 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                 const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
                 const reports = await AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue account.commission account.earnedFee').lean(); // only find accounts that have transValue > 0
                 const subPartnerRate = (await getSubPartnerRate({ referredBy })).subPartnerRate;
-                // console.log(epi)
-                // const referredByEpi =
-                // console.log(subPartnerRate)
 
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
                     await previousReport;
@@ -112,7 +125,7 @@ const getCashbackRate = ({ _id, referredBy, deals, isSubPartner, brand, month })
             .then(( [myVol, myNetworkVol, mySubVol, myDeal] ) => {
                 const transValue = myVol + myNetworkVol + mySubVol;
                 return myDeal.reduce((acc, deal) => (transValue <= deal.maxVol && transValue >= deal.minVol) ? (acc += deal.cashback, acc) : acc, 0)
-            })
+            }).catch(e => console.log(e))
         )
     });
 };
@@ -236,7 +249,7 @@ const getVolumeByBrand = async ({ _id }, brand, month) => {
 
 const getSubAffCommissionByBrand = async ({ _id }, brand, month) => {
     let subAffCommission = 0;
-    for await (const report of AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).lean()) {
+    for await (const report of AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.subAffCommission').lean()) {
         subAffCommission += report.account.subAffCommission;
     };
     return subAffCommission;
@@ -246,7 +259,7 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
     return new Promise(resolve => {
         resolve (
             (async () => {
-                const subPartners = await AffPartner.find({ referredBy: _id }).select('_id epi') // referredBy the partner we are checking
+                const subPartners = await AffPartner.find({ referredBy: _id, 'accounts.0': { $exists: true } }).select('_id epi') // { referredBy: _id } === the partner we are checking
                 if (subPartners.length > 0) {
 
                     await subPartners.reduce(async (previousSubPartner, nextSubPartner) => { // this was previously causing the process to not run synchronously - important bit is to await it
@@ -294,7 +307,6 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
                                     },
                                 }
                             ]);
-                            console.log(subReport)
                             return new Promise(resolve => resolve(subReport)); // this is important bit - we return a promise that resolves to another promise
                         } else return;
                     }, Promise.resolve());
@@ -361,7 +373,7 @@ const setAffPartnerBalance = ({ _id }) => {
                         'stats.cashback.$[el].amount': cashback[currency],
                         'stats.payments.$[el].amount': paid[currency], 
                         'stats.requested.$[el].amount': requested[currency], 
-                        // 'stats.subCommission.$[el].amount': subCommission[currency] // NEED TO ADD TO STATS ARRAY // MongoError: The path 'stats.subCommission' must exist in the document in order to apply array updates.
+                        'stats.subCommission.$[el].amount': subCommission[currency] // Currently the affpartners we have in local db does not include subCommission in stats array - for this reason it may fail
                     }, {
                         new: true,
                         arrayFilters: [{ 'el.currency': currency }],
@@ -415,11 +427,16 @@ const partnerStatusCheck = ({ _id, isSubPartner, isOfficialPartner, epi }) => {
             })()
         )
     })
-}
+};
 
 
 
 
 module.exports = {
-    updatePartnerStats
+    updatePartnerStats,
+    getCashbackRate,
+    getCashbackRate,
+    getVolumeByBrand,
+    getCashBackByBrand,
+    getSubAffCommissionByBrand
 }

@@ -19,6 +19,7 @@ const { updatePartnerStats } = require('./map-dashboard-data');
 
 const dataReducer = (results, brand, month, date) => {
     // console.log(brand, month, dayjs(date).format('DD/MM/YYYY'))
+    // console.log(results)
     let completedAccountMapping = results.reduce((previousAccount, nextAccount) => {
         return previousAccount.then(() => {
             return mapAccountReports(nextAccount, brand, month, date) // need to update properly
@@ -52,7 +53,11 @@ const mapAccountReports = async (a, brand, month, date) => {
                     deposits,
                     earnedFee
                 } = a;
-                currency = currency ? currency : setCurrency(brand);
+                const epis = [779, 840, 984]
+                if (epis.includes(epi)) {
+                    console.log(epi, accountId)
+                }
+                currency = currency ? currency : await setCurrency(brand);
                 let commissionRate = transValue > 0 ? (commission / transValue) : 0;
                 let cashbackRate = 0;
                 try {

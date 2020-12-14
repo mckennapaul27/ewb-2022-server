@@ -8,10 +8,20 @@ const { getToken } = require('../../utils/token.utils')
 const {
     AffAccount,
     AffReport,
-    AffSubReport
+    AffSubReport,
+    AffReportDaily,
+    AffReportMonthly,
+    AffPartner
 } = require('../../models/affiliate/index');
-const { mapRegexQueryFromObj, mapQueryForAggregate } = require('../../utils/helper-functions');
-const dayjs = require('dayjs')
+const { 
+    mapRegexQueryFromObj, 
+    mapQueryForAggregate 
+} = require('../../utils/helper-functions');
+const { 
+    getCashbackRate,
+    getVolumeByBrand,
+    getCashBackByBrand, 
+} = require('../../queries/map-dashboard-data');
 
 
 // POST /affiliate/application/create
@@ -28,7 +38,6 @@ router.post('/create', passport.authenticate('jwt', {
         }
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
-
 
 // POST /affiliate/report/fetch-reports
 router.post('/fetch-reports', passport.authenticate('jwt', {
@@ -103,27 +112,207 @@ router.post('/fetch-sub-reports', passport.authenticate('jwt', {
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
+// POST /affiliate/report/fetch-daily-reports
+router.post('/fetch-daily-reports', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id, startDate, endDate } = req.body;
+        try {
+            const reports = await AffReportDaily.find({ belongsTo: _id, date: { $gte: startDate, $lte: endDate } }).sort({ date: 'asc' });
+            return res.send({ reports });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        };
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /affiliate/report/fetch-daily-reports
+router.post('/fetch-daily-reports', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id, startDate, endDate } = req.body;
+        try {
+            const reports = await AffReportDaily.find({ belongsTo: _id, date: { $gte: startDate, $lte: endDate } }).sort({ date: 'asc' });
+            return res.status(200).send({ reports });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        };
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /affiliate/report/fetch-monthly-reports
+router.post('/fetch-monthly-reports', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id, months } = req.body;
+        try {
+            const reports = await AffReportMonthly.find({ belongsTo: _id }).where({ month: { $in: months } }).sort({ date: 'asc' });
+            return res.status(200).send({ reports });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        };
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+})
+
+
 // POST /affiliate/report/accountId/table
 router.post('/accountId/table', async (req, res) => {
-
-    let pageSize = parseInt(req.query.pageSize);
-    let pageIndex = parseInt(req.query.pageIndex);
+    const token = getToken(req.headers);
+    if (token) {
+        let pageSize = parseInt(req.query.pageSize);
+        let pageIndex = parseInt(req.query.pageIndex);
+        
+        let { sort, query } = req.body;
+        let skippage = pageSize * (pageIndex);
     
-    let { sort, query } = req.body;
-    let skippage = pageSize * (pageIndex);
-
-    const reports = await AffReport.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // NEED TO ADD SELECT AND LEAN
-    const pageCount = await AffReport.countDocuments(query);
-
-    return res.send({ reports, pageCount });
+        const reports = await AffReport.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // NEED TO ADD SELECT AND LEAN
+        const pageCount = await AffReport.countDocuments(query);
+    
+        return res.send({ reports, pageCount });
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
 // POST /affiliate/report/accountId/chart
 router.post('/accountId/chart', async (req, res) => {
-    let { months, query } = req.body;
-    const reports = await AffReport.find(query).where({ month: { $in: months } } ).sort({ date: 1 }); // NEED TO ADD SELECT AND LEAN
-    return res.send({ reports });
+    const token = getToken(req.headers);
+    if (token) {
+        let { months, query } = req.body;
+        const reports = await AffReport.find(query).where({ month: { $in: months } } ).sort({ date: 1 }); // NEED TO ADD SELECT AND LEAN
+        return res.send({ reports });
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
+
+
+// POST /affiliate/report/fetch-deal-progress
+router.post('/fetch-deal-progress', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id, month } = req.body;
+        try {
+            const partner = await AffPartner.findById(req.body._id).select('referredBy deals isSubPartner').lean()
+            const { referredBy, deals, isSubPartner } = partner;
+
+            const nRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'Neteller', month });
+            const sRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'Skrill', month });
+            const eRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'ecoPayz', month });
+
+            return res.status(200).send({ nRate, sRate, eRate, deals });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /affiliate/report/fetch-monthly-statement
+router.post('/fetch-monthly-statement', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id, month } = req.body;
+        try {
+            const partner = await AffPartner.findById(req.body._id).select('referredBy isSubPartner subPartnerRate').lean()
+            const { referredBy, isSubPartner, subPartnerRate } = partner;
+            
+            const nVolume = await getVolumeByBrand({ _id }, 'Neteller', month);
+            const nCashback = await getCashBackByBrand({ _id }, 'Neteller', month);
+            const nSubVol = await getSubPartnerVolumeByBrand({ _id, isSubPartner, month, brand: 'Neteller' });
+            const nSubCashback = await getSubPartnerCashbackByBrand({ _id, isSubPartner, month, brand: 'Neteller' });
+            const nNetworkShare = await getNetworkShareVolumeByBrand({ referredBy, month, brand: 'Neteller' });
+
+            const sVolume = await getVolumeByBrand({ _id }, 'Skrill', month);
+            const sCashback = await getCashBackByBrand({ _id }, 'Skrill', month);
+            const sSubVol = await getSubPartnerVolumeByBrand({ _id, isSubPartner, month, brand: 'Skrill' });
+            const sSubCashback = await getSubPartnerCashbackByBrand({ _id, isSubPartner, month, brand: 'Skrill' });
+            const sNetworkShare = await getNetworkShareVolumeByBrand({ referredBy, month, brand: 'Skrill' });
+
+            const eVolume = await getVolumeByBrand({ _id }, 'ecoPayz', month);
+            const eCashback = await getCashBackByBrand({ _id }, 'ecoPayz', month);
+            const eSubVol = await getSubPartnerVolumeByBrand({ _id, isSubPartner, month, brand: 'ecoPayz' });
+            const eSubCashback = await getSubPartnerCashbackByBrand({ _id, isSubPartner, month, brand: 'ecoPayz' });
+            const eNetworkShare = await getNetworkShareVolumeByBrand({ referredBy, month, brand: 'ecoPayz' });
+
+            return res.status(200).send({ 
+                subPartnerRate,
+                nVolume,
+                nCashback,
+                nSubVol,
+                nSubCashback,
+                nNetworkShare,
+
+                sVolume,
+                sCashback,
+                sSubVol,
+                sSubCashback,
+                sNetworkShare,
+
+                eVolume,
+                eCashback,
+                eSubVol,
+                eSubCashback,
+                eNetworkShare
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(403).send({ success: false, msg: error });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+const getSubPartnerVolumeByBrand = ({ _id, isSubPartner, brand, month }) => { // this is used for /affiliate/report/fetch-monthly-statement in router/affiliate/report.router.js
+    if (isSubPartner) {
+        return new Promise(resolve => {
+            resolve (
+                AffPartner.find({ referredBy: _id }).select('_id').lean() // get all partners that have BEEN referredBy this partner
+                .then(subPartners => {
+                    return subPartners.reduce(async (total, nextSubPartner) => {
+                        let acc = await total;
+                        for await (const report of AffReport.find({ belongsToPartner: nextSubPartner._id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
+                            acc += report.account.transValue;
+                        };
+                        return acc;
+                    }, Promise.resolve(0))
+                })
+            )
+        });
+    } else return 0;
+};
+
+const getNetworkShareVolumeByBrand = ({ referredBy, month, brand }) => { 
+    if (referredBy) {
+        return new Promise(resolve => {
+            resolve (
+                AffPartner.find({ referredBy }).select('_id').lean() // get all partners that have the SAME referredBy as this partner
+                .then(partnersReferredBySameNetwork => {
+                    return partnersReferredBySameNetwork.reduce(async (total, nextPartner) => {
+                        let acc = await total;
+                        for await (const report of AffReport.find({ belongsToPartner: nextPartner._id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
+                            acc += report.account.transValue;
+                        };
+                        return acc;
+                    }, Promise.resolve(0))
+                })
+            )
+        });
+    } else return 0;
+};
+
+const getSubPartnerCashbackByBrand = ({ _id, brand, month, isSubPartner }) => {
+    if (isSubPartner) {
+        return new Promise(resolve => {
+            resolve (
+                AffPartner.find({ referredBy: _id }).select('_id').lean() // get all partners that have BEEN referredBy this partner
+                .then(subPartners => {
+                    return subPartners.reduce(async (total, nextSubPartner) => {
+                        let acc = await total;
+                        for await (const report of AffReport.find({ belongsToPartner: nextSubPartner._id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.subAffCommission').lean()) {
+                            acc += report.account.subAffCommission;
+                        };
+                        return acc;
+                    }, Promise.resolve(0))
+                })
+            )
+        });
+    } else return 0;
+};
 
 
 

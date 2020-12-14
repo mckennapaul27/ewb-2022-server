@@ -8,7 +8,7 @@ const {
     Application,
     ActiveUser
 } = require('../../models/personal');
-const { createUserNotification } = require('../../utils/controller-functions');
+const { createUserNotification } = require('../../utils/notifications-functions');
 const { createApplication, updateApplication } = require('../../utils/notifications-list');
 const AffApplication = require('../../models/affiliate/AffApplication');
 

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name'];
+const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name', 'message'];
 const keysToConvertToMongooseId = ['belongsTo', 'belongsToPartner'];
 const populatedFieldQueries = ['partner.epi', 'belongsTo.epi', 'belongsToPartner.epi'];
 

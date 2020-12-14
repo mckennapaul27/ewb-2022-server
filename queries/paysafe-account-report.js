@@ -7,33 +7,23 @@ require('superagent-proxy')(request);
 const parseString = require('xml2js').parseString;
 const parseStringPromise = util.promisify(parseString);
 
-const { CURRENT_MONTH_NET_ACCOUNT_REPORT, startOfMonthX } = require('./config')
-
 const { formatEpi } = require('../utils/helper-functions');
 const { dataReducer } = require('./map-accounts-reports');
 
-const fetchAccountReport = (brand, month, date) => {
-   
-    // (async () => {
-    //     // const a = await AffAccount.deleteMany({ 'accountId': { $exists: false } })
-    //     // const b = await AffReport.deleteMany({ 'account.accountId': { $exists: false } })
-    //     // const c = await AffApplication.deleteMany({ 'accountId': { $exists: false } })
-    //     const a = await AffAccount.deleteMany()
-    //     const b = await AffReport.deleteMany()
-    //     const c = await AffApplication.deleteMany()
-    //     console.log(a, b, c) 
-    // })();
+const fetchAccountReport = async ({ brand, month, date, url }) => {
+    console.log('here: ', brand, month, date, url);
     (async () => {
         try {
-            const res = await request.get(CURRENT_MONTH_NET_ACCOUNT_REPORT()).proxy(proxy);
-            checkData(res.text, brand, month, date);
+            const res = await request.get(url).proxy(proxy);
+            checkData(res.text, brand, month, date, url);
         } catch (err) {
-           return err;
+            console.log(err);
+            return err;
         }
     })();
 };
 
-const checkData = async (res, brand, month, date) => {
+const checkData = async (res, brand, month, date, url) => {
     try {
         const reports = await parseStringPromise(res);
         if (!reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['reportresponse']) {
@@ -44,8 +34,9 @@ const checkData = async (res, brand, month, date) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand, month, date);
     } catch (err) {
+        console.log(err);
         if (err.message === 'Permission denied') setTimeout(() => {
-            fetchAccountReport (brand, month, date); // need to add fetchData parameters
+            fetchAccountReport ({ brand, month, date, url }); // need to add fetchData parameters
         }, 500);
     };
 };
