@@ -70,6 +70,22 @@ router.post('/fetch-notifications', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
+// POST /affiliate/partner/fetch-notifications-new
+router.post('/fetch-notifications-new', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id } = req.body;
+        try {
+            const count = await AffNotification.countDocuments({ belongsTo: _id, read: false });
+            return res.status(200).send({ count }); 
+        } catch (err) {
+            return res.status(400).send(err)
+        }    
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+});
+
 
 
 
