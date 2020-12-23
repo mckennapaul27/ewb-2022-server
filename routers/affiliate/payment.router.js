@@ -8,9 +8,11 @@ const { getToken } = require('../../utils/token.utils')
 const {
     AffPartner,
     AffReport,
-    AffPayment
+    AffPayment,
+    AffSubReport
 } = require('../../models/affiliate');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
+const { createAffNotification } = require('../../utils/notifications-functions');
 
 // /affiliate/payment/create-payment/:_id
 router.post('/create-payment/:_id', passport.authenticate('jwt', {
@@ -28,6 +30,9 @@ async function createPayment (req, res, next) {
             paymentAccount: req.body.paymentAccount,
             belongsTo: req.params._id
         });
+        const { currency, amount, brand, paymentAccount, belongsTo } = newPayment;
+        createAffNotification({ message: `You have requested ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} to be sent to ${brand} account ${paymentAccount}`, type: 'Payment', belongsTo });
+        // >>>>>>>> send email
         req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
         next();
     } else return res.status(403).send({ msg: 'Unauthorised' })
@@ -51,10 +56,18 @@ function updateBalances (req, res) { // After next() is called on createPayment(
                 cashback: { $sum: '$account.cashback' },
                 commission: { $sum: '$account.commission' }
             }}, 
+        ]),
+        AffSubReport.aggregate([
+            { $match: { $and: [ { belongsTo: mongoose.Types.ObjectId(req.params._id) }, { 'currency': req.body.currency } ] } },
+            { $project: { 'subAffCommission': 1 } }, // selected values to return 1 = true, 0 = false
+            { $group: { 
+                '_id': null, 
+                subAffCommission: { $sum: '$subAffCommission' },
+            }}, 
         ])
         // Need to add subpartner reports
     ])
-    .then(([ payments, reports ]) => {
+    .then(([ payments, reports, subreports ]) => {
         
         const isValidCalculate = (arr, query, value) => 
             arr.length > 0 
@@ -69,7 +82,8 @@ function updateBalances (req, res) { // After next() is called on createPayment(
         const paid = isValidCalculate(payments, 'Paid', 'amount');
         const commission = isValid(reports, 'commission');
         const cashback = isValid(reports, 'cashback');
-        const balance = cashback - (requested + paid);
+        const subCommission = isValid(subreports, 'subAffCommission');
+        const balance = (cashback + subCommission) - (requested + paid);
 
         AffPartner.findByIdAndUpdate(req.params._id, {
             $set: { 
@@ -78,6 +92,7 @@ function updateBalances (req, res) { // After next() is called on createPayment(
                 'stats.cashback.$[el].amount': cashback,
                 'stats.payments.$[el].amount': paid, 
                 'stats.requested.$[el].amount': requested, 
+                'stats.subCommission.$[el].amount': subCommission
             }}, {
                 arrayFilters: [{ 'el.currency': req.body.currency }],
                 new: true

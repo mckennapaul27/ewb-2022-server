@@ -38,8 +38,7 @@ AffReportMonthly.pre('validate', async function (next) { // https://stackoverflo
         report.currency = setCurrency(report.brand); // setting currency (this does not always work because when we set account: {} object properties in map-dashboard-data etc we update full object)
         next();
     } catch (error) {
-        console.log('error: ', error);
-        next(error);
+        next();
     } 
 });
 

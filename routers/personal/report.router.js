@@ -9,7 +9,7 @@ const {
 const {
     Report
 } = require('../../models/personal/index');
-const { mapRegexQueryFromObj } = require('../../utils/helper-functions')
+const { mapRegexQueryFromObj, mapQueryForAggregate } = require('../../utils/helper-functions')
 
 // /user/get-user
 router.get('/get-user', passport.authenticate('jwt', {
@@ -24,23 +24,23 @@ router.get('/get-user', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-// /personal/report/test - testing for react-table population
-router.post('/test', async (req, res) => {
+// /personal/report/fetch-reports - testing for react-table population
+router.post('/fetch-reports', async (req, res) => {
 
     let pageSize = parseInt(req.query.pageSize);
     let pageIndex = parseInt(req.query.pageIndex);
     let { sort, query } = req.body;
     let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
     
-    mapRegexQueryFromObj(query); // turn react-table query into regex query
-    // NEED TO ADD SELECT AND LEAN
-    console.log(query)
+    let aggregateQuery = mapQueryForAggregate(query); // have to create this for aggregation query because need to make it mongoose.Types.ObjectId        
+    query = mapRegexQueryFromObj(query); // turn react-table query into regex query
+
     const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // data for pagination
     const pageCount = await Report.countDocuments(query); // total documents to create pageCount 
     const brands = await Report.distinct('brand'); // number of distinct brands in reports collection for select filter
     const months = await Report.distinct('month'); // number of distinct brands in brands collection for select filter
     const totals  = await Report.aggregate([ // need to use mapQueryForAggregate(query);
-        { $match: { $and: [ query ] } }, 
+        { $match: { $and: [ aggregateQuery ] } }, 
         { $group: { 
                 '_id': null, 
                 cashback: { $sum: '$account.cashback' }, 

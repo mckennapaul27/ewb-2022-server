@@ -23,19 +23,22 @@ router.get('/get-user', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-// /common/user/update-user
-router.post('/update-user', passport.authenticate('jwt', {
+// /common/user/update-user/:_id
+router.post('/update-user/:_id', passport.authenticate('jwt', {
     session: false
 }), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-        const { name, email, _id } = req.body; // receives these regardless of any change through 
-        let exists = await User.countDocuments({ email: email }).select('email').lean() // check if user exists        
+        const { email } = req.body; // receives these regardless of any change through 
+        const { _id } = req.params;
+        let update = req.body;
+        let exists = false;
+        if (update['email']) {
+            let count = await User.countDocuments({ email: update['email'] }).select('email').lean() // check if user exists  
+            if (count > 0) exists = true;
+        };
         if (exists > 0) return res.status(400).send({ msg: `Account already exists with email ${email}` });
-        User.findByIdAndUpdate(_id, { 
-            email,
-            name
-        }, { new: true }).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId referredBy' }).lean()
+        User.findByIdAndUpdate(_id, update, { new: true }).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId referredBy' }).lean()
         .then(updatedUser => res.status(201).send({ msg: 'You have successfully updated your settings.', updatedUser }))
         .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
     } else return res.status(403).send({ msg: 'Unauthorised' });

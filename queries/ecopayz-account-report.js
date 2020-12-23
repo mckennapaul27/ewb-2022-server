@@ -3,7 +3,8 @@ const path = require('path');
 const csv = require('csv-parser')
 
 const { getToken } = require('../utils/token.utils');
-const { dataReducer } = require('./map-accounts-reports');
+const { affDataReducer } = require('./map-aff-accounts-reports');
+const { actDataReducer } = require('./map-act-accounts-reports');
 
 const uploadAffReports = (req, res) => {
     const token = getToken(req.headers);
@@ -37,18 +38,38 @@ const uploadAffReports = (req, res) => {
 
 const mapRawData = async (data, month, date) => {
     const results = data.reduce((acc, item) => {
+
         const inValidEpi = ['couponarbitrage', 'ewb'];
-        acc.push({
-            epi: inValidEpi.includes(item.trackingcodename) ? 0 : Number(item.trackingcodename),
-            accountId: Number(item.clientaccountnumber),
-            country: item.country,
-            transValue: Number((item.trxamtprogcur).replace(',', '')),
-            commission: Number((item.affiliatesfee).replace(',', '')),
-            earnedFee: Number((item.affiliatesfee).replace(',', '') * 3.076923)
-        });
-        return acc;
+        const epi = inValidEpi.includes(item.trackingcodename) ? 0 : Number(item.trackingcodename);
+        const accountId = Number(item.clientaccountnumber);
+        const country = item.country;
+        const transValue = Number((item.trxamtprogcur).replace(',', ''));
+        const commission = Number((item.affiliatesfee).replace(',', ''));
+        const earnedFee = Number((item.affiliatesfee).replace(',', '') * 3.076923);
+
+        let obj = {
+            epi,
+            accountId,
+            country,
+            transValue,
+            commission,
+            earnedFee
+        };
+        if (!acc.some(a => a.accountId === accountId)) { acc.push(obj); return acc; }
+        else if (acc.some(b => b.accountId === accountId)) {
+            acc = acc.map(c => {
+                if (c.accountId === accountId) {
+                    c.transValue += transValue;
+                    c.commission += commission;
+                    c.earnedFee += earnedFee;
+                    return c;
+                } else return c;
+            })
+            return acc;
+        } else return acc;
     }, []);
-    return dataReducer(results, brand = 'ecoPayz', month, date);
+    actDataReducer(results, brand = 'ecoPayz', month, date);
+    affDataReducer(results, brand = 'ecoPayz', month, date);
 };
 
 

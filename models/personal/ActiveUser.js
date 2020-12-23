@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const { defaultDealOne, defaultDealTwo, defaultStats } = require('../../config/deals');
+const { defaultDealOne, defaultDealTwo, defaultActStats } = require('../../config/deals');
 
 const ActiveUser = new Schema({ 
     paymentDetails: {
@@ -34,6 +34,13 @@ const ActiveUser = new Schema({
             currency: String
         }],
         commission: [{
+            amount: {
+                type: Number,
+                default: 0
+            },
+            currency: String
+        }],
+        raf: [{
             amount: {
                 type: Number,
                 default: 0
@@ -91,7 +98,7 @@ ActiveUser.pre('validate', function (next) {
     activeUser.deals.push(defaultDealOne('Neteller'));
     activeUser.deals.push(defaultDealOne('Skrill'));
     activeUser.deals.push(defaultDealTwo('ecoPayz'));
-    activeUser.stats = defaultStats;
+    activeUser.stats = defaultActStats;
     next();   
 })
 

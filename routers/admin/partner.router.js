@@ -5,10 +5,13 @@ require('../../auth/admin-passport')(passport);
 const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
-const dayjs = require('dayjs')
 const fs = require('fs');
 const path = require('path');
-const csv = require('csv-parser')
+const csv = require('csv-parser');
+
+let dayjs = require('dayjs');
+let advancedFormat = require('dayjs/plugin/advancedFormat');
+dayjs.extend(advancedFormat);
 
 const { getToken } = require('../../utils/token.utils');
 
@@ -17,7 +20,9 @@ const {
     AffReport,
     AffApplication,
     AffPayment,
-    AffReportMonthly
+    AffAccount,
+    AffReportMonthly,
+    AffSubReport
 } = require('../../models/affiliate/index');
 const {
     Application
@@ -25,6 +30,9 @@ const {
 
 const { mapRegexQueryFromObj, isPopulatedValue, mapQueryForAggregate, mapQueryForPopulate } = require('../../utils/helper-functions');
 const { uploadAffReports } = require('../../queries/ecopayz-account-report');
+const { createAffNotification } = require('../../utils/notifications-functions');
+const { affApplicationYY, affApplicationYN, affApplicationNN } = require('../../utils/notifications-list');
+const { defaultAffStats } = require('../../config/deals');
 
 
 // POST /admin/partner/get-partner
@@ -48,7 +56,6 @@ router.post('/update-partner/:_id', passport.authenticate('admin', {
 }), async (req, res) => {
     const token = getToken(req.headers);
     const update = req.body;
-    console.log(update)
     if (token) {
         try {
             const partner = await AffPartner.findByIdAndUpdate(req.params._id, update, { new: true });
@@ -150,19 +157,35 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
 }), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-        const { action } = req.body;
-        const today = dayjs().format('DD/MM/YYYY');
-        const update = {
-            'status': (action === 'YY' || action === 'YN') ? 'Approved' : 'Declined',
-            'upgradeStatus': (action === 'YY') ? `Upgraded ${today}` : (action === 'YN') ? `Not verified ${today}` : `Declined ${today}`,
-            'availableUpgrade.valid': (action === 'YY' || action === 'NN') ? false : true 
-        };
-        if (action === 'YY' || action === 'NN') update['availableUpgrade.status'] = '-';        
-        const aa = await AffApplication.findByIdAndUpdate(req.params._id, update, { new: true });
-        // send email
-        // add notification
-        // if successfull create affaccount and affreport
-        return res.status(201).send(aa)
+        try {
+            const { action } = req.body;
+            const today = dayjs().format('DD/MM/YYYY');
+            const update = {
+                'status': (action === 'YY' || action === 'YN') ? 'Approved' : 'Declined',
+                'upgradeStatus': (action === 'YY') ? `Upgraded ${today}` : (action === 'YN') ? `Not verified ${today}` : `Declined ${today}`,
+                'availableUpgrade.valid': (action === 'YY' || action === 'NN') ? false : true 
+            };
+            if (action === 'YY' || action === 'NN') update['availableUpgrade.status'] = '-';        
+    
+            const aa = await AffApplication.findByIdAndUpdate(req.params._id, update, { new: true }); // find and update application and return new application
+    
+            const { brand, belongsTo, accountId } = aa; // deconstruct updated application
+    
+            // notifications
+            if (action === 'YY') createAffNotification(affApplicationYY({ brand, accountId, belongsTo }));
+            if (action === 'YN') createAffNotification(affApplicationYN({ brand, accountId, belongsTo }));
+            if (action === 'NN') createAffNotification(affApplicationNN({ brand, accountId, belongsTo }));
+
+            // send emails >>>>>>>>>> 
+
+            if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
+
+
+            return res.status(201).send(aa);
+        } catch (error) {
+            console.log(error);
+            return res.status(400).send({ msg: 'Error whilst updating application' })
+        }
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
@@ -182,34 +205,37 @@ router.post('/upload-application-results', passport.authenticate('admin', {
             .on('data', data => applicationData.push(data))
             .on('end', () => {
                 applicationData = applicationData.reduce((acc, item) => acc.some(a => a.accountId === item.accountId) ? acc : (acc.push(item), acc), []); // remove duplicates - have to put second return of acc inside brackets (acc.push(item), acc) otherwise it will not return acc
-                return applicationData.map(async app => {
+                applicationData.map(async app => {
                     const today = dayjs().format('DD/MM/YYYY');
                     const update = {
                         'status': app.Tagged === 'Y' ? 'Approved' : 'Declined',
                         'upgradeStatus': (app.Upgraded === 'Y') ? `Upgraded ${today}` : (app.Tagged === 'Y' && app.Upgraded === 'N') ? `Not verified ${today}` : `Declined ${today}`,
-                        'availableUpgrade.valid': (app.Upgraded === 'Y') ? false :( app.Tagged === 'N') ? false : true 
+                        'availableUpgrade.valid': (app.Upgraded === 'Y') ? false : ( app.Tagged === 'N') ? false : true 
                     };
                     if (app.Upgraded === 'Y' || app.Tagged === 'N') update['availableUpgrade.status'] = '-';
-                    const aa = await AffApplication.findOne({ 'accountId': app.accountId });
-                    const ab = await Application.findOne({ 'accountId': app.accountId });
+                    let workOutAction = (tagged, upgraded) => (tagged === 'Y' && upgraded === 'Y') ? 'YY' : (tagged === 'Y' && upgraded === 'N') ? 'YN' : 'NN';
+                    let action = workOutAction(app.Tagged, app.Upgraded);
+                    
                     try {
-                        if (aa) {
-                            // send email
-                            // add notification
-                            // if successfull create affaccount and affreport
-                            await AffApplication.findByIdAndUpdate(aa._id, update, { new: true });
+                        const existingApplication = await AffApplication.findOne({ 'accountId': app.accountId }).select('accountId').lean();
+                        if (existingApplication) {
+                            const aa = await AffApplication.findByIdAndUpdate(existingApplication._id, update, { new: true });
+                            const { brand, belongsTo, accountId } = aa; // deconstruct updated application
+                            // notifications
+                            if (action === 'YY') createAffNotification(affApplicationYY({ brand, accountId, belongsTo }));
+                            if (action === 'YN') createAffNotification(affApplicationYN({ brand, accountId, belongsTo }));
+                            if (action === 'NN') createAffNotification(affApplicationNN({ brand, accountId, belongsTo }));
+
+                            // send emails  >>>>>>>>>>>>>
+
+                            if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
+
                         } 
-                        if (ab) {
-                            // send email
-                            // add notification
-                            // if successfull create affaccount and affreport
-                            await Application.findByIdAndUpdate(ab._id, update, { new: true });
-                        } 
-                        return res.status(201).send({ msg: 'Successfully updated applications' })
-                    } catch (err) {
-                        return res.status(400).send({ msg: 'Error whilst updating applications' })
-                    };
+                    } catch (error) {
+                        return error;
+                    }
                 })
+                return res.status(201).send({ msg: 'Successfully updated applications' });
             })  
         });        
     } else return res.status(403).send({ msg: 'Unauthorised' });
@@ -310,8 +336,9 @@ router.post('/update-payment/:_id', passport.authenticate('admin', {
         }
         try {
             const updatedPayment = await AffPayment.findByIdAndUpdate(req.params._id, update, { new: true });
-            // send email
-            // add notification
+            const { currency, amount, belongsTo } = updatedPayment;
+            // send email >>>>>>>>>>>>>
+            createAffNotification({ message: `Your payout request for ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} has been ${status.toLowerCase()}`, type: 'Payment', belongsTo })
             req.body = updatedPayment;
             req.params._id = updatedPayment.belongsTo; // changing req.params._id to belongsTo to keep update balance function consistent
             next();
@@ -344,10 +371,17 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
                 cashback: { $sum: '$account.cashback' },
                 commission: { $sum: '$account.commission' }
             }}, 
+        ]),
+        AffSubReport.aggregate([
+            { $match: { $and: [ { belongsTo: mongoose.Types.ObjectId(req.params._id) }, { 'currency': req.body.currency } ] } },
+            { $project: { 'subAffCommission': 1 } }, // selected values to return 1 = true, 0 = false
+            { $group: { 
+                '_id': null, 
+                subAffCommission: { $sum: '$subAffCommission' },
+            }}, 
         ])
-        // Need to add subpartner reports
     ])
-    .then(([ payments, reports ]) => {
+    .then(([ payments, reports, subreports ]) => {
         
         const isValidCalculate = (arr, query, value) => 
             arr.length > 0 
@@ -362,7 +396,8 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
         const paid = isValidCalculate(payments, 'Paid', 'amount');
         const commission = isValid(reports, 'commission');
         const cashback = isValid(reports, 'cashback');
-        const balance = cashback - (requested + paid);
+        const subCommission = isValid(subreports, 'subAffCommission');
+        const balance = (cashback + subCommission) - (requested + paid);
 
         AffPartner.findByIdAndUpdate(req.params._id, {
             $set: { 
@@ -371,6 +406,7 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
                 'stats.cashback.$[el].amount': cashback,
                 'stats.payments.$[el].amount': paid, 
                 'stats.requested.$[el].amount': requested, 
+                'stats.subCommission.$[el].amount': subCommission
             }}, {
                 arrayFilters: [{ 'el.currency': req.body.currency }],
                 new: true
@@ -379,6 +415,36 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
         .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
     })
 };
+
+const createAffAccAffReport = ({ accountId, brand, belongsTo }) => {
+    return new Promise (resolve => { // have to return a promise to be able to await it. E.G  await createAffAccAffReport ({ accountId, brand, belongsTo });
+        resolve (
+            (async () => {
+                const existingAccount = await AffAccount.findOne({ accountId }).select('accountId reports belongsTo'); // select accounts
+                if (!existingAccount) {
+                    const newAccount = await AffAccount.create({ brand, accountId, belongsTo }); // calls .pre('save') middleware here [1]
+                    const newReport = await AffReport.create({ 
+                        date: Number(dayjs().startOf('month').format('x')),
+                        month: dayjs().format('MMMM YYYY'),
+                        brand, 
+                        belongsTo: newAccount._id,
+                        belongsToPartner: newAccount.belongsTo,
+                        'account.accountId': accountId,
+                        'account.deposits': 0,
+                        'account.transValue': 0,
+                        'account.commission': 0,
+                        'account.commissionRate': 0,
+                        'account.earnedFee': 0,
+                        'account.cashbackRate': 0,
+                    });
+                    newAccount.reports.push(newReport); // Push new report to reports array
+                    await newAccount.save(); // calls .pre('save') middleware here again [2]
+                    await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true }); 
+                } else return;
+            })()
+        )
+    })
+}
 
 
 

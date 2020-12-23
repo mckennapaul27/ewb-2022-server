@@ -3,7 +3,7 @@ const passport = require('passport');
 require('../../auth/passport')(passport)
 const express = require('express');
 const router = express.Router();
-
+const mongoose = require('mongoose');
 const { getToken } = require('../../utils/token.utils')
 const {
     AffAccount,
@@ -11,7 +11,8 @@ const {
     AffSubReport,
     AffReportDaily,
     AffReportMonthly,
-    AffPartner
+    AffPartner,
+    AffApplication
 } = require('../../models/affiliate/index');
 const { 
     mapRegexQueryFromObj, 
@@ -21,7 +22,7 @@ const {
     getCashbackRate,
     getVolumeByBrand,
     getCashBackByBrand, 
-} = require('../../queries/map-dashboard-data');
+} = require('../../queries/map-aff-dashboard-data');
 
 
 // POST /affiliate/application/create
@@ -152,8 +153,59 @@ router.post('/fetch-monthly-reports', async (req, res) => {
             return res.status(403).send({ success: false, msg: error });
         };
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
-})
+});
 
+// POST /affiliate/report/fetch-monthly-summary
+router.post('/fetch-monthly-summary', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id, month, start, end } = req.body;
+        try {
+            const { isSubPartner } = (await AffPartner.findById(_id).select('referredBy isSubPartner subPartnerRate').lean());
+
+            const nCashback = await getCashBackByBrand({ _id }, 'Neteller', month);
+            const nSubCashback = await getSubPartnerCashbackByBrand({ _id, isSubPartner, month, brand: 'Neteller' });
+            const sCashback = await getCashBackByBrand({ _id }, 'Skrill', month);
+            const sSubCashback = await getSubPartnerCashbackByBrand({ _id, isSubPartner, month, brand: 'Skrill' });
+            const data = await AffReportDaily.aggregate([
+                { $match: { $and: [ { belongsTo: mongoose.Types.ObjectId(_id) }, { date: { $gte: start, $lte: end } } ] } },
+                { $project: { 'clicks': 1, 'registrations': 1, 'brand': 1 } },
+                { $group: {
+                    '_id': {
+                        brand: '$brand'
+                    },
+                    clicks: { $sum: '$clicks' },
+                    registrations: { $sum: '$registrations' }
+                }}
+            ]);
+            
+            const nRegs = data.reduce((acc, i) => i._id.brand === 'Neteller' ? (acc += i.clicks, acc) : acc, 0);
+            const sRegs = data.reduce((acc, i) => i._id.brand === 'Skrill' ? (acc += i.clicks, acc) : acc, 0);
+
+            const nClicks = data.reduce((acc, i) => i._id.brand === 'Neteller' ? (acc += i.registrations, acc) : acc, 0);
+            const sClicks = data.reduce((acc, i) => i._id.brand === 'Skrill' ? (acc += i.registrations, acc) : acc, 0);
+
+            const nApplications = await AffApplication.countDocuments({ belongsTo: _id, brand: 'Neteller', dateAdded: { $gte: start, $lte: end } });
+            const sApplications = await AffApplication.countDocuments({ belongsTo: _id, brand: 'Skrill', dateAdded: { $gte: start, $lte: end } });
+
+            return res.status(200).send({ 
+                nCashback,
+                nSubCashback,
+                sCashback,
+                sSubCashback,
+                nApplications,
+                sApplications,
+                sRegs,
+                nRegs,
+                nClicks,
+                sClicks
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(403).send({ success: false, msg: error });
+        };
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
 
 // POST /affiliate/report/accountId/table
 router.post('/accountId/table', async (req, res) => {
@@ -181,7 +233,6 @@ router.post('/accountId/chart', async (req, res) => {
         return res.send({ reports });
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
-
 
 // POST /affiliate/report/fetch-deal-progress
 router.post('/fetch-deal-progress', async (req, res) => {

@@ -8,7 +8,8 @@ const parseString = require('xml2js').parseString;
 const parseStringPromise = util.promisify(parseString);
 
 const { formatEpi } = require('../utils/helper-functions');
-const { dataReducer } = require('./map-accounts-reports');
+const { affDataReducer } = require('./map-aff-accounts-reports');
+const { actDataReducer } = require('./map-act-accounts-reports');
 
 const fetchAccountReport = async ({ brand, month, date, url }) => {
     console.log('here: ', brand, month, date, url);
@@ -57,7 +58,8 @@ const mapRawData = async (data, brand, month, date) => {
         });
         return acc;
     }, []);
-    return dataReducer(results, brand, month, date);
+    actDataReducer(results, brand, month, date);
+    affDataReducer(results, brand, month, date);
 };
 
 module.exports = {

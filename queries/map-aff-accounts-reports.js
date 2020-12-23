@@ -4,22 +4,10 @@ const {
     AffApplication,
     AffPartner
 } = require('../models/affiliate/index')
-
-const {
-
-} = require('../models/personal/index')
-const {
-
-} = require('../models/common/index')
-const {
-
-} = require('../models/common/index');
 const { setCurrency } = require('../config/deals');
-const { updatePartnerStats } = require('./map-dashboard-data');
+const { updatePartnerStats } = require('./map-aff-dashboard-data');
 
-const dataReducer = (results, brand, month, date) => {
-    // console.log(brand, month, dayjs(date).format('DD/MM/YYYY'))
-    // console.log(results)
+const affDataReducer = (results, brand, month, date) => {
     let completedAccountMapping = results.reduce((previousAccount, nextAccount) => {
         return previousAccount.then(() => {
             return mapAccountReports(nextAccount, brand, month, date) // need to update properly
@@ -53,10 +41,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                     deposits,
                     earnedFee
                 } = a;
-                const epis = [779, 840, 984]
-                if (epis.includes(epi)) {
-                    console.log(epi, accountId)
-                }
+                
                 currency = currency ? currency : await setCurrency(brand);
                 let commissionRate = transValue > 0 ? (commission / transValue) : 0;
                 let cashbackRate = 0;
@@ -67,6 +52,10 @@ const mapAccountReports = async (a, brand, month, date) => {
                         if (report) { // if existing report for the month = UPDATE IT
                             return AffReport.findByIdAndUpdate(report._id, {
                                 lastUpdate,
+                                siteId,
+                                memberId,
+                                playerId,
+                                country,
                                 account: {  // these is resetting full account object so remeber to include ALL fields
                                     accountId,  
                                     deposits,
@@ -190,5 +179,5 @@ const mapAccountReports = async (a, brand, month, date) => {
 };
 
 module.exports = {
-    dataReducer
+    affDataReducer
 }

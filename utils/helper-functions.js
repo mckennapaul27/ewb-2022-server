@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name', 'message'];
-const keysToConvertToMongooseId = ['belongsTo', 'belongsToPartner'];
+const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name', 'message', 'upgradeStatus'];
+const keysToConvertToMongooseId = ['belongsTo', 'belongsToPartner', 'belongsToActiveUser'];
 const populatedFieldQueries = ['partner.epi', 'belongsTo.epi', 'belongsToPartner.epi'];
 
 const mapRegexQueryFromObj = (query) => Object.keys(query)

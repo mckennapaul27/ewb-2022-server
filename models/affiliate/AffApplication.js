@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const { initialUpgrades } = require('../../config/deals');
+const { initialUpgrades, defaultSiteId } = require('../../config/deals');
 const dayjs = require('dayjs');
 
 const AffApplication = new Schema({ 
@@ -30,15 +30,20 @@ const AffApplication = new Schema({
 
 AffApplication.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
     const a = this; // a = affApplication
+    if (!a.siteId) a.siteId = defaultSiteId[a.brand]; // if no siteId is provided on creation - use defauly siteIds
     a.availableUpgrade.status = initialUpgrades[a.brand],
     a.availableUpgrade.valid = false;
     a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
     next();   
 });
 
-AffApplication.pre('findOneAndUpdate', async function () { // https://stackoverflow.com/questions/44614734/modifying-mongoose-document-on-pre-hook-of-findoneandupdate
-    // const docToUpdate = await this.model.findOne(this.getQuery())
-})
+// async function createAffNotification ({ message, type, belongsTo }) {
+//     await AffNotification.create({ message, type, belongsTo });
+// };
+
+// AffApplication.pre('findOneAndUpdate', async function () { // https://stackoverflow.com/questions/44614734/modifying-mongoose-document-on-pre-hook-of-findoneandupdate
+//     // const docToUpdate = await this.model.findOne(this.getQuery())
+// })
 
 module.exports = mongoose.model('affapplication', AffApplication);
 

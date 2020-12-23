@@ -44,7 +44,7 @@ if (process.env.NODE_ENV !== 'dev') {
         saveUninitialized: false, // don't create session until something stored
         resave: false, // don't save session if unmodified
         store: new MongoStore({
-            url: process.env.MONGODB_URI,
+            url: DB_URL,
             touchAfter: 24 * 3600 // time period in seconds
         })
     }));

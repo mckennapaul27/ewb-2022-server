@@ -1,14 +1,10 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const dayjs = require('dayjs');
+const AffNotification = require('./AffNotification');
 
 const AffAccount = new Schema({ 
     brand: String,
     accountId: String,
-    upgradeStatus: {
-        type: String,
-        default: 'Click to request VIP'
-    },
     dateAdded: { type: Number, default: Date.now },
     reports: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -21,10 +17,21 @@ const AffAccount = new Schema({
     }
 });
 
-AffAccount.pre('save', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
-    const a = this; // a = affApplication
-    a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
-    next();   
-});
+AffAccount.pre('save', async function (next) { // https://medium.com/@justinmanalad/pre-save-hooks-in-mongoose-js-cf1c0959dba2
+    const a = this;
+    try {
+        if (a.isNew) await createAffNotification({ message: `Account ${a.accountId} has been added to your dashboard`, type: 'Account', belongsTo: a.belongsTo });
+        next();
+    } catch (error) {
+        next();
+    }
+})
+
+
+
+async function createAffNotification ({ message, type, belongsTo }) { return Promise.resolve(AffNotification.create({ message, type, belongsTo })) } ;
 
 module.exports = mongoose.model('affaccount', AffAccount);
+
+
+

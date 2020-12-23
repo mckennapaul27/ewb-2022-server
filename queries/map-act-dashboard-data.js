@@ -7,25 +7,24 @@ dayjs.extend(advancedFormat);
 dayjs.extend(localizedFormat); // https://day.js.org/docs/en/plugin/localized-format
 
 const { setCurrency } = require('../config/deals');
-const { 
-    AffPartner,
-    AffPayment,
-    AffReport,
-    AffReportMonthly,
-    AffSubReport 
-} = require('../models/affiliate/index');
+const {
+    Account,
+    Application,
+    Report,
+    ActiveUser
+} = require('../models/personal/index');
 
-const { createAffNotification } = require('../utils/notifications-functions');
+const { createUserNotification } = require('../utils/notifications-functions');
+// createUserNotification = ({ message, type, belongsTo }) => UserNotification.create({ message, type, belongsTo });
 
-const updatePartnerStats = async (brand, month, date) => {
-    let arr = await AffPartner.find({ 
-        $or: [  // only find() partners that have at least 1 account in the accounts array or have referred subpartners
-            { isSubPartner: true }, 
+const updateActUserStats = async (brand, month, date) => {
+    let arr = await ActiveUser.find({ // only find() users that have at least 1 account in the accounts array or have referred friends
+        $or: [  
+            { 'friends.0': { $exists: true } },
             { 'accounts.0': { $exists: true } }
         ] 
-    }).select('-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails');
-
-    createAffNotification({ message: `Your reports were updated on ${dayjs().format('LLLL')}`, type: 'Report', isGeneral: true });
+    });
+    // .select('-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails');
    
     let processStatsOne = arr.reduce(async (previousPartner, nextPartner) => {
         await previousPartner;
@@ -53,8 +52,11 @@ const updatePartnerStats = async (brand, month, date) => {
                 }, Promise.resolve());
                 console.log('Processing [4] ...');
                 processStatsFour.then(() => {
-
-                    return null;
+                    createAffNotification({ // once complete - add notification
+                        message: `Your ${brand} reports were updated on ${dayjs().format('LLLL')}`, 
+                        type: 'Report', 
+                        isGeneral: true 
+                    });
                 })
             })            
         })
@@ -373,7 +375,7 @@ const setAffPartnerBalance = ({ _id }) => {
                         'stats.cashback.$[el].amount': cashback[currency],
                         'stats.payments.$[el].amount': paid[currency], 
                         'stats.requested.$[el].amount': requested[currency], 
-                        'stats.subCommission.$[el].amount': subCommission[currency] // Currently the affpartners we have in local db does not include subCommission in stats array - for this reason it may fail
+                        'stats.subCommission.$[el].amount': subCommission[currency] // Currently the affpartners we have in local db does not include subCommission in stats array - for this reason it may fail. When we load data from old site, we need to make sure every partner has stats.subCommission in their balance array
                     }, {
                         new: true,
                         arrayFilters: [{ 'el.currency': currency }],
@@ -433,7 +435,7 @@ const partnerStatusCheck = ({ _id, isSubPartner, isOfficialPartner, epi }) => {
 
 
 module.exports = {
-    updatePartnerStats,
+    updateActUserStats,
     getCashbackRate,
     getCashbackRate,
     getVolumeByBrand,

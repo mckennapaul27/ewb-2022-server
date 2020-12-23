@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const { affiliateDealOne, affiliateDealTwo, defaultStats } = require('../../config/deals');
+const { affiliateDealOne, affiliateDealTwo, defaultAffStats } = require('../../config/deals');
 const AffCounter = require('../affiliate/AffCounter');
 
 const AffPartner = new Schema({ 
@@ -137,7 +137,7 @@ AffPartner.pre('validate', async function (next) {
     affPartner.deals.push(affiliateDealOne('Skrill'));
     affPartner.deals.push(affiliateDealTwo('ecoPayz'));
 
-    affPartner.stats = defaultStats;
+    affPartner.stats = defaultAffStats;
 
     next();   
 });
@@ -147,6 +147,12 @@ async function getNextSequence (name) {
     const newCounter = await AffCounter.findByIdAndUpdate(name, { $inc: { seq: 1 } }, { new: true });
     return newCounter.seq;
 };
+
+// AffPartner.pre('findOneAndUpdate', async function () {
+//     // console.log(this.model);
+//     // console.log(this.getQuery());
+//     console.log('>>>>>>>>>>>>><<<<<<<<<<<<<<<', this)
+// })
 
 
 // siteId: {

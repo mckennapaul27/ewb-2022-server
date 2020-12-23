@@ -8,11 +8,18 @@ const welcome = user => ({ message: `Welcome to eWalletBooster.com, ${user.name}
 const welcomeSocial = user => ({ message: `Welcome, ${user.name}`, type: 'General', belongsTo: user._id });
 
 const createApplication = (a, _id) => ({ message: `We have received your application for ${a.accountId}`, type: 'Application', belongsTo: _id });
-const updateApplication = (a, _id) => ({ message: `${a.availableUpgrade.status} VIP upgrade for ${a.accountId}`, type: 'Application', belongsTo: _id });
+const updateApplication = (a, _id) => ({ message: `Requested ${a.availableUpgrade.status} VIP upgrade for ${a.accountId}`, type: 'Application', belongsTo: _id });
+
+const affApplicationYY = ({ brand, accountId, belongsTo }) => ({ message: `${brand} account ${accountId} has been upgraded to VIP`, type: 'Application', belongsTo:  belongsTo });
+const affApplicationYN = ({ brand, accountId, belongsTo }) => ({ message: `${brand} account ${accountId} could not be upgraded - please verify and request again`, type: 'Application', belongsTo:  belongsTo });
+const affApplicationNN = ({ brand, accountId, belongsTo }) => ({ message: `Your application for ${brand} account ${accountId} has been rejected`, type: 'Application', belongsTo:  belongsTo });
 
 module.exports = {
     welcome,
     welcomeSocial,
     createApplication,
-    updateApplication
+    updateApplication,
+    affApplicationYY,
+    affApplicationYN,
+    affApplicationNN
 }

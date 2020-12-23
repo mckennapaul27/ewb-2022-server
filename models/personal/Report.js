@@ -7,23 +7,23 @@ const Report = new Schema({
     month: String, // Format as August 2020
     lastUpdate: { type: Number, default: Date.now },
     brand: String,
+    country: String,
     account: {
         accountId: String,  
         deposits: Number,
         transValue: Number,
         commission: Number,
-        cashback: Number,
-        cashbackRate: Number,
+        cashback: Number, // Y
+        cashbackRate: Number, 
         commissionRate: Number, // need to start storing this in data so that we can access in react-table filters
-        rafCashback: Number,
+        rafCashback: Number, // Y
         earnedFee: Number,
         currency: String, // this is so we can calculate balances per currency,
-        profit: Number // need to start storing this in data so that we can access in react-table filters
+        profit: Number // Y // need to start storing this in data so that we can access in react-table filters
     },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'account',
-        // required: false
     },
     belongsToActiveUser: {
         type: mongoose.Schema.Types.ObjectId,

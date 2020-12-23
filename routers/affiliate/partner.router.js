@@ -12,6 +12,7 @@ const {
     AffNotification
 } = require('../../models/affiliate/index');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
+const { createAffNotification } = require('../../utils/notifications-functions');
 
 
 // POST /affiliate/partner/fetch-details/:_id
@@ -37,8 +38,10 @@ router.post('/update-partner/:_id', passport.authenticate('jwt', {
     const token = getToken(req.headers);
     if (token) {
         const update = req.body; // doing it this way so we can submit anything to it to update and therefore provide less routes
+        const { notification } = req.body;
         try {
             const partner = await AffPartner.findByIdAndUpdate(req.params._id, update, { new: true, select: req.body.select });
+            if (notification) createAffNotification({ message: notification, type: 'Partner', belongsTo: req.params._id });
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ success: false });
@@ -58,9 +61,10 @@ router.post('/fetch-notifications', passport.authenticate('jwt', {
         let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
         let orQuery = { isGeneral: true };
         query = mapRegexQueryFromObj(query);  
-        if (query.type) orQuery['type'] = query.type; // we need orQuery to look for general notifications. We also only add 'type' to the orQuery if it exists in query
+        if (query.type) orQuery['type'] = query.type; // we need orQuery to look for general notifications. We also only add 'type' to the orQuery if it exists in query, otherwise it will just return all isGeneral: true messages despite the filter
+        let searchQuery = query.message ? query : { $or: [ query, orQuery ] }; // only use orQuery if no 'message' is queried.
         try {
-            const notifications = await AffNotification.find({ $or: [ query, orQuery ] }).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).lean();
+            const notifications = await AffNotification.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).lean();
             const pageCount = await AffNotification.countDocuments(query);
             const types = await AffNotification.distinct('type');
             return res.status(200).send({ notifications, pageCount, types }); 
@@ -85,6 +89,24 @@ router.post('/fetch-notifications-new', passport.authenticate('jwt', {
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
+
+// POST /affiliate/partner/update-notifications
+router.post('/update-notifications', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id } = req.body;
+        try {
+            await AffNotification.updateMany({ belongsTo: _id, read: false }, { read: true });
+            const count = await AffNotification.countDocuments({ belongsTo: _id, read: false });
+            return res.status(200).send({ count }); 
+        } catch (err) {
+            return res.status(400).send(err)
+        }    
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+});
+
 
 
 

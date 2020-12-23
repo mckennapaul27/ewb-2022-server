@@ -57,11 +57,14 @@ const mapRawData = async (data, brand, month, date) => {
             epi: null,
             country: item.playercountry[0] === '' ? '' : item.playercountry[0],
             commission: 0,
+            cashback: 0,
             transValue: 0,
             deposits: 0,
+            subAffCommission: 0,
             earnedFee: 0,
             cashbackRate: 0,
-            commissionRate: 0
+            commissionRate: 0,
+            profit: 0
         });
         return acc;
     }, []);
@@ -80,6 +83,9 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
             transValue,
             commission,
             deposits,
+            cashback,
+            subAffCommission,
+            profit,
             earnedFee,
             cashbackRate,
             commissionRate
@@ -112,7 +118,10 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                         commissionRate, 
                         earnedFee,
                         currency, 
-                        cashbackRate
+                        cashbackRate,
+                        cashback,
+                        subAffCommission,
+                        profit
                     }
                 });         
                 newAccount.reports.push(newReport); // Push new report to reports array
@@ -121,7 +130,7 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                 await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
                 // send emails and notifications
                
-            } else if (!existingAccount && !defaultSiteIds.includes(siteId)) { // if account does not exist and site is neither ['75417', '75418', '40278', '56'] defaults
+            } else if (!existingAccount && !application && !defaultSiteIds.includes(siteId)) { // if account does not exist and site is neither ['75417', '75418', '40278', '56'] defaults
                 
                 // db.inventory.find( { "instock": { $elemMatch: { qty: 5, warehouse: "A" } } } )
 
@@ -151,7 +160,10 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                             commissionRate, 
                             earnedFee,
                             currency, 
-                            cashbackRate
+                            cashbackRate,
+                            cashback,
+                            subAffCommission,
+                            profit
                         }
                     }); 
                     newAccount.reports.push(newReport); // Push new report to reports array

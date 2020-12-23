@@ -24,7 +24,7 @@ const defaultDealTwo = (brand) => {
     }
 };
 
-const defaultStats = {
+const defaultAffStats = {
     balance: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' }
@@ -51,6 +51,33 @@ const defaultStats = {
     ]
 };
 
+const defaultActStats = {
+    balance: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
+    ],
+    commission: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
+    ],
+    cashback: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
+    ],
+    payments: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
+    ],
+    requested: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
+    ],
+    raf: [
+        { amount: 0, currency: 'EUR' },
+        { amount: 0, currency: 'USD' }
+    ]
+};
+
 const initialUpgrades = {
     Neteller: 'Fast Silver',
     Skrill: 'Bronze',
@@ -65,7 +92,13 @@ const nextUpgrades = {
     Skrill: [],
     ecoPayz: [],
     MuchBetter: []
-}
+};
+
+const defaultSiteId = {
+    'Neteller': 75417,
+    'Skrill': 75418,
+    'ecoPayz': 100 // Just using 100 as no need for this for ecoPayz
+};
 
 const brandCurrency = {
     'Neteller': 'USD',
@@ -113,10 +146,12 @@ const quarterMonths = [
 module.exports = {
     defaultDealOne,
     defaultDealTwo,
-    defaultStats,
+    defaultAffStats,
+    defaultActStats,
     affiliateDealOne,
     affiliateDealTwo,
     initialUpgrades,
     setCurrency,
-    nextUpgrades
+    nextUpgrades,
+    defaultSiteId
 }
