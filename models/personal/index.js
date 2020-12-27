@@ -4,4 +4,5 @@ module.exports = {
     Application: require('./Application'),
     Payment: require('./Payment'),
     Report: require('./Report'),
+    SubReport: require('./SubReport')
 }

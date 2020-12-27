@@ -65,7 +65,6 @@ function updateBalances (req, res) { // After next() is called on createPayment(
                 subAffCommission: { $sum: '$subAffCommission' },
             }}, 
         ])
-        // Need to add subpartner reports
     ])
     .then(([ payments, reports, subreports ]) => {
         
@@ -125,7 +124,7 @@ router.post('/fetch-payments', passport.authenticate('jwt', {
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' })
-})
+});
 
 
 

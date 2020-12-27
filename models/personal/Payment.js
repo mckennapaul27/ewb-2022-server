@@ -11,6 +11,8 @@ const Payment = new Schema({
     paidDate: Number,
     transactionId: String,
     currency: String,
+    brand: String,
+    paymentAccount: String, // can be email for Skrill, Neteller & ecoPayz and phoneCode + phoneNumber for MuchBetter and wallet address for BTC
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'activeuser',

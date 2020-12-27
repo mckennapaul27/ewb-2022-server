@@ -14,6 +14,7 @@ const {
     Payment,
     Report
 } = require('../../models/personal');
+const { createUserNotification } = require('../../utils/notifications-functions');
 
 
 // /personal/active-user/get-active-user/:_id
@@ -31,15 +32,20 @@ router.get('/get-active-user/:_id', passport.authenticate('jwt', {
 // /personal/active-user/update-payment-details/:_id
 router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
     session: false
-}), (req, res) => {
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-        ActiveUser.findByIdAndUpdate(req.params._id, {
-            paymentDetails: req.body.paymentDetails
-        }, { new: true }).select('paymentDetails').lean()
-        .then(activeUser => res.status(201).send({ activeUser, msg: 'You have successfully updated your payment details.' }))
-        .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
-    } else return res.status(403).send({ msg: 'Unauthorised' })
+        const update = req.body; // doing it this way so we can submit anything to it to update and therefore provide less routes
+        const { notification } = req.body;
+        try {
+            const partner = await ActiveUser.findByIdAndUpdate(req.params._id, update, { new: true, select: req.body.select });
+            if (notification) createUserNotification({ message: notification, type: 'Payment', belongsTo: req.params._id });
+            return res.status(200).send(partner);
+        } catch (err) {
+            console.log(err);
+            return res.status(400).send({ success: false });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
 // /personal/active-user/fetch-deal-data/:_id
@@ -48,24 +54,33 @@ router.post('/fetch-deal-data/:_id', passport.authenticate('jwt', {
 }), (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-
+        const { month, brand } = req.body;
         Promise.all([
             ActiveUser.findById(req.params._id).select('deals _id').lean(),
             Report.aggregate([ // including month and brand in query
-                // { $match: { $and: [ { belongsToActiveUser: mongoose.Types.ObjectId(req.params._id) }, { month: req.body.brand }, { brand: req.body.brand } ] } }, 
+                { $match: { $and: [ { belongsToActiveUser: mongoose.Types.ObjectId(req.params._id) }, { month }, { brand } ] } }, 
                 { $project: { 'account.transValue': 1 } }, // selected values to return 1 = true, 0 = false
                 { $group: { 
                     '_id': null, 
                     transValue: { $sum: '$account.transValue' }
                 }}
             ]),
-            // Also need volume of referrals
+            ActiveUser.find({ referredBy: req.params._id }).select('_id').lean() // get all partners that have BEEN referredBy this activeuser
+            .then(subUsers => {
+                return subUsers.reduce(async (total, nextSubUser) => {
+                    let acc = await total;
+                    for await (const report of Report.find({ belongsToActiveUser: nextSubUser._id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
+                        acc += report.account.transValue;
+                    };
+                    return acc;
+                }, Promise.resolve(0))
+            })
         ])
-        .then(([ activeUser, reports ])=> {
+        .then(([ activeUser, myVol, mySubVol ])=> {
 
             const isValid = (arr, value) => arr.length > 0 ? arr[0][value] : 0; // used when _id = null | arr is the aggregate result | value is either cashback or commission
             
-            const transValue = isValid(reports, 'transValue');
+            const transValue = isValid(myVol, 'transValue');
 
             const deal = (activeUser.deals.find(d => d.brand === req.body.brand)).rates;  
 
@@ -75,9 +90,12 @@ router.post('/fetch-deal-data/:_id', passport.authenticate('jwt', {
             achievedRate = achievedRate * 100;
             percentage = percentage * 100;
 
-            return res.status(200).send({ deal, achievedRate, percentage });
+            return res.status(200).send({ deal, achievedRate, percentage, myVol: transValue, mySubVol });
         })
-        .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
+        .catch((err) => {
+            console.log(err);
+            return res.status(500).send({ msg: 'Server error: Please contact support' })
+        })
     } else return res.status(403).send({ msg: 'Unauthorised' })
 })
 

@@ -10,7 +10,7 @@ const {
 } = require('../models/personal/index');
 
 const { setCurrency } = require('../config/deals');
-const { updateActUserStats } = require('./map-aff-dashboard-data');
+const { updateActUserStats } = require('./map-act-dashboard-data');
 const { createUserNotification } = require('../utils/notifications-functions');
 
 const actDataReducer = (results, brand, month, date) => {
@@ -21,7 +21,7 @@ const actDataReducer = (results, brand, month, date) => {
     }, Promise.resolve())
     completedAccountMapping
     .then(() => {
-        // return updateActUserStats(brand, month, date);
+        return updateActUserStats(brand, month, date);
     })
     .catch(e => console.log(e))
 };
@@ -68,6 +68,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                                 { belongsTo: existingApplication.belongsTo, accountEmail: existingApplication.email }, 
                                 { select: 'belongsTo accountEmail', new: true }
                             );
+                            await ActiveUser.findByIdAndUpdate(updatedAccount.belongsTo, { $push: { accounts: updatedAccount } }, { select: 'accounts', new: true });
                             createUserNotification({ 
                                 message: `Account ${updatedAccount.accountId} has been added to your dashboard and is now eligible`, 
                                 type: 'Account', 
@@ -192,7 +193,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                         }
                     }
                 } catch (error) {
-                    console.log('error:', error);
+                    // console.log(error);
+                    return error;
                 };
             })() // which we have to call
         )

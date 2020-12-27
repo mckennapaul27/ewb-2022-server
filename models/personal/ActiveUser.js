@@ -4,18 +4,16 @@ const Schema = mongoose.Schema;
 const { defaultDealOne, defaultDealTwo, defaultActStats } = require('../../config/deals');
 
 const ActiveUser = new Schema({ 
-    paymentDetails: {
-        EUR: {
-            brand: { type: String, default: '' },
-            email: { type: String, default: '' },
-            name: { type: String, default: '' },
-            accountId: { type: String, default: '' },
-        },
-        USD: {
-            brand: { type: String, default: '' },
-            email: { type: String, default: '' },
-        }
-    },    
+    paymentDetails: [{ // array of currency options so that they can add as many as they like
+        currency: String,
+        brand: String,
+        email: String,
+        address: String,
+        name: String,
+        accountId: String,
+        phoneCode: String,
+        phoneNumber: String,
+    }],
     deals: [{
         brand: String,
         rates: [{

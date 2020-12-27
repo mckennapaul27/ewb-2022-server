@@ -6,12 +6,14 @@ const advancedFormat = require('dayjs/plugin/advancedFormat');
 dayjs.extend(advancedFormat);
 dayjs.extend(localizedFormat); // https://day.js.org/docs/en/plugin/localized-format
 
-const { setCurrency } = require('../config/deals');
+const { setCurrency, defaultActStats } = require('../config/deals');
 const {
     Account,
     Application,
     Report,
-    ActiveUser
+    SubReport,
+    ActiveUser,
+    Payment
 } = require('../models/personal/index');
 
 const { createUserNotification } = require('../utils/notifications-functions');
@@ -23,90 +25,57 @@ const updateActUserStats = async (brand, month, date) => {
             { 'friends.0': { $exists: true } },
             { 'accounts.0': { $exists: true } }
         ] 
-    });
-    // .select('-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails');
-   
+    })
+    .select('deals friends accounts referredBy');
+
+    console.log(`Processing data for ${arr.length} activeusers ...`);
+    
     let processStatsOne = arr.reduce(async (previousPartner, nextPartner) => {
         await previousPartner;
-        return setCashback(nextPartner, brand, month).then(() => {
-            return partnerStatusCheck(nextPartner);
-        })
+        return setCashback(nextPartner, brand, month); // set cashback
     }, Promise.resolve());
     console.log('Processing [1] ...');
     processStatsOne.then(() => {
         let processStatsTwo = arr.reduce(async (previousPartner, nextPartner) => {
             await previousPartner;
-            return updateMonthlyReport(nextPartner, brand, month, date);
+            return createUpdateSubReport(nextPartner, brand, month, date); // create or update sub report
         }, Promise.resolve());
         console.log('Processing [2] ...');
         processStatsTwo.then(() => {
             let processStatsThree = arr.reduce(async (previousPartner, nextPartner) => {
                 await previousPartner;
-                return createUpdateAffSubReport(nextPartner, brand, month, date);
+                return setBalance(nextPartner); // update balance  
             }, Promise.resolve());
             console.log('Processing [3] ...');
-            processStatsThree.then(() => {
-                let processStatsFour = arr.reduce(async (previousPartner, nextPartner) => {
-                    await previousPartner;
-                    return setAffPartnerBalance(nextPartner)
-                }, Promise.resolve());
-                console.log('Processing [4] ...');
-                processStatsFour.then(() => {
-                    createAffNotification({ // once complete - add notification
-                        message: `Your ${brand} reports were updated on ${dayjs().format('LLLL')}`, 
-                        type: 'Report', 
-                        isGeneral: true 
-                    });
-                })
-            })            
+            processStatsThree.then(() => null) // return null to end sequence 
         })
     });
 };
 
-const getSubPartnerRate = async ({ referredBy }) => { // finding the partner that referred THIS partner
-    if (referredBy) {
-        const rate = await AffPartner.findById(referredBy).select('subPartnerRate epi').exec();
-        return rate;
-    } else return 0;
-}
-
-const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, epi }, brand, month) => {
+const setCashback = ({ _id, deals, referredBy }, brand, month) => {
 
     return new Promise(resolve => {
         resolve (
             (async () => {
-                const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
-                const reports = await AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue account.commission account.earnedFee').lean(); // only find accounts that have transValue > 0
-                const subPartnerRate = (await getSubPartnerRate({ referredBy })).subPartnerRate;
-
+                const rate = await getCashbackRate({ _id, deals, brand, month });
+                const reports = await Report.find({ belongsToActiveUser: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue account.commission account.earnedFee').lean(); // only find accounts that have transValue > 0
+                
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
                     await previousReport;
 
-                    const { transValue, commission, earnedFee } = nextReport.account;
-                    const levels = (twentyPercentRate, c) => { // c = commission
-                        if (c === 0) return 0;
-                        else if (revShareActive) return rate; // if revShareActive, just return rate like 25% or 27.5%
-                        else if (fixedDealActive['isActive']) return fixedDealActive['rate']; // if fixed deal active return the rate. Have put it in ['rate'] just in case in passes rate from function param
-                        else if (twentyPercentRate < 0.0050 && rate >= 0.0050) return twentyPercentRate;
-                        else if (twentyPercentRate < 0.0039) return twentyPercentRate;
-                        else return rate;
-                    };
-                    const twentyPercentRate = (earnedFee / 5) / transValue;
-                    const verifiedRate = (brand === 'Skrill' || brand === 'Neteller') ? levels(twentyPercentRate, commission) : rate;
-                    const cashback = revShareActive ? earnedFee * rate : transValue * verifiedRate;
-                    const subAffCommission = referredBy ?  (
-                        (twentyPercentRate < 0.005 && rate >= 0.005) ? cashback * 0.05 : cashback * subPartnerRate
-                    ) : 0;   
-                    
-                    const profit = commission - (subAffCommission + cashback);
+                    const { commission, earnedFee, transValue } = nextReport.account;
+                    const cashback = earnedFee * rate;
+                    const rafCashback = referredBy ? cashback * 0.05 : 0;
+                    const cashbackRate = cashback / transValue;
+                    const profit = commission - (cashback + rafCashback);
 
-                    await AffReport.findByIdAndUpdate(nextReport._id, {
+                    await Report.findByIdAndUpdate(nextReport._id, {
                         lastUpdate: Date.now(),
-                        'account.cashbackRate': verifiedRate,
+                        'account.cashbackRate': cashbackRate,
                         'account.cashback': cashback,
-                        'account.subAffCommission': subAffCommission,
+                        'account.rafCashback': rafCashback,
                         'account.profit': profit
-                    }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.subAffCommission account.profit' }).exec();
+                    }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.rafCashback account.profit' }).exec();
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());
@@ -115,191 +84,86 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
     })      
 };
 
-const getCashbackRate = ({ _id, referredBy, deals, isSubPartner, brand, month }) => {
+const getCashbackRate = ({ _id, deals, brand, month }) => {
     return new Promise(resolve => {
         resolve (
             Promise.all([
-                getReportsVolume({ _id, month }),
-                getNetworkShareVolume({ referredBy, month }),
-                getSubPartnerVolume({ _id, isSubPartner, month }),
+                getReportsVolume({ _id, brand, month }),
+                getSubUserVolume({ _id, brand, month }),
                 deals.find(d => d.brand === brand).rates
             ])
-            .then(( [myVol, myNetworkVol, mySubVol, myDeal] ) => {
-                const transValue = myVol + myNetworkVol + mySubVol;
+            .then(( [myVol, mySubVol, myDeal] ) => {
+                const transValue = myVol + mySubVol;
                 return myDeal.reduce((acc, deal) => (transValue <= deal.maxVol && transValue >= deal.minVol) ? (acc += deal.cashback, acc) : acc, 0)
             }).catch(e => console.log(e))
         )
     });
 };
 
-const getReportsVolume = async ({ _id, month }) => { // search by month ONLY for all brands
+const getReportsVolume = async ({ _id, brand, month }) => { // search by month ONLY for all brands
     let transValue = 0;
-    for await (const report of AffReport.find({ belongsToPartner: _id, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
+    for await (const report of Report.find({ belongsToActiveUser: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
         transValue += report.account.transValue;
     };
     return transValue;
 };
 
-const getNetworkShareVolume = ({ referredBy, month }) => { 
-    if (referredBy) {
-        return new Promise(resolve => {
-            resolve (
-                AffPartner.find({ referredBy }).select('_id').lean() // get all partners that have the SAME referredBy as this partner
-                .then(partnersReferredBySameNetwork => {
-                    return partnersReferredBySameNetwork.reduce(async (total, nextPartner) => {
-                        let acc = await total;
-                        for await (const report of AffReport.find({ belongsToPartner: nextPartner._id, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
-                            acc += report.account.transValue;
-                        };
-                        return acc;
-                    }, Promise.resolve(0))
-                })
-            )
-        });
-    } else return 0;
-};
-
-const getSubPartnerVolume = ({ _id, month, isSubPartner }) => {
-    if (isSubPartner) {
-        return new Promise(resolve => {
-            resolve (
-                AffPartner.find({ referredBy: _id }).select('_id').lean() // get all partners that have BEEN referredBy this partner
-                .then(subPartners => {
-                    return subPartners.reduce(async (total, nextSubPartner) => {
-                        let acc = await total;
-                        for await (const report of AffReport.find({ belongsToPartner: nextSubPartner._id, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
-                            acc += report.account.transValue;
-                        };
-                        return acc;
-                    }, Promise.resolve(0))
-                })
-            )
-        });
-    } else return 0;
-};
-
-const updateMonthlyReport = ({ _id, referredBy, deals }, brand, month, date) => {
-    return new Promise(resolve => {
-        resolve (
-            (async () => {
-                const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
-                const transValue = await getVolumeByBrand({ _id }, brand, month);
-                const commission = await getCommissionByBrand({ _id }, brand, month);
-                const cashback = await getCashBackByBrand({ _id }, brand, month);
-                const subAffCommission = await getSubAffCommissionByBrand({ _id }, brand, month);
-                const commissionRate = commission / transValue;
-                const profit = commission - (cashback + subAffCommission);
-                
-                if (transValue > 0) { // can't use await AffReportMonthly.bulkWrite([ here anymore because we need to use .pre('validate') to add parameters
-                    const existingReport = await AffReportMonthly.findOne({ belongsTo: _id, month, brand }).select('_id').lean();
-                    if (existingReport) {
-                        await AffReportMonthly.findByIdAndUpdate(existingReport._id, {
-                            lastUpdate: Date.now(),
-                            transValue,
-                            commission,
-                            commissionRate,
-                            cashback,
-                            cashbackRate: rate,
-                            subAffCommission,
-                            profit
-                        }, { new: true })
-                    } else {
-                        await AffReportMonthly.create({
-                            date,
-                            month,
-                            brand,
-                            lastUpdate: Date.now(),
-                            transValue,
-                            commission,
-                            commissionRate,
-                            cashback,
-                            cashbackRate: rate,
-                            subAffCommission,
-                            belongsTo: _id,
-                            profit
-                        })
-                    };
-                } else return;
-            })()
-        )
+const getSubUserVolume = async ({ _id, brand, month }) => Promise.resolve(
+    ActiveUser.find({ referredBy: _id }).select('_id').lean() // get all partners that have BEEN referredBy this activeuser
+    .then(subUsers => {
+        return subUsers.reduce(async (total, nextSubUser) => {
+            let acc = await total;
+            for await (const report of Report.find({ belongsToActiveUser: nextSubUser._id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
+                acc += report.account.transValue;
+            };
+            return acc;
+        }, Promise.resolve(0))
     })
-};
+);
 
-const getCashBackByBrand = async ({ _id }, brand, month) => {
-    let cashback = 0;
-    for await (const report of AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.cashback').lean()) {
-        cashback += report.account.cashback;
-    };
-    return cashback;
-};
-
-const getCommissionByBrand = async ({ _id }, brand, month) => {
-    let commission = 0;
-    for await (const report of AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.commission').lean()) {
-        commission += report.account.commission;
-    };
-    return commission;
-};
-
-const getVolumeByBrand = async ({ _id }, brand, month) => {
-    let transValue = 0;
-    for await (const report of AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
-        transValue += report.account.transValue;
-    };
-    return transValue;
-};
-
-const getSubAffCommissionByBrand = async ({ _id }, brand, month) => {
-    let subAffCommission = 0;
-    for await (const report of AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.subAffCommission').lean()) {
-        subAffCommission += report.account.subAffCommission;
-    };
-    return subAffCommission;
-};
-
-const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
+const createUpdateSubReport = ({ _id }, brand, month, date) => {
     return new Promise(resolve => {
         resolve (
             (async () => {
-                const subPartners = await AffPartner.find({ referredBy: _id, 'accounts.0': { $exists: true } }).select('_id epi') // { referredBy: _id } === the partner we are checking
-                if (subPartners.length > 0) {
-
-                    await subPartners.reduce(async (previousSubPartner, nextSubPartner) => { // this was previously causing the process to not run synchronously - important bit is to await it
+                const subUsers = await ActiveUser.find({ referredBy: _id, 'accounts.0': { $exists: true } }).select('_id epi') // { referredBy: _id } === the partner we are checking
+                if (subUsers.length > 0) {
+                    await subUsers.reduce(async (previousSubUser, nextSubUser) => { // this was previously causing the process to not run synchronously - important bit is to await it
                         
-                        await previousSubPartner;
+                        await previousSubUser;
 
-                        const aggregateReports = await AffReport.aggregate([
-                            { $match: { $and: [ { belongsToPartner: mongoose.Types.ObjectId(nextSubPartner._id)}, { brand }, { month }, { 'account.transValue': { $gt: 0 } } ] } },
-                            { $project: { 'account.cashback': 1, 'account.commission': 1, 'account.transValue': 1, 'account.subAffCommission': 1, 'account.deposits': 1 } }, // selected values to return 1 = true, 0 = false
+                        const aggregateReports = await Report.aggregate([
+                            { $match: { $and: [ { belongsToActiveUser: mongoose.Types.ObjectId(nextSubUser._id)}, { brand }, { month }, { 'account.transValue': { $gt: 0 } } ] } },
+                            { $project: { 'account.cashback': 1, 'account.commission': 1, 'account.transValue': 1, 'account.rafCashback': 1, 'account.deposits': 1 } }, // selected values to return 1 = true, 0 = false
                             { $group: { 
                                 '_id': null, 
                                 deposits: { $sum: '$account.deposits' },
                                 transValue: { $sum: '$account.transValue' },
                                 cashback: { $sum: '$account.cashback' },
                                 commission: { $sum: '$account.commission' },
-                                subAffCommission: { $sum: '$account.subAffCommission' }
+                                rafCashback: { $sum: '$account.rafCashback' }
                             }}, 
-                        ]);                       
+                        ]);              
+                        const userId = (await ActiveUser.findById(nextSubUser._id).select('belongsTo').populate({ path: 'belongsTo', select: 'userId' })).belongsTo.userId;
 
                         if (aggregateReports.length > 0) {
-                            const { deposits, transValue, commission, cashback, subAffCommission } = aggregateReports[0];
+                            const { deposits, transValue, commission, cashback, rafCashback } = aggregateReports[0];
                             const cashbackRate = cashback / transValue;
-                            const subReport = await AffSubReport.bulkWrite([
+                            const subReport = await SubReport.bulkWrite([
                                 {
                                     updateOne: { 
-                                        filter: { belongsTo: _id, month, brand, epi: nextSubPartner.epi }, 
+                                        filter: { belongsTo: _id, month, brand, userId }, 
                                         update: { 
                                             $set: {
                                                 date,
                                                 month,
                                                 lastUpdate: Date.now(),
                                                 brand,
-                                                epi: nextSubPartner.epi,
+                                                userId,
                                                 deposits,
                                                 transValue,
                                                 commission,
                                                 cashback,
-                                                subAffCommission,
+                                                rafCommission: rafCashback,
                                                 cashbackRate,
                                                 currency: setCurrency(brand),
                                                 belongsTo: _id
@@ -311,6 +175,7 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
                             ]);
                             return new Promise(resolve => resolve(subReport)); // this is important bit - we return a promise that resolves to another promise
                         } else return;
+
                     }, Promise.resolve());
                 } else return;
             })()
@@ -318,13 +183,12 @@ const createUpdateAffSubReport = ({ _id }, brand, month, date) => {
     })
 };
 
-const setAffPartnerBalance = ({ _id }) => {
+const setBalance = ({ _id }) => {
     return new Promise(resolve => {
         resolve (
             (async () => {
-
-                const affReports = await AffReport.aggregate([
-                    { $match: { $and: [ { belongsToPartner: mongoose.Types.ObjectId(_id) }, { 'account.transValue': { $gt: 0 } } ] } }, // only search if transValue > 0
+                const reports = await Report.aggregate([
+                    { $match: { $and: [ { belongsToActiveUser: mongoose.Types.ObjectId(_id) }, { 'account.transValue': { $gt: 0 } } ] } }, // only search if transValue > 0
                     { $project: { 'account.cashback': 1, 'account.commission': 1, 'account.currency': 1 } }, // selected values to return 1 = true, 0 = false
                     { $group: { // https://docs.mongodb.com/manual/reference/operator/aggregation/group/
                         '_id': {
@@ -334,17 +198,17 @@ const setAffPartnerBalance = ({ _id }) => {
                         commission: { $sum: '$account.commission' }
                     }},
                 ]);
-                const affSubReports = await AffSubReport.aggregate([
+                const subReports = await SubReport.aggregate([
                     { $match: { $and: [ { belongsTo: mongoose.Types.ObjectId(_id) } ] } },
-                    { $project: { 'subAffCommission': 1, 'currency': 1 } }, // selected values to return 1 = true, 0 = false
+                    { $project: { 'rafCommission': 1, 'currency': 1 } }, // selected values to return 1 = true, 0 = false
                     { $group: { // https://docs.mongodb.com/manual/reference/operator/aggregation/group/
                         '_id': {
                             currency: '$currency'
                         },
-                        total: { $sum: '$subAffCommission' }
+                        total: { $sum: '$rafCommission' }
                     }},
                 ]);
-                const affPayments = await AffPayment.aggregate([
+                const payments = await Payment.aggregate([
                     { $match: { $and: [ { belongsTo: mongoose.Types.ObjectId(_id) } ] } },
                     { $project: { 'currency': 1, 'status': 1, 'amount': 1 } }, // selected values to return 1 = true, 0 = false
                     { $group: {
@@ -356,89 +220,40 @@ const setAffPartnerBalance = ({ _id }) => {
                     }}
                 ]);
                 
-                const commission = affReports.reduce((acc, item) => (acc[item._id.currency] += item.commission, acc), { USD: 0, EUR: 0 });
-                const cashback = affReports.reduce((acc, item) => (acc[item._id.currency] += item.cashback, acc), { USD: 0, EUR: 0 });
-                const subCommission = affSubReports.reduce((acc, item) => (acc[item._id.currency] += item.total, acc), { USD: 0, EUR: 0 });
-                const paid = affPayments.reduce((acc, item) => item._id.status === 'Paid' ? (acc[item._id.currency] += item.total, acc) : acc, { USD: 0, EUR: 0 });
-                const requested = affPayments.reduce((acc, item) => item._id.status === 'Requested' ? (acc[item._id.currency] += item.total, acc) : acc, { USD: 0, EUR: 0 });
+                const commission = reports.reduce((acc, item) => (acc[item._id.currency] += item.commission, acc), { USD: 0, EUR: 0 });
+                const cashback = reports.reduce((acc, item) => (acc[item._id.currency] += item.cashback, acc), { USD: 0, EUR: 0 });
+                const rafCommission = subReports.reduce((acc, item) => (acc[item._id.currency] += item.total, acc), { USD: 0, EUR: 0 });
+                const paid = payments.reduce((acc, item) => item._id.status === 'Paid' ? (acc[item._id.currency] += item.total, acc) : acc, { USD: 0, EUR: 0 });
+                const requested = payments.reduce((acc, item) => item._id.status === 'Requested' ? (acc[item._id.currency] += item.total, acc) : acc, { USD: 0, EUR: 0 });
                 let balance = {
-                    USD: (cashback['USD'] + subCommission['USD']) - (paid['USD'] + requested['USD']),
-                    EUR: (cashback['EUR'] + subCommission['EUR']) - (paid['EUR'] + requested['EUR']),
+                    USD: (cashback['USD'] + rafCommission['USD']) - (paid['USD'] + requested['USD']),
+                    EUR: (cashback['EUR'] + rafCommission['EUR']) - (paid['EUR'] + requested['EUR']),
                 };
 
                 await ['USD', 'EUR'].reduce(async (acc, currency) => {
                     await acc;
 
-                    const partner = await AffPartner.findByIdAndUpdate(_id, {
+                    const activeUser = await ActiveUser.findByIdAndUpdate(_id, {
                         'stats.balance.$[el].amount': balance[currency],
                         'stats.commission.$[el].amount': commission[currency], 
                         'stats.cashback.$[el].amount': cashback[currency],
                         'stats.payments.$[el].amount': paid[currency], 
                         'stats.requested.$[el].amount': requested[currency], 
-                        'stats.subCommission.$[el].amount': subCommission[currency] // Currently the affpartners we have in local db does not include subCommission in stats array - for this reason it may fail. When we load data from old site, we need to make sure every partner has stats.subCommission in their balance array
+                        'stats.raf.$[el].amount': rafCommission[currency] 
                     }, {
                         new: true,
                         arrayFilters: [{ 'el.currency': currency }],
                         select: 'stats'
                     });
-                    return new Promise(resolve => resolve(partner)); // this is important bit - we return a promise that resolves to another promise
+                    return new Promise(resolve => resolve(activeUser)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());   
             })()
         )
     })
 };
 
-const partnerStatusCheck = ({ _id, isSubPartner, isOfficialPartner, epi }) => {
-    return new Promise(resolve => {
-        resolve (
-            (async () => {
-                if (!isSubPartner || !isOfficialPartner) { // only call queries if not already isSubPartner OR; isOfficialPartner === false
-
-                    const subPartners = await AffPartner.find({ referredBy: _id }).select('_id').lean(); 
-                    const myVol = await (async () => {
-                        let transValue = 0;
-                        for await (const report of AffReport.find({ belongsToPartner: _id, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
-                            transValue += report.account.transValue;
-                        };
-                        return transValue;
-                    })()
-                    const subVol = await subPartners.reduce(async (total, nextSubPartner) => {
-                        let acc = await total;
-                        for await (const report of AffReport.find({ belongsToPartner: nextSubPartner._id, 'account.transValue': { $gt: 0 } }).select('account.transValue').lean()) {
-                            acc += report.account.transValue;
-                        };
-                        return acc;
-                    }, Promise.resolve(0));
-
-                    const total = subVol + myVol;
-                    const isSub = total > 10000 ? true : false;
-                    const isOfficial = total > 250000 ? true : false;
-
-                    if (isSub) {
-                        // send email
-                        await AffPartner.findByIdAndUpdate(_id, {
-                            isSubPartner: isSub
-                        }, { select: 'isSubPartner' });
-                    } else if (isOfficial) {
-                        // send email
-                        await AffPartner.findByIdAndUpdate(_id, {
-                            isOfficialPartner: isOfficial
-                        }, { select: 'isOfficialPartner' });
-                    } else return;
-                } else return;
-            })()
-        )
-    })
-};
-
-
-
-
 module.exports = {
     updateActUserStats,
     getCashbackRate,
-    getCashbackRate,
-    getVolumeByBrand,
-    getCashBackByBrand,
-    getSubAffCommissionByBrand
+    getCashbackRate
 }

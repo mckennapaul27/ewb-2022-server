@@ -11,6 +11,9 @@ const {
     AffPartner,
     AffNotification
 } = require('../../models/affiliate/index');
+const {
+    User
+} = require('../../models/common/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const { createAffNotification } = require('../../utils/notifications-functions');
 
@@ -59,7 +62,11 @@ router.post('/fetch-notifications', passport.authenticate('jwt', {
         let pageIndex = parseInt(req.query.pageIndex);
         let { sort, query } = req.body;
         let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
-        let orQuery = { isGeneral: true };
+        let regDate = (await AffPartner.findById(query.belongsTo).select('belongsTo').populate({ path: 'belongsTo', select: 'regDate' })).belongsTo.regDate;
+        let orQuery = { 
+            isGeneral: true,
+            createdAt: { $gte: regDate }
+        };
         query = mapRegexQueryFromObj(query);  
         if (query.type) orQuery['type'] = query.type; // we need orQuery to look for general notifications. We also only add 'type' to the orQuery if it exists in query, otherwise it will just return all isGeneral: true messages despite the filter
         let searchQuery = query.message ? query : { $or: [ query, orQuery ] }; // only use orQuery if no 'message' is queried.
