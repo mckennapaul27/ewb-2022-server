@@ -15,6 +15,7 @@ const AffPartner = new Schema({
         phoneCode: String,
         phoneNumber: String,
     }],
+    email: String,
     deals: [{
         brand: String,
         rates: [{

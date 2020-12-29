@@ -11,6 +11,7 @@ const userRouter = require('./user.router');
 const partnerRouter = require('./partner.router');
 // const rafRouter = require('./raf.router');
 const apiRouter = require('./api.router');
+const activeUserRouter = require('./active-user-router');
 
 // routes
 router.use('/auth', authRouter);
@@ -29,7 +30,7 @@ router.use('/user', userRouter);
 
 router.use('/partner', partnerRouter);
 
-// router.use('/raf', rafRouter);
+router.use('/active-user', activeUserRouter);
 
 router.use('/api', apiRouter);
 

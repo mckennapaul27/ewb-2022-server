@@ -20,19 +20,15 @@ const {
     AffReport,
     AffApplication,
     AffPayment,
-    AffAccount,
     AffReportMonthly,
     AffSubReport
 } = require('../../models/affiliate/index');
-const {
-    Application
-} = require('../../models/personal/index');
 
 const { mapRegexQueryFromObj, isPopulatedValue, mapQueryForAggregate, mapQueryForPopulate } = require('../../utils/helper-functions');
 const { uploadAffReports } = require('../../queries/ecopayz-account-report');
 const { createAffNotification } = require('../../utils/notifications-functions');
-const { affApplicationYY, affApplicationYN, affApplicationNN } = require('../../utils/notifications-list');
-const { defaultAffStats } = require('../../config/deals');
+const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
+const { createAffAccAffReport } = require('../../utils/account-functions');
 
 
 // POST /admin/partner/get-partner
@@ -172,9 +168,9 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
     
             // notifications
-            if (action === 'YY') createAffNotification(affApplicationYY({ brand, accountId, belongsTo }));
-            if (action === 'YN') createAffNotification(affApplicationYN({ brand, accountId, belongsTo }));
-            if (action === 'NN') createAffNotification(affApplicationNN({ brand, accountId, belongsTo }));
+            if (action === 'YY') createAffNotification(applicationYY({ brand, accountId, belongsTo }));
+            if (action === 'YN') createAffNotification(applicationYN({ brand, accountId, belongsTo }));
+            if (action === 'NN') createAffNotification(applicationNN({ brand, accountId, belongsTo }));
 
             // send emails >>>>>>>>>> 
 
@@ -222,9 +218,9 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                             const aa = await AffApplication.findByIdAndUpdate(existingApplication._id, update, { new: true });
                             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
                             // notifications
-                            if (action === 'YY') createAffNotification(affApplicationYY({ brand, accountId, belongsTo }));
-                            if (action === 'YN') createAffNotification(affApplicationYN({ brand, accountId, belongsTo }));
-                            if (action === 'NN') createAffNotification(affApplicationNN({ brand, accountId, belongsTo }));
+                            if (action === 'YY') createAffNotification(applicationYY({ brand, accountId, belongsTo }));
+                            if (action === 'YN') createAffNotification(applicationYN({ brand, accountId, belongsTo }));
+                            if (action === 'NN') createAffNotification(applicationNN({ brand, accountId, belongsTo }));
 
                             // send emails  >>>>>>>>>>>>>
 
@@ -301,7 +297,8 @@ router.post('/fetch-monthly-reports', passport.authenticate('admin', {
                         cashback: { $sum: '$cashback' }, 
                         volume: { $sum: '$transValue' },
                         subAffCommission: { $sum: '$subAffCommission' }, 
-                        profit: { $sum: '$profit' } 
+                        profit: { $sum: '$profit' },
+                        deposits: { $sum: '$account.deposits' }, 
                     } 
                 }
             ]);  
@@ -312,7 +309,8 @@ router.post('/fetch-monthly-reports', passport.authenticate('admin', {
                         allCashback: { $sum: '$cashback' }, 
                         allVolume: { $sum: '$transValue' },
                         allSubAffCommission: { $sum: '$subAffCommission' }, 
-                        allProfit: { $sum: '$profit' } 
+                        allProfit: { $sum: '$profit' },
+                        allDeposits: { $sum: '$account.deposits' },
                     } 
                 }
             ]);  
@@ -416,35 +414,7 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
     })
 };
 
-const createAffAccAffReport = ({ accountId, brand, belongsTo }) => {
-    return new Promise (resolve => { // have to return a promise to be able to await it. E.G  await createAffAccAffReport ({ accountId, brand, belongsTo });
-        resolve (
-            (async () => {
-                const existingAccount = await AffAccount.findOne({ accountId }).select('accountId reports belongsTo'); // select accounts
-                if (!existingAccount) {
-                    const newAccount = await AffAccount.create({ brand, accountId, belongsTo }); // calls .pre('save') middleware here [1]
-                    const newReport = await AffReport.create({ 
-                        date: Number(dayjs().startOf('month').format('x')),
-                        month: dayjs().format('MMMM YYYY'),
-                        brand, 
-                        belongsTo: newAccount._id,
-                        belongsToPartner: newAccount.belongsTo,
-                        'account.accountId': accountId,
-                        'account.deposits': 0,
-                        'account.transValue': 0,
-                        'account.commission': 0,
-                        'account.commissionRate': 0,
-                        'account.earnedFee': 0,
-                        'account.cashbackRate': 0,
-                    });
-                    newAccount.reports.push(newReport); // Push new report to reports array
-                    await newAccount.save(); // calls .pre('save') middleware here again [2]
-                    await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true }); 
-                } else return;
-            })()
-        )
-    })
-}
+
 
 
 

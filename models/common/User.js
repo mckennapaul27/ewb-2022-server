@@ -60,8 +60,8 @@ User.pre('validate', function (next) { // https://stackoverflow.com/questions/30
     bcrypt.hash(user.password, 10)
     .then(async hash => {
         const userId = await getNextSequence('userid');
-        const activeUser = await createActiveUser(user._id, user.referredByActiveUser);
-        const partner = await createAffPartner(user._id, user.referredByPartner);
+        const activeUser = await createActiveUser(user._id, user.referredByActiveUser, user.email);
+        const partner = await createAffPartner(user._id, user.referredByPartner, user.email);
         user.partner = partner;
         user.activeUser = activeUser;
         user.userId = userId;
@@ -98,8 +98,8 @@ User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, refer
                     token: accessToken
                 }
             });
-            newUser.partner = await createAffPartner(newUser._id, referredByPartner);
-            newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser); 
+            newUser.partner = await createAffPartner(newUser._id, referredByPartner, profile.emails[0].value);
+            newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser, profile.emails[0].value); 
             newUser.save(async function(error, savedUser) {
                 if (error) return error;
                 return cb(error, savedUser);
@@ -127,8 +127,8 @@ User.statics.upsertFbUser = function (referredBy, referredByActiveUser, referred
                     token: accessToken
                 }
             });
-            newUser.partner = await createAffPartner(newUser._id, referredByPartner);
-            newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser); 
+            newUser.partner = await createAffPartner(newUser._id, referredByPartner, profile.emails[0].value);
+            newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser, profile.emails[0].value); 
             newUser.save(async function(error, savedUser) {
                 if (error) return error;
                 return cb(error, savedUser);
@@ -150,17 +150,17 @@ function getNextSequence (name) {
     }) 
 };
 
-// create new ActiveUser with default dealTiers
-async function createActiveUser (belongsTo, referredBy) { // creates new activeuser, sets referredBy if applicable and pushes new active user to friends array [] of the referrer
-    const newActiveUser = await ActiveUser.create({ belongsTo, referredBy });
+// create new ActiveUser with default dealTiers 
+async function createActiveUser (belongsTo, referredBy, email) { // creates new activeuser, sets referredBy if applicable and pushes new active user to friends array [] of the referrer
+    const newActiveUser = await ActiveUser.create({ belongsTo, referredBy, email });
     if (newActiveUser.referredBy) await ActiveUser.findByIdAndUpdate(newActiveUser.referredBy, { $push: { friends: newActiveUser } }, { new: true });
     return newActiveUser; // it has to RETURN the new active user, otherwise it won't work as the await await createActiveUser() expects activeUser to be returned.
 };
 
 
 // create new AffPartner
-async function createAffPartner (belongsTo, referredBy) {
-    const newAffPartner = await AffPartner.create({ belongsTo, referredBy });
+async function createAffPartner (belongsTo, referredBy, email) {
+    const newAffPartner = await AffPartner.create({ belongsTo, referredBy, email });
     if (newAffPartner.referredBy) await AffPartner.findByIdAndUpdate(newAffPartner.referredBy, { $push: { subPartners: newAffPartner } }, { new: true });
     return newAffPartner;
 }

@@ -2,11 +2,11 @@ const defaultDealOne = (brand) => {
     return {
         brand: brand,
         rates: [
-            { level: 1, minVol: 0, maxVol: 10000, cashback: 0.15 },
-            { level: 2, minVol: 10000, maxVol: 100000, cashback: 0.175 },
-            { level: 3, minVol: 100001, maxVol: 250000, cashback: 0.20 },
-            { level: 4, minVol: 250001, maxVol: 500000, cashback: 0.225 },
-            { level: 5, minVol: 500001, maxVol: 1500000, cashback: 0.25 }
+            { level: 1, minVol: 0, maxVol: 10000, cashback: 0.16 },
+            { level: 2, minVol: 10000, maxVol: 100000, cashback: 0.17 },
+            { level: 3, minVol: 100001, maxVol: 250000, cashback: 0.18 },
+            { level: 4, minVol: 250001, maxVol: 500000, cashback: 0.19 },
+            { level: 5, minVol: 500001, maxVol: 1500000, cashback: 0.20 }
         ]
     }
 };
@@ -15,11 +15,11 @@ const defaultDealTwo = (brand) => {
     return {
         brand: brand,
         rates: [
-            { level: 1, minVol: 0, maxVol: 10000, cashback: 0.175 },
-            { level: 2, minVol: 10000, maxVol: 100000, cashback: 0.20 },
-            { level: 3, minVol: 100001, maxVol: 250000, cashback: 0.225 },
-            { level: 4, minVol: 250001, maxVol: 500000, cashback: 0.25 },
-            { level: 5, minVol: 500001, maxVol: 1500000, cashback: 0.275 }
+            { level: 1, minVol: 0, maxVol: 10000, cashback: 0.26 },
+            { level: 2, minVol: 10000, maxVol: 100000, cashback: 0.27 },
+            { level: 3, minVol: 100001, maxVol: 250000, cashback: 0.28 },
+            { level: 4, minVol: 250001, maxVol: 500000, cashback: 0.29 },
+            { level: 5, minVol: 500001, maxVol: 1500000, cashback: 0.30 }
         ]
     }
 };
