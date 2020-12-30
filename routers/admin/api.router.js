@@ -24,7 +24,8 @@ const {
     AffPayment,
     AffAccount,
     AffReportMonthly,
-    AffSubReport
+    AffSubReport,
+    AffNotification
 } = require('../../models/affiliate/index');
 const {
     Application,
@@ -33,6 +34,7 @@ const {
 const { createAccountReport, createAffAccAffReport } = require('../../utils/account-functions');
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createUserNotification, createAffNotification } = require('../../utils/notifications-functions');
+const { uploadAffReports } = require('../../queries/ecopayz-account-report');
 
 
 // POST /admin/api/call-daily-functions
@@ -68,12 +70,26 @@ router.post('/fetch-applications-csv', passport.authenticate('admin', {
             let applications = [...affApplications, ...dashApplications]
             return res.status(200).send({ applications }); 
         } catch (err) {
-            console.log(err);
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
+// POST /admin/api/add-notification
+router.post('/add-notification', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { isGeneral, type, message } = req.body;
+        try {
+            await AffNotification.create({ isGeneral, message, type })
+            return res.status(200).send({ msg: 'Successfully added notification' });
+        } catch (error) {
+            return res.status(400).send(err)
+        }
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+})
 // POST /admin/api/upload-application-results
 router.post('/upload-application-results', passport.authenticate('admin', {
     session: false
@@ -106,7 +122,6 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         const existingDashApplication = await Application.findOne({ 'accountId': app.accountId }).select('accountId').lean();
                         if (existingAffApplication) { // updating affiliate applications
                             const aa = await AffApplication.findByIdAndUpdate(existingAffApplication._id, update, { new: true });
-                            console.log('aa: ', aa);
                             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
                             // notifications
                             if (action === 'YY') createAffNotification(applicationYY({ brand, accountId, belongsTo }));
@@ -117,7 +132,6 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         };
                         if (existingDashApplication) { // updating dash / personal applications
                             const ab = await Application.findByIdAndUpdate(existingDashApplication._id, update, { new: true });
-                            console.log('ab: ', ab);
                             const { brand, belongsTo, accountId } = ab; // deconstruct updated application
                             let _id = (await ActiveUser.findById(belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
                             if (action === 'YY') createUserNotification(applicationYY({ brand, accountId, belongsTo: _id }));
@@ -137,6 +151,10 @@ router.post('/upload-application-results', passport.authenticate('admin', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
+// POST /admin/api/upload-reports - uploading applications using CSV
+router.post('/upload-reports', passport.authenticate('admin', {
+    session: false
+}), uploadAffReports);
 
 
 

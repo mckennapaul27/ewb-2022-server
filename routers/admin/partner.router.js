@@ -25,7 +25,6 @@ const {
 } = require('../../models/affiliate/index');
 
 const { mapRegexQueryFromObj, isPopulatedValue, mapQueryForAggregate, mapQueryForPopulate } = require('../../utils/helper-functions');
-const { uploadAffReports } = require('../../queries/ecopayz-account-report');
 const { createAffNotification } = require('../../utils/notifications-functions');
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createAffAccAffReport } = require('../../utils/account-functions');
@@ -185,58 +184,6 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
-// POST /admin/partner/upload-application-results - uploading applications using CSV
-router.post('/upload-application-results', passport.authenticate('admin', {
-    session: false
-}), async (req, res) => {
-    const token = getToken(req.headers);
-    if (token) {
-        let transactionFile = req.files.file;
-        let fileName = path.join(__dirname, '../../csv/application-results.csv');
-        transactionFile.mv(fileName, function (err) {
-            if (err) return res.status(500).send(err);
-            let applicationData = [];
-            let inputStream = fs.createReadStream(fileName, 'utf8');
-            inputStream.pipe(csv(['accountId', 'Tagged', 'Upgraded'])) // set headers manually
-            .on('data', data => applicationData.push(data))
-            .on('end', () => {
-                applicationData = applicationData.reduce((acc, item) => acc.some(a => a.accountId === item.accountId) ? acc : (acc.push(item), acc), []); // remove duplicates - have to put second return of acc inside brackets (acc.push(item), acc) otherwise it will not return acc
-                applicationData.map(async app => {
-                    const today = dayjs().format('DD/MM/YYYY');
-                    const update = {
-                        'status': app.Tagged === 'Y' ? 'Approved' : 'Declined',
-                        'upgradeStatus': (app.Upgraded === 'Y') ? `Upgraded ${today}` : (app.Tagged === 'Y' && app.Upgraded === 'N') ? `Not verified ${today}` : `Declined ${today}`,
-                        'availableUpgrade.valid': (app.Upgraded === 'Y') ? false : ( app.Tagged === 'N') ? false : true 
-                    };
-                    if (app.Upgraded === 'Y' || app.Tagged === 'N') update['availableUpgrade.status'] = '-';
-                    let workOutAction = (tagged, upgraded) => (tagged === 'Y' && upgraded === 'Y') ? 'YY' : (tagged === 'Y' && upgraded === 'N') ? 'YN' : 'NN';
-                    let action = workOutAction(app.Tagged, app.Upgraded);
-                    
-                    try {
-                        const existingApplication = await AffApplication.findOne({ 'accountId': app.accountId }).select('accountId').lean();
-                        if (existingApplication) {
-                            const aa = await AffApplication.findByIdAndUpdate(existingApplication._id, update, { new: true });
-                            const { brand, belongsTo, accountId } = aa; // deconstruct updated application
-                            // notifications
-                            if (action === 'YY') createAffNotification(applicationYY({ brand, accountId, belongsTo }));
-                            if (action === 'YN') createAffNotification(applicationYN({ brand, accountId, belongsTo }));
-                            if (action === 'NN') createAffNotification(applicationNN({ brand, accountId, belongsTo }));
-
-                            // send emails  >>>>>>>>>>>>>
-
-                            if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
-
-                        } 
-                    } catch (error) {
-                        return error;
-                    }
-                })
-                return res.status(201).send({ msg: 'Successfully updated applications' });
-            })  
-        });        
-    } else return res.status(403).send({ msg: 'Unauthorised' });
-});
-
 // POST /admin/partner/fetch-payments
 router.post('/fetch-payments', passport.authenticate('admin', {
     session: false
@@ -345,11 +292,6 @@ router.post('/update-payment/:_id', passport.authenticate('admin', {
         }
     } else return res.status(403).send({ msg: 'Unauthorised' });
 }, updateBalances);
-
-// POST /admin/partner/upload-reports - uploading applications using CSV
-router.post('/upload-reports', passport.authenticate('admin', {
-    session: false
-}), uploadAffReports);
 
 function updateBalances (req, res) { // After next() is called on /update-payment/:_id it comes next to updateBalances()
     return Promise.all([
