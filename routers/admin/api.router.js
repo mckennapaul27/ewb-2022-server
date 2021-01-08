@@ -51,7 +51,6 @@ router.post('/call-daily-functions', passport.authenticate('admin', {
             if (callFunction === 'ACI') fetchACIDReport({ brand, url });
             return res.status(200).send({ msg: 'Successfully called API' });
         } catch (err) {
-            console.log(err)
             return res.status(400).send({ msg: 'Error calling API' })
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
@@ -141,7 +140,6 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                             if (action === 'YY' || action === 'YN') await createAccountReport({ accountId, brand, belongsTo })
                         }
                     } catch (error) {
-                        console.log(error);
                         return error;
                     }
                 })

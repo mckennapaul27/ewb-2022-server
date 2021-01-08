@@ -1,5 +1,6 @@
 module.exports = {
     User: require('./User'),
     UserCounter: require('./UserCounter'),
-    UserNotification: require('./UserNotification')
+    UserNotification: require('./UserNotification'),
+    Brand: require('./Brand')
 }

@@ -25,7 +25,7 @@ const {
     options,
     corsOptions
 } = require('./config/config');
-
+const { dataTransfer } = require('./data.transfer');
 
 app.use(fileUpload());
 app.use(cors(corsOptions));
@@ -50,6 +50,9 @@ if (process.env.NODE_ENV !== 'dev') {
     }));
 };
 
+// dataTransfer()
+
+
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;
 // Connect to the database before starting the application server.
@@ -62,23 +65,5 @@ module.exports = app;
 
 
 
-// cron.schedule('*/10 * * * * *', () => {
-//     console.log('running a task every 10 seconds');
-    
-//     let time = dayjs(Date.now()).format('LTS');
-//     let date = startOfMonthX(0);
-//     let month = dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
-//     // dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
-//     // console.log(time, dayjs(date).format('DD/MM/YYYY'), month);
-//     console.log(NET_ACCOUNT_REPORT())
-//     // fetchAccountReport(brand = 'Neteller', month, date)
-// }, { timezone: 'Europe/London' });
-
-// let date = startOfMonthX(0);
-// let month = dayjs(Date.now()).subtract(1, 'months').format('MMMM YYYY')
-// fetchPlayerRegistrationsReport (brand = 'Skrill', month, date);
-
-// fetchACIDReport(brand = 'Neteller')
-// fetchPlayerRegistrationsReport(brand = 'Neteller', month = 'November 2020', date = Number(startOfMonthX(0)))
 
 

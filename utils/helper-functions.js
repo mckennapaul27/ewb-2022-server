@@ -37,7 +37,6 @@ const formatEpi = (epi) => parseInt(epi.split('').map(b => parseInt(b)).filter(b
 //     external: `${formatMemmoryUsage(memoryData.external)} -> V8 external memory`,
 // }
 
-// console.log(memoryUsage)
 
 
 

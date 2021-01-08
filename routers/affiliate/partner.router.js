@@ -16,6 +16,7 @@ const {
 } = require('../../models/common/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const { createAffNotification } = require('../../utils/notifications-functions');
+const { createAdminJob } = require('../../utils/admin-job-functions');
 
 
 // POST /affiliate/partner/fetch-details/:_id
@@ -34,17 +35,52 @@ router.post('/fetch-details/:_id', passport.authenticate('jwt', { // with this f
 });
 
 
-// POST /affiliate/partner/update-partner/:_id
-router.post('/update-partner/:_id', passport.authenticate('jwt', {
+// POST /affiliate/partner/update-partner-payment-details/:_id
+router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
     session: false
 }), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-        const update = req.body; // doing it this way so we can submit anything to it to update and therefore provide less routes
-        const { notification } = req.body;
         try {
-            const partner = await AffPartner.findByIdAndUpdate(req.params._id, update, { new: true, select: req.body.select });
-            if (notification) createAffNotification({ message: notification, type: 'Partner', belongsTo: req.params._id });
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { paymentDetails: req.body.paymentDetails }, { new: true, select: 'paymentDetails' })
+            createAffNotification({
+                message: `You have updated your ${req.body.brand} payment details`,
+                type: 'Partner',
+                belongsTo: req.params._id
+            });
+            createAdminJob({
+                message: `Partner has updated their payment details`,
+                completed: true,
+                status: 'Completed',
+                partner: req.params._id
+            });
+            // send email
+            return res.status(200).send(partner);
+        } catch (err) {
+            return res.status(400).send({ success: false });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /affiliate/partner/request-links/:_id
+router.post('/request-links/:_id', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        try {
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { brandAssets: req.body.brandAssets }, { new: true, select: 'brandAssets' })
+            createAffNotification({
+                message: `You have requested additional links for ${req.body.brand}`,
+                type: 'Partner',
+                belongsTo: req.params._id
+            });
+            createAdminJob({
+                message: `Partner has requested additional links for ${req.body.brand}`,
+                status: 'Pending',
+                partner: req.params._id
+            });
+            // send email
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ success: false });

@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const { initialUpgrades, defaultSiteId } = require('../../config/deals');
+const { defaultSiteId } = require('../../config/deals');
 const dayjs = require('dayjs');
+const Brand = require('../common/Brand');
 
 const AffApplication = new Schema({ 
     brand: String,
@@ -28,10 +29,11 @@ const AffApplication = new Schema({
     }
 });
 
-AffApplication.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+AffApplication.pre('validate', async function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
     const a = this; // a = affApplication
     if (!a.siteId) a.siteId = defaultSiteId[a.brand]; // if no siteId is provided on creation - use defauly siteIds
-    a.availableUpgrade.status = initialUpgrades[a.brand],
+    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+    a.availableUpgrade.status = initialUpgrade;
     a.availableUpgrade.valid = false;
     a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
     next();   

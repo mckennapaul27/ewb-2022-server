@@ -10,10 +10,14 @@ const {
 } = require('../../models/personal');
 const {
     AffApplication
-} = require('../../models/affiliate/index')
+} = require('../../models/affiliate/index');
+const {
+    Brand
+} = require('../../models/common/index')
 const { createUserNotification } = require('../../utils/notifications-functions');
 const { createApplication, updateApplication } = require('../../utils/notifications-list');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 // /personal/application/get-applications
 router.post('/get-applications', passport.authenticate('jwt', {
@@ -41,7 +45,45 @@ router.post('/request-upgrade/:_id', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 }, getApplications);
 
-// /personal/application/create-new-application
+// /personal/application/create-new-light-application (for use on front end when there might be no belongsTo)
+router.post('/create-new-light-application', async (req, res) => {
+    try {
+        const { accountId, email, currency, activeUser, brand } = req.body; 
+        let existsOne = await Application.countDocuments({ accountId }).select('accountId').lean() // check if application exists   
+        let existsTwo = await AffApplication.countDocuments({ accountId }).select('accountId').lean() // check if affapplication exists     
+        if (existsOne > 0 || existsTwo > 0) return res.status(400).send({ msg: `Application already exists for ${accountId}` });  
+        const newApp = new Application({
+            brand,
+            accountId,
+            email, 
+            currency,
+            belongsTo: activeUser
+        })
+        if (activeUser) {
+            newApp.belongsTo = activeUser;
+            let _id = (await ActiveUser.findById(newApp.belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
+            if (_id) createUserNotification(createApplication(newApp, _id));
+        };
+        await Application.create(newApp);
+        await sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+            templateId: 1, 
+            smtpParams: {
+                BRAND: brand,
+                ACCOUNTID: accountId,
+                EMAIL: email,
+                CURRENCY: currency,
+                STATUS: newApp.status
+            }, 
+            tags: ['Application'], 
+            email: email
+        });
+        return res.status(201).send({ msg: `We have received your application for ${accountId}` });
+    } catch (error) {
+        return res.status(500).send({ msg: 'Server error: Please contact support' })
+    }
+})
+
+// /personal/application/create-new-application (for use when submitting from dashboard)
 router.post('/create-new-application', passport.authenticate('jwt', {
     session: false
 }), async (req, res, next) => {
@@ -62,6 +104,18 @@ router.post('/create-new-application', passport.authenticate('jwt', {
             let _id = (await ActiveUser.findById(newApp.belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
             createUserNotification(createApplication(newApp, _id));
         }; 
+        await sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+            templateId: 1, 
+            smtpParams: {
+                BRAND: brand,
+                ACCOUNTID: accountId,
+                EMAIL: email,
+                CURRENCY: currency,
+                STATUS: newApp.status
+            }, 
+            tags: ['Application'], 
+            email: 'mckennapaul27@gmail.com' 
+        });
         req.newApp = newApp;        
         next();
     } else return res.status(403).send({ msg: 'Unauthorised' });
@@ -110,6 +164,22 @@ router.post('/fetch-applications', passport.authenticate('jwt', {
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
+});
+
+// /personal/application/fetch-brand
+router.post('/fetch-brand', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { brand } = req.body;
+        try {
+            const b = await Brand.findOne({ brand })
+            return res.status(200).send(b);
+        } catch (error) {
+            return res.status(400).send({ success: false });
+        }
+    } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
 

@@ -13,6 +13,7 @@ const {
 } = require('../../models/personal');
 const { createUserNotification } = require('../../utils/notifications-functions');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
+const { createAdminJob } = require('../../utils/admin-job-functions');
 
 // /personal/payment/create-payment/:_id
 router.post('/create-payment/:_id', passport.authenticate('jwt', {
@@ -36,7 +37,12 @@ async function createPayment (req, res, next) {
             message: `You have requested ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} to be sent to ${brand} account ${paymentAccount}`, 
             type: 'Payment', 
             belongsTo: _id 
-        })
+        });
+        createAdminJob({
+            message: `Activeuser payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
+            status: 'Pending',
+            activeUser: belongsTo
+        });
         // send email
         req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
         next();

@@ -90,6 +90,7 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
             cashbackRate,
             commissionRate
         } = a;
+        console.log(siteId);
         const defaultSiteIds = ['75417', '75418', '40278', '56']; 
         try {
             const existingAccount = await AffAccount.exists({ accountId });

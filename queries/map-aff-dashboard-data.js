@@ -16,6 +16,7 @@ const {
 } = require('../models/affiliate/index');
 
 const { createAffNotification } = require('../utils/notifications-functions');
+const { createAdminJob } = require('../utils/admin-job-functions');
 
 const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({ 
@@ -55,6 +56,11 @@ const updatePartnerStats = async (brand, month, date) => {
                         message: `Your ${brand} reports were updated on ${dayjs().format('LLLL')}`, 
                         type: 'Report', 
                         isGeneral: true 
+                    });
+                    createAdminJob({
+                        message: `${brand} reports and dashboard data were successfully mapped and updated on ${dayjs().format('LLLL')}`, 
+                        completed: true,
+                        status: 'Completed'
                     });
                 })
             })            

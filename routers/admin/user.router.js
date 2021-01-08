@@ -10,6 +10,9 @@ const { getToken } = require('../../utils/token.utils');
 const {
     User
 } = require('../../models/common/index');
+const {
+    AdminJob
+} = require('../../models/admin/index')
 
 const { mapRegexQueryFromObj, isPopulatedValue, mapQueryForPopulate } = require('../../utils/helper-functions');
 
@@ -75,6 +78,48 @@ router.post('/get-user', passport.authenticate('admin', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
+
+// POST /admin/user/fetch-admin-jobs?pageSize=${pageSize}&pageIndex=${pageIndex}
+router.post('/fetch-admin-jobs', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        let pageSize = parseInt(req.query.pageSize);
+        let pageIndex = parseInt(req.query.pageIndex);
+        let { sort, query } = req.body;
+        let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
+        query = mapRegexQueryFromObj(query); 
+        try {
+            const jobs = await AdminJob.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).lean();
+            const pageCount = await AdminJob.countDocuments(query);
+            const statuses = await AdminJob.distinct('status');
+            return res.status(200).send({ jobs, pageCount, statuses }); 
+        } catch (err) {
+            return res.status(400).send(err)
+        }    
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+});
+
+// POST /admin/user/update-admin-job/:_id
+router.post('/update-admin-job/:_id', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        try {
+            const { status, completed } = req.body;
+            if (status === 'Delete') await AdminJob.findByIdAndDelete(req.params._id);
+            else await AdminJob.findByIdAndUpdate(req.params._id, {
+                status,
+                completed
+            }, { new: true })
+            return res.status(201).send({ msg: `Updated job` }); 
+        } catch (err) {
+            return res.status(400).send(err)
+        }    
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+});
 
 
 

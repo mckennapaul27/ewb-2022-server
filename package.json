@@ -19,7 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "async-each-series": "^1.1.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.19.0",
     "chai": "^4.2.0",
@@ -47,6 +47,7 @@
     "passport-facebook-token": "^4.0.0",
     "passport-google-token": "^0.1.2",
     "passport-jwt": "^4.0.0",
+    "sib-api-v3-sdk": "^8.1.0",
     "sinon": "^9.0.3",
     "superagent": "^6.1.0",
     "superagent-proxy": "^2.1.0",

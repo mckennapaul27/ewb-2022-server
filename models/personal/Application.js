@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
-const { initialUpgrades } = require('../../config/deals');
+const Brand = require('../common/Brand');
 const dayjs = require('dayjs');
 
 const Application = new Schema({ 
@@ -27,12 +26,16 @@ const Application = new Schema({
     }
 });
 
-Application.pre('save', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+Application.pre('save', async function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
     const a = this; // a = affApplication
-    a.availableUpgrade.status = initialUpgrades[a.brand],
+    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+    a.availableUpgrade.status = initialUpgrade;
     a.availableUpgrade.valid = false;
     a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
     next();   
 });
 
 module.exports = mongoose.model('application', Application);
+
+
+// a.availableUpgrade.status = initialUpgrades[a.brand],

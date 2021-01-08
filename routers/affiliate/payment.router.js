@@ -13,6 +13,7 @@ const {
 } = require('../../models/affiliate');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const { createAffNotification } = require('../../utils/notifications-functions');
+const { createAdminJob } = require('../../utils/admin-job-functions');
 
 // /affiliate/payment/create-payment/:_id
 router.post('/create-payment/:_id', passport.authenticate('jwt', {
@@ -31,7 +32,16 @@ async function createPayment (req, res, next) {
             belongsTo: req.params._id
         });
         const { currency, amount, brand, paymentAccount, belongsTo } = newPayment;
-        createAffNotification({ message: `You have requested ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} to be sent to ${brand} account ${paymentAccount}`, type: 'Payment', belongsTo });
+        createAffNotification({ 
+            message: `You have requested ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} to be sent to ${brand} account ${paymentAccount}`, 
+            type: 'Payment', 
+            belongsTo 
+        });
+        createAdminJob({
+            message: `Affiliate payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
+            status: 'Pending',
+            partner: belongsTo
+        });
         // >>>>>>>> send email
         req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
         next();

@@ -2,20 +2,17 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const Brand = new Schema({
-    name: String,
+    brand: String,
     branding: {
         colorHex: String,
         colorClass: String,
         currencyValue: String,
         currencySymbol: String,
     },
-    properties: {
-        accountId: RegExp,
-        link: String
-    },
-    benefits: [{
-        text: String 
-    }]
+    link: String,
+    initialUpgrade: String,
+    benefits: [String],
+    terms: [String]
 });
 
 module.exports = mongoose.model('brand', Brand);

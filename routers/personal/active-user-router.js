@@ -42,7 +42,6 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
             if (notification) createUserNotification({ message: notification, type: 'Payment', belongsTo: req.params._id });
             return res.status(200).send(partner);
         } catch (err) {
-            console.log(err);
             return res.status(400).send({ success: false });
         }
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
