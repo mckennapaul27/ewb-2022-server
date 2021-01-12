@@ -81,17 +81,9 @@ const AffPartner = new Schema({
             currency: String
         }],
     },
-    notifications: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'affnotification'
-    }],
     accounts: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affaccount'
-    }],
-    statistics: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'affstats'
     }],
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
@@ -107,14 +99,10 @@ const AffPartner = new Schema({
     subPartnerRate: { type: Number, default: 0.10 },
     isSubPartner: { type: Boolean, default: false },
     isOfficialPartner: { type: Boolean, default: false },
-    subPartners: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR
+    subPartners: [{ // Need to have this for checking partners to query in map-aff-dashboard example Lucy Bandy
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner'
-    }],
-    subAffReports: [{ // PROBABLY DELETE THIS AS FOUND NO USE FOR IT SO FAR - CURRENTLY USING IN USER.JS BUT NOT SURE IT IS NEEDED
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'affsubreport'
-    }],
+    }],    
     referredBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner'
@@ -129,17 +117,18 @@ const AffPartner = new Schema({
 // pre save hook to generate dealTier's and stats for affiliates
 AffPartner.pre('validate', async function (next) {
     const affPartner = this;
-    // if (aff)
-    // if (affPartner.dealTier) because we will be laoding data from database, we need to first check if dealTier is there.
-    
-    affPartner.epi = await getNextSequence('partnerid');
 
-    affPartner.deals.push(affiliateDealOne('Neteller'));
-    affPartner.deals.push(affiliateDealOne('Skrill'));
-    affPartner.deals.push(affiliateDealTwo('ecoPayz'));
-
+    // ** For Data Transfer **
+    if (affPartner.deals.length === 0) {
+        affPartner.deals.push(affiliateDealOne('Neteller'));
+        affPartner.deals.push(affiliateDealOne('Skrill'));
+        affPartner.deals.push(affiliateDealTwo('ecoPayz'));
+    } 
+    if (!affPartner.epi) {
+        affPartner.epi = await getNextSequence('partnerid');
+    }
     affPartner.stats = defaultAffStats;
-
+    // ** For Data Transfer **
     next();   
 });
 
@@ -149,11 +138,6 @@ async function getNextSequence (name) {
     return newCounter.seq;
 };
 
-// AffPartner.pre('findOneAndUpdate', async function () {
-//     // console.log(this.model);
-//     // console.log(this.getQuery());
-//     console.log('>>>>>>>>>>>>><<<<<<<<<<<<<<<', this)
-// })
 
 
 // siteId: {

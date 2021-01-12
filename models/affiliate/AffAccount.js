@@ -17,15 +17,15 @@ const AffAccount = new Schema({
     }
 });
 
-AffAccount.pre('save', async function (next) { // https://medium.com/@justinmanalad/pre-save-hooks-in-mongoose-js-cf1c0959dba2
-    const a = this;
-    try {
-        if (a.isNew) await createAffNotification({ message: `Account ${a.accountId} has been added to your dashboard`, type: 'Account', belongsTo: a.belongsTo });
-        next();
-    } catch (error) {
-        next();
-    }
-})
+// AffAccount.pre('save', async function (next) { // https://medium.com/@justinmanalad/pre-save-hooks-in-mongoose-js-cf1c0959dba2
+//     const a = this;
+//     try {
+//         if (a.isNew) await createAffNotification({ message: `Account ${a.accountId} has been added to your dashboard`, type: 'Account', belongsTo: a.belongsTo });
+//         next();
+//     } catch (error) {
+//         next();
+//     }
+// })
 
 
 

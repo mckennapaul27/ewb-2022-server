@@ -2,7 +2,7 @@ const defaultDealOne = (brand) => {
     return {
         brand: brand,
         rates: [
-            { level: 1, minVol: 0, maxVol: 10000, cashback: 0.16 },
+            { level: 1, minVol: 0, maxVol: 10000, cashback: 0.157 },
             { level: 2, minVol: 10000, maxVol: 100000, cashback: 0.17 },
             { level: 3, minVol: 100001, maxVol: 250000, cashback: 0.18 },
             { level: 4, minVol: 250001, maxVol: 500000, cashback: 0.19 },

@@ -19,7 +19,8 @@ const fileUpload = require('express-fileupload');
 const routes = require('./router');
 
 const {
-    DB_URL,
+    LOCAL_DB_URL,
+    TEST_DATA_TRANSFER_URL,
     SECRET,
     PORT,
     options,
@@ -44,19 +45,19 @@ if (process.env.NODE_ENV !== 'dev') {
         saveUninitialized: false, // don't create session until something stored
         resave: false, // don't save session if unmodified
         store: new MongoStore({
-            url: DB_URL,
+            url: LOCAL_DB_URL,
             touchAfter: 24 * 3600 // time period in seconds
         })
     }));
 };
 
-// dataTransfer()
+dataTransfer()
 
 
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;
 // Connect to the database before starting the application server.
-mongoose.connect(DB_URL, options)
+mongoose.connect(TEST_DATA_TRANSFER_URL, options) 
 .then(database => {
     app.listen(PORT, () => console.log('App listening on port...' + PORT)); // listen to the app before doing anything else
 }).catch(e => console.log(e));

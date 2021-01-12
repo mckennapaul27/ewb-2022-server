@@ -18,7 +18,7 @@ const {
     AffReport
 } = require('../models/affiliate/index')
 const {
-    DB_URL,
+    LOCAL_DB_URL,
     SECRET,
     PORT,
     options,
