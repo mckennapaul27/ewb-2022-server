@@ -32,10 +32,10 @@ const AffApplication = new Schema({
 AffApplication.pre('validate', async function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
     const a = this; // a = affApplication
     if (!a.siteId) a.siteId = defaultSiteId[a.brand]; // if no siteId is provided on creation - use defauly siteIds
-    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
-    a.availableUpgrade.status = initialUpgrade;
-    a.availableUpgrade.valid = false;
-    a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
+    // const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+    // a.availableUpgrade.status = initialUpgrade;
+    // a.availableUpgrade.valid = false;
+    // a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
     next();   
 });
 

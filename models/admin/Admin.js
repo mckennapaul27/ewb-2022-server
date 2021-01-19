@@ -13,21 +13,26 @@ const Admin = new Schema({
     resetPasswordExpires: Date
 });
 
-Admin.pre('validate', function (next) {
-    const admin = this;
-    if (!admin.isModified('password')) return next();
-    bcrypt.hash(admin.password, 10)
-    .then(hash => {
-        admin.password = hash;
-        next();
-    }, err => next(err))
-});
+// Admin.pre('validate', function (next) {
+//     const admin = this;
+//     if (!admin.isModified('password')) return next();
+//     bcrypt.hash(admin.password, 10)
+//     .then(hash => {
+//         admin.password = hash;
+//         next();
+//     }, err => next(err))
+// });
 
 
 // compare password for login
 Admin.methods.checkPassword = function (password, callback) {
+    console.log(password);
+    console.log(this.password)
     bcrypt.compare(password, this.password, function (err, isMatch) {
-        if (err) return callback(err);
+        if (err)  {
+            console.log(err);
+            return callback(err)
+        };
         callback(null, isMatch);
     });
 }

@@ -5,7 +5,6 @@ const SubReport = new Schema({
     date: Number, // first day of month
     month: String,
     lastUpdate: { type: Number, default: Date.now }, // The static Date.now() method returns the number of milliseconds elapsed since January 1, 1970 00:00:00 UTC
-    brand: String,
     userId: Number,
     transValue: Number,
     deposits: Number,

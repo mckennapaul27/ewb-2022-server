@@ -123,6 +123,19 @@ router.post('/reset-password', (req, res) => {
     })
 });
 
+const resetPassword = async () => {
+    console.log('called');
+    return bcrypt.hash('abcdef', 10)
+    .then(hash => {
+        User.findOneAndUpdate({ email: 'netellerguimaraes@gmail.com' }, { password: hash }, { new: true })
+        .then(user => {
+            console.log('updatedUser: ', user);
+        })
+    })
+};
+
+resetPassword();
+
 // /common/auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
 router.route('/google-login') // Login to google using support@ewalletbooster.com and go to https://console.developers.google.com/apis/credentials?folder=&organizationId=&project=ewalletbooster-login
 .post(passport.authenticate('google-token', {

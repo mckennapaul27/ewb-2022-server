@@ -92,7 +92,7 @@ router.post('/fetch-sub-reports', passport.authenticate('jwt', {
         try {
             const reports = await SubReport.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize)
             const pageCount = await SubReport.countDocuments(query);
-            const brands = await SubReport.distinct('brand'); 
+            const currencies = await SubReport.distinct('currency'); 
             const months = await SubReport.distinct('month');  
             const totals = await SubReport.aggregate([ 
                 { $match: { $and: [ aggregateQuery ] } }, 
@@ -107,7 +107,7 @@ router.post('/fetch-sub-reports', passport.authenticate('jwt', {
                     } 
                 }
             ]);  
-            return res.status(200).send({ reports, pageCount, brands, months, totals  }); 
+            return res.status(200).send({ reports, pageCount, currencies, months, totals  }); 
         } catch (err) {
             return res.status(400).send(err)
         }    

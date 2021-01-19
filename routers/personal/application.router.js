@@ -135,7 +135,7 @@ async function getApplications (req, res) {
             ? `Requested ${req.newApp.availableUpgrade.status} for ${req.newApp.accountId}` 
             : '';
         try {
-            const applications = await Application.find({ belongsTo: req.body.activeUser, status: 'Approved' }).sort({ dateAdded: 'desc' }).lean();
+            const applications = await Application.find({ belongsTo: req.body.activeUser, status: { $in: ['Approved', 'Confirmed'] } }).sort({ dateAdded: 'desc' }).lean();
             return res.status(200).send({ applications, vipRequest, newApp, msg });
         } catch (error) {
             return res.status(500).send({ msg: 'Server error: Please contact support' })

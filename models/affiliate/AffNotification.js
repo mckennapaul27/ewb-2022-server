@@ -9,7 +9,6 @@ const AffNotification = new Schema({
         type: Number, 
         default: Date.now, // we don't call this function with Date.now() otherwise it would store it once,       
     },   
-    accountId: String, // so we can display in table / not need for 
     isGeneral: { type: Boolean, default: false }, // so we can add general notification from admin which shows in everybody's accounts
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,
