@@ -39,6 +39,7 @@ router.post('/login', async (req, res, next) => {
             })
         }
     } catch (err) {
+        console.log(err);
         return res.status(500).send({ msg: 'Server error: Please contact support' })
     }
 });
