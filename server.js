@@ -6,6 +6,7 @@ const app = express();
 const session = require('express-session');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 
 const mongoose = require('mongoose');
 // mongoose.set('debug', true);
@@ -20,7 +21,6 @@ const routes = require('./router');
 
 const {
     DB_URL,
-    TEST_DATA_TRANSFER_URL,
     SECRET,
     PORT,
     options,
@@ -28,6 +28,7 @@ const {
 } = require('./config/config');
 const { dataTransfer } = require('./data.transfer');
 
+app.use(compression())
 app.use(fileUpload());
 app.use(cors(corsOptions));
 app.use(helmet());
@@ -54,13 +55,17 @@ if (process.env.NODE_ENV !== 'dev') {
 // dataTransfer()
 
 
+
+
+
+
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;
 // Connect to the database before starting the application server.
-mongoose.connect(TEST_DATA_TRANSFER_URL, options) 
+mongoose.connect(DB_URL, options) 
 .then(database => {
     app.listen(PORT, () => console.log('App listening on port...' + PORT)); // listen to the app before doing anything else
-}).catch(e => console.log(e));
+}).catch(e => e);
 
 module.exports = app;
 

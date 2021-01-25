@@ -39,7 +39,6 @@ const checkData = async (res, brand, month, date, url) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand, month, date);
     } catch (err) {
-        console.log(err);
         if (err.message === 'Permission denied') setTimeout(() => {
             fetchPlayerRegistrationsReport ({ brand, month, date, url }); // need to add fetchData parameters if it fails api fetch
         }, 500);
@@ -175,7 +174,7 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                 } else return;
             } else return;
         } catch (error) {
-            console.log('error: ', error)
+            return error;
         }
     })
 }

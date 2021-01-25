@@ -92,7 +92,6 @@ router.post('/fetch-deal-data/:_id', passport.authenticate('jwt', {
             return res.status(200).send({ deal, achievedRate, percentage, myVol: transValue, mySubVol });
         })
         .catch((err) => {
-            console.log(err);
             return res.status(500).send({ msg: 'Server error: Please contact support' })
         })
     } else return res.status(403).send({ msg: 'Unauthorised' })

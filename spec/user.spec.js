@@ -59,7 +59,7 @@ function createNewUser (storedPassword) {
     .post('/common/auth/create-new-user')
     .send(user)
     .then(res => res)
-    .catch(e => console.log(e))
+    .catch(e => e)
 }
 
 

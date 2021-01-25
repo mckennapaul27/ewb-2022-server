@@ -40,7 +40,6 @@ const checkData = async (res, brand, url) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand);
     } catch (err) {
-        console.log(err);
         if (err.message === 'Permission denied') setTimeout(() => {
             fetchACIDReport ({ brand, url }); // need to add fetchData parameters
         }, 500);

@@ -54,7 +54,6 @@ function updateBalances (req, res) { // After next() is called on createPayment(
     return updatePersonalBalance({ _id: req.params._id })
     .then(() => res.status(201).send({ newPayment: req.newPayment, msg: `You have requested ${req.body.currency} ${req.body.amount.toFixed(2)} ` }))
     .catch((err) => {
-        console.log(err);
         return res.status(500).send({ msg: 'Server error: Please contact support' })
     });
 };

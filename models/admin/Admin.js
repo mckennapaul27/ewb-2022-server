@@ -26,11 +26,8 @@ const Admin = new Schema({
 
 // compare password for login
 Admin.methods.checkPassword = function (password, callback) {
-    console.log(password);
-    console.log(this.password)
     bcrypt.compare(password, this.password, function (err, isMatch) {
         if (err)  {
-            console.log(err);
             return callback(err)
         };
         callback(null, isMatch);

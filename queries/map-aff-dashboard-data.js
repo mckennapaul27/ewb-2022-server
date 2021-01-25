@@ -133,7 +133,7 @@ const getCashbackRate = ({ _id, referredBy, deals, isSubPartner, brand, month })
             .then(( [myVol, myNetworkVol, mySubVol, myDeal] ) => {
                 const transValue = myVol + myNetworkVol + mySubVol;
                 return myDeal.reduce((acc, deal) => (transValue <= deal.maxVol && transValue >= deal.minVol) ? (acc += deal.cashback, acc) : acc, 0)
-            }).catch(e => console.log(e))
+            }).catch(e => e)
         )
     });
 };

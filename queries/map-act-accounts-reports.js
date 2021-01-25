@@ -23,7 +23,7 @@ const actDataReducer = (results, brand, month, date) => {
     .then(() => {
         return updateActUserStats(brand, month, date);
     })
-    .catch(e => console.log(e))
+    .catch(e => e)
 };
 
 const mapAccountReports = async (a, brand, month, date) => {
@@ -193,7 +193,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                         }
                     }
                 } catch (error) {
-                    // console.log(error);
+                    // return error;
                     return error;
                 };
             })() // which we have to call

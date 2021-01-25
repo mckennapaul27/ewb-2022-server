@@ -63,7 +63,7 @@ function updateContact (email, attributes, listIds, unlinkListIds) { // Pass in 
     updateContact.unlinkListIds = unlinkListIds; // array of listIds to remove contact from
     apiInstance.updateContact(email, updateContact)
     .then(r => r)
-    .catch(e => console.log(e))
+    .catch(e => e)
 };
 
 
@@ -89,7 +89,7 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => { // templa
         const res = await apiInstance.sendTransacEmail(sendSmtpEmail);
         Promise.resolve(res);
     } catch (error) {
-        console.log(error);
+        return error;
         Promise.reject(error);
     }
 }

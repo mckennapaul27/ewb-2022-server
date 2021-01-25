@@ -17,7 +17,6 @@ router.get('/get-user', passport.authenticate('jwt', {
         User.findById(req.user._id).select('name email userId _id activeUser').lean()
         .then(user => res.status(200).send(user))
         .catch((err) => {
-            console.log(err)
             return res.status(500).send({ msg: 'Server error: Please contact support' })
         })
     } else return res.status(403).send({ msg: 'Unauthorised' })

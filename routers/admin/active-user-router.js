@@ -91,6 +91,7 @@ router.post('/fetch-reports', passport.authenticate('admin', {
                 }
             ]);  
             const allTotals = await Report.aggregate([ // all time totals = excludes the $match pipe
+                // { $match: { belongsToActiveUser: mongoose.Types.ObjectId(query.belongsToActiveUser) } }, 
                 { $group: { 
                         '_id': null, 
                         allCommission: { $sum: '$account.commission' }, 

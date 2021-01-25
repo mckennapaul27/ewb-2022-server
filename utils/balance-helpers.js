@@ -67,7 +67,7 @@ const updatePersonalBalance = ({ _id }) => {
                         return new Promise(resolve => resolve(activeUser)); // this is important bit - we return a promise that resolves to another promise
                     }, Promise.resolve());   
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )

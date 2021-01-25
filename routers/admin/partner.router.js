@@ -179,7 +179,7 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
 
             return res.status(201).send(aa);
         } catch (error) {
-            console.log(error);
+            return error;
             return res.status(400).send({ msg: 'Error whilst updating application' })
         }
     } else return res.status(403).send({ msg: 'Unauthorised' });

@@ -49,12 +49,10 @@ router.post('/create-new-user', async (req, res) => {
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
             .catch((err) => {
-                console.log(err)
                 return res.status(500).send({ msg: 'Server error: Please contact support' })
             })
         })
         .catch((err) => {
-            console.log(err)
             return res.status(500).send({ msg: 'Server error: Please contact support' })
         })
     }
@@ -127,14 +125,14 @@ const resetPassword = async () => {
     console.log('called');
     return bcrypt.hash('abcdef', 10)
     .then(hash => {
-        User.findOneAndUpdate({ email: 'netellerguimaraes@gmail.com' }, { password: hash }, { new: true })
+        User.findOneAndUpdate({ email: 'bergich@gmail.com' }, { password: hash }, { new: true })
         .then(user => {
             console.log('updatedUser: ', user);
         })
     })
 };
 
-resetPassword();
+// resetPassword();
 
 // /common/auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
 router.route('/google-login') // Login to google using support@ewalletbooster.com and go to https://console.developers.google.com/apis/credentials?folder=&organizationId=&project=ewalletbooster-login

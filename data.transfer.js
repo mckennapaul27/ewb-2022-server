@@ -59,9 +59,9 @@ const dataTransfer = async () => {
 
     // await Application.deleteMany();
     // await Account.deleteMany();
-    // await Report.deleteMany();
+    await Report.deleteMany();
     // await Payment.deleteMany();
-    await SubReport.deleteMany();
+    // await SubReport.deleteMany();
 
     // await setInitialUserData();
     // await setInitialPartnerData();
@@ -82,10 +82,10 @@ const dataTransfer = async () => {
 
     // await setInitialApplicationData();
     // await setInitialAccounts();
-    // await setInitialReports();
+    await setInitialReports();
     // await setInitialPayments();
     // await setInitialRafPayments();
-    await setInitialSubReports();   // NEED TO SET SUBREPORTS TOO OTHERWISE WON'T CALCULATE BALANCES CORRECTLY - REFER TO map-act-dashboard-data
+    // await setInitialSubReports();   
 
     console.log('done!!!!!!!!!');
 };
@@ -163,7 +163,7 @@ const setInitialUserData = () => {
                                     const referredByUser = (await request.get(`http://localhost:5000/data/get-user-by-id/${referredBy}`)).body;
                                     newUser.referredBy = referredByUser.userId;
                                 } catch (error) {
-                                    console.log(error);
+                                    return error;
                                 }
                             };
     
@@ -189,7 +189,7 @@ const setInitialUserData = () => {
                         }
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -277,7 +277,7 @@ const setInitialPartnerData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -330,7 +330,7 @@ const updateInitialUserData = () => {
                         return new Promise(resolve => resolve(next));
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -373,7 +373,7 @@ const setInitialAffAccountData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -449,7 +449,7 @@ const setInitialAffReportData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -503,7 +503,7 @@ const setInitialAffApplicationData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -548,7 +548,7 @@ const setInitialAffNotificationData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -599,7 +599,7 @@ const setInitialAffPayments = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -654,7 +654,7 @@ const setInitialAffReportDailyData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -721,7 +721,7 @@ const setInitialAffReportMonthlyData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -783,7 +783,7 @@ const setInitialAffSubReportMonthlyData = () => {
                         };
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -905,7 +905,7 @@ const setBrandData = () => {
                         terms: []
                     })
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -1003,7 +1003,7 @@ const setInitialAccounts = () => {
 
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -1043,7 +1043,7 @@ const setInitialReports = () => {
 
                             const newCashbackRate = commission === 0 ? 0 : cashback / transValue;
                             const newCommissionRate = commission === 0 ? 0 : commission / transValue;
-                            const newRafCommission = rafCommission ? rafCommission : 0;
+                            const newRafCommission = (belongsToUser && belongsToUser.referredBy) ? cashback / 20 : 0;
                             const newProfit = commission === 0 ? 0 : commission - (cashback + newRafCommission);
 
                             let account = await Account.findOne({ accountId }).select('accountId country');
@@ -1072,7 +1072,7 @@ const setInitialReports = () => {
                                     cashback, // Y
                                     cashbackRate: newCashbackRate,
                                     commissionRate: newCommissionRate,
-                                    rafCashback: rafCommission, // Y
+                                    rafCashback: newRafCommission,
                                     currency: setCurrency(brand),
                                     profit: newProfit
                                 },
@@ -1098,7 +1098,7 @@ const setInitialReports = () => {
 
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -1157,7 +1157,7 @@ const setInitialApplicationData = () => {
 
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -1195,10 +1195,6 @@ const setInitialPayments = () => {
                         });
 
                         const user = await User.findById(belongsToUser).select('_id activeUser');
-                        if (!user) {
-                            console.log('next: ', next);
-                            console.log(newPayment);
-                        }
                         newPayment.belongsTo = user.activeUser;
 
                         await Payment.create(newPayment);
@@ -1207,7 +1203,7 @@ const setInitialPayments = () => {
                         
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -1253,7 +1249,7 @@ const setInitialRafPayments = () => {
                         
                     }, Promise.resolve())
                 } catch (error) {
-                    console.log(error);
+                    return error;
                 }
             })()
         )
@@ -1265,37 +1261,42 @@ const setInitialSubReports = () => {
     return new Promise(resolve => {
         resolve(
             (async () => {
-                const data = (await request.get('http://localhost:5000/data/get-reports-with-raf')).body;
+                const data = (await request.get('http://localhost:5000/data/calculate-reports-for-new-sub')).body;
                     
                 await data.reduce(async (previous, next) => {
                     await previous;
 
                     const {
-                        date,
                         month,
-                        lastUpdate,
-                        commission,
+                        brand,
+                        userId,
+                        email,
                         transValue,
-                        belongsTo // user
+                        deposits,
+                        commission,
+                        cashback,
+                        rafCommission,
+                        cashbackRate,
+                        currency,
+                        belongsTo
                     } = next;
-
 
                     if (transValue > 0 || commission > 0) {
                         const newReport = new SubReport({ // set currecny instead of brand
-                            date: Number(dayjs(date).format('x')), 
+                            date: Number(dayjs(month).endOf('month').format('x')),
                             month,
-                            lastUpdate: Number(dayjs(lastUpdate).format('x')), 
-                            userId: 0,
+                            lastUpdate: Number(dayjs(month).endOf('month').format('x')),
+                            brand, // using this even if some are Skrill i.e non-gooner referrals - we cannot use 'Combined' or 'All' as the filter on front end will find these using .distinct('brand')
+                            userId,
                             transValue,
-                            deposits: 0,
+                            deposits,
                             commission,
-                            cashback: commission * 20,
-                            rafCommission: commission,
-                            cashbackRate: commission === 0 ? 0 : (commission * 20) / transValue,
-                            currency: setCurrency('Neteller'), // use currency instead of brand - we using 'Neteller' here as this will set all current reports to USD
+                            cashback,
+                            rafCommission,
+                            cashbackRate,
+                            currency, // use currency instead of brand - we using 'Neteller' here as this will set all current reports to USD
+                            email
                         });
-    
-                        if (commission > 0) console.log(newReport)
     
                         const user = await User.findById(belongsTo).select('_id activeUser');
                         newReport.belongsTo = user.activeUser;
@@ -1311,7 +1312,6 @@ const setInitialSubReports = () => {
 }
 
 
-// Abcdef-123*
 // console.log(mongoose.isValidObjectId(newUser._id));
 // console.log(mongoose.isValidObjectId(newUser.partner));
 // console.log(mongoose.isValidObjectId(newUser.referredByPartner));

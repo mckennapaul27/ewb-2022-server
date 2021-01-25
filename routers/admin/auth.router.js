@@ -27,14 +27,11 @@ router.post('/register', async (req, res, next) => {
 
 // POST /admin/auth/login
 router.post('/login', async (req, res, next) => {
-    console.log('called')
     try {
         const admin = await Admin.findOne({ username: req.body.username }).select('password')
         if (!admin) return res.status(401).send({ msg: 'Admin not found' });
         else {
             admin.checkPassword(req.body.password, function (err, isMatch) {
-                console.log(err);
-                console.log(isMatch)
                 if (isMatch && !err) {
                     const token = jwt.sign(admin.toJSON(), secret);
                     return res.status(200).send({ admin, token: 'jwt ' + token });              
@@ -42,7 +39,6 @@ router.post('/login', async (req, res, next) => {
             })
         }
     } catch (err) {
-        console.log(err);
         return res.status(500).send({ msg: 'Server error: Please contact support' })
     }
 });

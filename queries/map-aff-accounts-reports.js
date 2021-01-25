@@ -17,7 +17,7 @@ const affDataReducer = (results, brand, month, date) => {
     .then(() => {
         return updatePartnerStats(brand, month, date);
     })
-    .catch(e => console.log(e))
+    .catch(e => e)
 };
 
 const mapAccountReports = async (a, brand, month, date) => {
@@ -171,7 +171,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                         } else return; 
                     };
                 } catch (error) {
-                    console.log('error:', error);
+                    return error;
                 };
             })() // which we have to call
         )

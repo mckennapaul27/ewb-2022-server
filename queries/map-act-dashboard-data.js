@@ -96,7 +96,7 @@ const getCashbackRate = ({ _id, deals, brand, month }) => {
             .then(( [myVol, mySubVol, myDeal] ) => {
                 const transValue = myVol + mySubVol;
                 return myDeal.reduce((acc, deal) => (transValue <= deal.maxVol && transValue >= deal.minVol) ? (acc += deal.cashback, acc) : acc, 0)
-            }).catch(e => console.log(e))
+            }).catch(e => e)
         )
     });
 };
@@ -144,7 +144,7 @@ const createUpdateSubReport = ({ _id }, brand, month, date) => {
                                 rafCashback: { $sum: '$account.rafCashback' }
                             }}, 
                         ]);              
-                        const userId = (await ActiveUser.findById(nextSubUser._id).select('belongsTo').populate({ path: 'belongsTo', select: 'userId' })).belongsTo.userId;
+                        const { userId, email } = (await ActiveUser.findById(nextSubUser._id).select('belongsTo').populate({ path: 'belongsTo', select: 'userId email' })).belongsTo;
 
                         if (aggregateReports.length > 0) {
                             const { deposits, transValue, commission, cashback, rafCashback } = aggregateReports[0];
@@ -159,6 +159,7 @@ const createUpdateSubReport = ({ _id }, brand, month, date) => {
                                                 month,
                                                 lastUpdate: Date.now(),
                                                 userId,
+                                                email,
                                                 deposits,
                                                 transValue,
                                                 commission,
