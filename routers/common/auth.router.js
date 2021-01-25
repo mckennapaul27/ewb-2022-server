@@ -165,7 +165,10 @@ router.get('/client-ids', (req, res) => {
 router.post('/verify-recaptcha', (req, res) => { // https://www.google.com/recaptcha/admin/site/343237064 using mckennapaul27@gmail.com
     return axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${req.body['g-recaptcha-response']}`)
     .then((google) => res.status(200).send(google.data.success))
-    .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
+    .catch((err) => {
+        console.error(err);
+        return res.status(500).send({ msg: 'Server error: Please contact support' })
+    })
 });
 
 module.exports = router;
