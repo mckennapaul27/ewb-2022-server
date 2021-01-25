@@ -166,7 +166,6 @@ router.post('/verify-recaptcha', (req, res) => { // https://www.google.com/recap
     return axios.post(`https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${req.body['g-recaptcha-response']}`)
     .then((google) => res.status(200).send(google.data.success))
     .catch((err) => {
-        console.error(err);
         return res.status(500).send({ msg: 'Server error: Please contact support' })
     })
 });

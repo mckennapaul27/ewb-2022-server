@@ -62,11 +62,17 @@ router.post('/fetch-applications-csv', passport.authenticate('admin', {
 }), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {    
-        let { sort, query } = req.body;
+        let { sort } = req.body;
+        let query = {
+            $or: [
+                { status: 'Pending' },
+                { upgradeStatus: { $regex: /.*Requested.*/ } }
+            ]
+        }
         try {
             let affApplications = await AffApplication.find(query).sort(sort);
             let dashApplications = await Application.find(query).sort(sort);
-            let applications = [...affApplications, ...dashApplications]
+            let applications = [...affApplications, ...dashApplications];
             return res.status(200).send({ applications }); 
         } catch (err) {
             return res.status(400).send(err)
