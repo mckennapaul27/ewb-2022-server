@@ -125,14 +125,14 @@ const resetPassword = async () => {
     console.log('called');
     return bcrypt.hash('abcdef', 10)
     .then(hash => {
-        User.findOneAndUpdate({ email: 'bergich@gmail.com' }, { password: hash }, { new: true })
+        User.findOneAndUpdate({ email: 'lucybandy1993@gmail.com' }, { password: hash }, { new: true })
         .then(user => {
             console.log('updatedUser: ', user);
         })
     })
 };
 
-// resetPassword();
+resetPassword();
 
 // /common/auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
 router.route('/google-login') // Login to google using support@ewalletbooster.com and go to https://console.developers.google.com/apis/credentials?folder=&organizationId=&project=ewalletbooster-login
