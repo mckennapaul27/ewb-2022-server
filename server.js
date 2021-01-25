@@ -11,6 +11,7 @@ const compression = require('compression');
 const mongoose = require('mongoose');
 // mongoose.set('debug', true);
 mongoose.Promise = global.Promise;
+const MongoStore = require('connect-mongo')(session);
 
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
