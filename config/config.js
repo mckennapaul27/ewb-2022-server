@@ -28,7 +28,11 @@ const whiteList = () => {
         'https://ewalletbooster.eu.ngrok.io',
         'https://ewalletbooster.eu.ngrok.io',
         'https://ewb-admin-2021.herokuapp.com',
-        'https://ewb-frontend-2021.herokuapp.com'
+        'https://ewb-frontend-2021.herokuapp.com',
+        'http://www.ewalletbroker.com',
+        'http://www.ewalletbroker.com',
+        'https://ewalletbroker.com',
+        'https://ewalletbroker.com'
     ];
     if (process.env.NODE_ENV === 'dev') {
         allowed.push('http://localhost:3000');
