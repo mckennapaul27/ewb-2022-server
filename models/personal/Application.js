@@ -23,7 +23,9 @@ const Application = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'activeuser',
         required: false
-    }
+    },
+    applicationToken: String,
+    applicationExpires: Date
 });
 
 // Application.pre('save', async function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger

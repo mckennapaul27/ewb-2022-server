@@ -30,7 +30,7 @@ const whiteList = () => {
         'https://ewb-admin-2021.herokuapp.com',
         'https://ewb-frontend-2021.herokuapp.com',
         'http://www.ewalletbroker.com',
-        'http://www.ewalletbroker.com',
+        'https://www.ewalletbroker.com',
         'https://ewalletbroker.com',
         'https://ewalletbroker.com'
     ];

@@ -40,52 +40,52 @@ const { setCurrency } = require('./config/deals');
 // mongoose.Types.ObjectId(_id);
 
 const dataTransfer = async () => {
-    // await UserCounter.deleteMany();
-    // await AffCounter.deleteMany();
-    // await User.deleteMany();
-    // await ActiveUser.deleteMany();
-    // await AffPartner.deleteMany();
-    // await AffAccount.deleteMany();
-    // await AffReport.deleteMany();
-    // await AffApplication.deleteMany();
-    // await AffNotification.deleteMany();
-    // await AffPayment.deleteMany();
-    // await AffReportDaily.deleteMany();
-    // await AffReportMonthly.deleteMany();
-    // await AffSubReport.deleteMany();
+    await UserCounter.deleteMany();
+    await AffCounter.deleteMany();
+    await User.deleteMany();
+    await ActiveUser.deleteMany();
+    await AffPartner.deleteMany();
+    await AffAccount.deleteMany();
+    await AffReport.deleteMany();
+    await AffApplication.deleteMany();
+    await AffNotification.deleteMany();
+    await AffPayment.deleteMany();
+    await AffReportDaily.deleteMany();
+    await AffReportMonthly.deleteMany();
+    await AffSubReport.deleteMany();
 
-    // await Brand.deleteMany();
-    // await Admin.deleteMany();
+    await Brand.deleteMany();
+    await Admin.deleteMany();
 
-    // await Application.deleteMany();
-    // await Account.deleteMany();
+    await Application.deleteMany();
+    await Account.deleteMany();
     await Report.deleteMany();
-    // await Payment.deleteMany();
-    // await SubReport.deleteMany();
+    await Payment.deleteMany();
+    await SubReport.deleteMany();
 
-    // await setInitialUserData();
-    // await setInitialPartnerData();
-    // await setUserCounter(); // Only call when first transferring data
-    // await setAffCounter(); // Only call when first transferring data - Have to call this before updateInitialUserData() otherwise we will not have AffCounter
-    // await updateInitialUserData(); // fetch data by user _id and then map to activeuser
-    // await setInitialAffAccountData();
-    // await setInitialAffReportData();
-    // await setInitialAffApplicationData();
-    // await setInitialAffNotificationData();
-    // await setInitialAffPayments();
-    // await setInitialAffReportDailyData();
-    // await setInitialAffReportMonthlyData();
-    // await setInitialAffSubReportMonthlyData();
+    await setInitialUserData();
+    await setInitialPartnerData();
+    await setUserCounter(); // Only call when first transferring data
+    await setAffCounter(); // Only call when first transferring data - Have to call this before updateInitialUserData() otherwise we will not have AffCounter
+    await updateInitialUserData(); // fetch data by user _id and then map to activeuser
+    await setInitialAffAccountData();
+    await setInitialAffReportData();
+    await setInitialAffApplicationData();
+    await setInitialAffNotificationData();
+    await setInitialAffPayments();
+    await setInitialAffReportDailyData();
+    await setInitialAffReportMonthlyData();
+    await setInitialAffSubReportMonthlyData();
 
-    // await setBrandData()
-    // await setAdmin();
+    await setBrandData()
+    await setAdmin();
 
-    // await setInitialApplicationData();
-    // await setInitialAccounts();
+    await setInitialApplicationData();
+    await setInitialAccounts();
     await setInitialReports();
-    // await setInitialPayments();
-    // await setInitialRafPayments();
-    // await setInitialSubReports();   
+    await setInitialPayments();
+    await setInitialRafPayments();
+    await setInitialSubReports();   
 
     console.log('done!!!!!!!!!');
 };

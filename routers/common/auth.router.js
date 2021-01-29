@@ -104,7 +104,8 @@ router.post('/reset-password', (req, res) => {
         resetPasswordToken: req.body.token,
         resetPasswordExpires: {
             $gt: Date.now()
-    }}).lean().select('_id')
+        }
+    }).lean().select('_id')
     .then(user => {
         if (!user) return res.status(401).send({ msg: 'Password reset token is invalid or has expired' })
         return bcrypt.hash(req.body.password, 10)
@@ -132,7 +133,7 @@ const resetPassword = async () => {
     })
 };
 
-resetPassword();
+// resetPassword();
 
 // /common/auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
 router.route('/google-login') // Login to google using support@ewalletbooster.com and go to https://console.developers.google.com/apis/credentials?folder=&organizationId=&project=ewalletbooster-login

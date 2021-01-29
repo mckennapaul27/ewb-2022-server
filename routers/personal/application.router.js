@@ -18,6 +18,8 @@ const { createUserNotification } = require('../../utils/notifications-functions'
 const { createApplication, updateApplication } = require('../../utils/notifications-list');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const { sendEmail } = require('../../utils/sib-helpers');
+const url = require('url');  
+const querystring = require('querystring'); 
 
 // /personal/application/get-applications
 router.post('/get-applications', passport.authenticate('jwt', {
@@ -181,6 +183,11 @@ router.post('/fetch-brand', passport.authenticate('jwt', {
         }
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
+
+// /personal/application/fetch-application
+router.get('/fetch-application', async (req, res) => {
+
+})
 
 
 module.exports = router;
