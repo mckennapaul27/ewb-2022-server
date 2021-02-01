@@ -96,7 +96,7 @@ router.post('/forgot-password', (req, res) => {
                 sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
                     templateId: 12, 
                     smtpParams: {
-                        URL: `https://www.ewalletbooster.com/reset-password?token=${token}`
+                        TOKEN: `${token}`
                     }, 
                     tags: ['Auth'], 
                     email: user.email
