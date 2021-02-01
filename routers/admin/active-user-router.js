@@ -15,17 +15,18 @@ const { getToken } = require('../../utils/token.utils');
 const {
     Application,
     ActiveUser,
-    Account,
     Report,
     Payment,
-    SubReport
 } = require('../../models/personal/index');
+
+const crypto = require('crypto');
 
 const { mapRegexQueryFromObj, mapQueryForAggregate } = require('../../utils/helper-functions');
 const { createUserNotification } = require('../../utils/notifications-functions');
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createAccountReport } = require('../../utils/account-functions');
 const { updatePersonalBalance } = require('../../utils/balance-helpers');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 // POST /admin/active-user/get-active-user
 router.post('/get-active-user', passport.authenticate('admin', {
@@ -147,20 +148,74 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
                 'availableUpgrade.valid': (action === 'YY' || action === 'NN') ? false : true 
             };
             if (action === 'YY' || action === 'NN') update['availableUpgrade.status'] = '-';        
-    
+            
             const aa = await Application.findByIdAndUpdate(req.params._id, update, { new: true }); // find and update application and return new application
-    
-            const { brand, belongsTo, accountId } = aa; // deconstruct updated application
+            const { brand, belongsTo, accountId, email, currency } = aa; // deconstruct updated application
+            const activeUser = await ActiveUser.findById(belongsTo).select('belongsTo').lean(); // get the _id of the user that activeuser belongsTo
+            // notifications ( if it belongs to activeuser )
+            if (activeUser && activeUser.belongsTo) {
+                if (action === 'YY') {
+                    createUserNotification(applicationYY({ brand, accountId, belongsTo: activeUser.belongsTo }));
+                    await sendEmail({
+                        templateId: 65, 
+                        smtpParams: {
+                            BRAND: brand,
+                            ACCOUNTID: accountId,
+                            EMAIL: email,
+                            CURRENCY: currency
+                        }, 
+                        tags: ['Application'], 
+                        email: email
+                    })
+                } else if (action === 'YN') {
+                    createUserNotification(applicationYN({ brand, accountId, belongsTo: activeUser.belongsTo }));
+                    await sendEmail({
+                        templateId: 2, 
+                        smtpParams: {
+                            BRAND: brand,
+                            ACCOUNTID: accountId,
+                            EMAIL: email,
+                            CURRENCY: currency
+                        }, 
+                        tags: ['Application'], 
+                        email: email
+                    })
+                } else if (action === 'NN') {
+                    createUserNotification(applicationNN({ brand, accountId, belongsTo: activeUser.belongsTo })); // Do not send email as covering NN below                    
+                } else null;
+            };
+            // email if application is "light" application - only sent if YY or YN
+            if (!belongsTo && (action === 'YY' || action === 'YN'))  {
+                const buffer = await crypto.randomBytes(20);
+                const token = buffer.toString('hex');
+                await Application.findByIdAndUpdate(req.params._id, { applicationToken: token, applicationExpires: Date.now() + 86400000 }, { new: true })
+                await sendEmail({
+                    templateId: 4, 
+                    smtpParams: {
+                        BRAND: brand,
+                        ACCOUNTID: accountId,
+                        ID: token,
+                        EMAIL: email,
+                        CURRENCY: currency
+                    }, 
+                    tags: ['Application'], 
+                    email: email
+                })
+            };
 
-            let _id = (await ActiveUser.findById(belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
-    
-            // notifications
-            if (action === 'YY') createUserNotification(applicationYY({ brand, accountId, belongsTo: _id }));
-            if (action === 'YN') createUserNotification(applicationYN({ brand, accountId, belongsTo: _id }));
-            if (action === 'NN') createUserNotification(applicationNN({ brand, accountId, belongsTo: _id }));
+            if (action === 'NN') await sendEmail({
+                templateId: 3, 
+                smtpParams: {
+                    BRAND: brand,
+                    ACCOUNTID: accountId,
+                    EMAIL: email
+                }, 
+                tags: ['Application'], 
+                email: email
+            });
 
-            // send emails >>>>>>>>>> 
-            if (action === 'YY' || action === 'YN') await createAccountReport({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
+            // if YY or YN call this function which will only create account and report if doesn't already exist
+            if ((action === 'YY' || action === 'YN') && belongsTo) await createAccountReport({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
 
             return res.status(201).send(aa);
         } catch (error) {

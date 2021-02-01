@@ -186,8 +186,37 @@ router.post('/fetch-brand', passport.authenticate('jwt', {
 
 // /personal/application/fetch-application
 router.get('/fetch-application', async (req, res) => {
+    let parsedUrl = url.parse(req.url);
+    let parsedQs = querystring.parse(parsedUrl.query);
+    try {
+        const application = await Application.findOne({
+            applicationToken: parsedQs.apptoken,
+            applicationExpires: {
+                $gt: Date.now()
+            }
+        });
+        if (!application) return res.status(400).send({ msg: 'Application token is invalid or has expired' });
+        else return res.status(200).send(application);
+    } catch (error) {
+        return res.status(500).send({ success: false });
+    };
+});
 
-})
+// /personal/application/link-to-active-user/:activeUser
+router.post('/link-to-active-user/:activeUser', async (req, res) => {
+    let parsedUrl = url.parse(req.url);
+    let parsedQs = querystring.parse(parsedUrl.query);
+    try {
+        const application = await Application.findOneAndUpdate({ applicationToken: parsedQs.apptoken, applicationExpires: { $gt: Date.now() } }, {
+            belongsTo: req.params.activeUser,
+            applicationToken: null,
+            applicationExpires: null
+        }, { new: true });
+        if (application) return res.status(201).send({ msg: `Successfully linked ${application.brand} account ${application.accountId}` });
+    } catch (error) {
+        return res.status(500).send({ success: false });
+    };
+});
 
 
 module.exports = router;

@@ -21,6 +21,7 @@ const { AffPartner } = require('../../models/affiliate/index');
 const { createUserNotification } = require('../../utils/notifications-functions');
 const { generateToken, sendToken } = require('../../utils/token.utils');
 const { welcome, welcomeSocial } = require('../../utils/notifications-list');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 
 // /common/auth/create-new-user 
@@ -88,12 +89,21 @@ router.post('/forgot-password', (req, res) => {
                 User.findByIdAndUpdate(user._id, {
                     resetPasswordToken: token,
                     resetPasswordExpires: Date.now() + 86400000
-                }, { upsert: true, new: true }).lean().select('_id')
+                }, { upsert: true, new: true }).lean()
             ])
             .then(([ token, user ]) => {
                 // send email /reset-password?token=' + token;
+                sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+                    templateId: 12, 
+                    smtpParams: {
+                        URL: `https://www.ewalletbooster.com/reset-password?token=${token}`
+                    }, 
+                    tags: ['Auth'], 
+                    email: user.email
+                });
                 return res.status(201).send({ msg: 'Kindly check your email for further instructions', _id: user._id, token }) // sending _id for testing purposes
-            }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
+            })
+            .catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
         })
     }).catch((err) => res.status(500).send({ msg: 'Server error: Please contact support' }))
 });
@@ -122,16 +132,16 @@ router.post('/reset-password', (req, res) => {
     })
 });
 
-const resetPassword = async () => {
-    console.log('called');
-    return bcrypt.hash('abcdef', 10)
-    .then(hash => {
-        User.findOneAndUpdate({ email: 'lucybandy1993@gmail.com' }, { password: hash }, { new: true })
-        .then(user => {
-            console.log('updatedUser: ', user);
-        })
-    })
-};
+// const resetPassword = async () => {
+//     console.log('called');
+//     return bcrypt.hash('abcdef', 10)
+//     .then(hash => {
+//         User.findOneAndUpdate({ email: 'lucybandy1993@gmail.com' }, { password: hash }, { new: true })
+//         .then(user => {
+//             console.log('updatedUser: ', user);
+//         })
+//     })
+// };
 
 // resetPassword();
 

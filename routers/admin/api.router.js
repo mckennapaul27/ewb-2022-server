@@ -35,6 +35,7 @@ const { createAccountReport, createAffAccAffReport } = require('../../utils/acco
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createUserNotification, createAffNotification } = require('../../utils/notifications-functions');
 const { uploadAffReports } = require('../../queries/ecopayz-account-report');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 
 // POST /admin/api/call-daily-functions
@@ -125,6 +126,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                     try {
                         const existingAffApplication = await AffApplication.findOne({ 'accountId': app.accountId }).select('accountId').lean();
                         const existingDashApplication = await Application.findOne({ 'accountId': app.accountId }).select('accountId').lean();
+
                         if (existingAffApplication) { // updating affiliate applications
                             const aa = await AffApplication.findByIdAndUpdate(existingAffApplication._id, update, { new: true });
                             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
@@ -135,15 +137,75 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                             // send emails  >>>>>>>>>>>>>
                             if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
                         };
+
                         if (existingDashApplication) { // updating dash / personal applications
                             const ab = await Application.findByIdAndUpdate(existingDashApplication._id, update, { new: true });
-                            const { brand, belongsTo, accountId } = ab; // deconstruct updated application
-                            let _id = (await ActiveUser.findById(belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
-                            if (action === 'YY') createUserNotification(applicationYY({ brand, accountId, belongsTo: _id }));
-                            if (action === 'YN') createUserNotification(applicationYN({ brand, accountId, belongsTo: _id }));
-                            if (action === 'NN') createUserNotification(applicationNN({ brand, accountId, belongsTo: _id }));
-                            // send emails >>>>>>>
-                            if (action === 'YY' || action === 'YN') await createAccountReport({ accountId, brand, belongsTo })
+                            const { brand, belongsTo, accountId, email, currency } = ab; // deconstruct updated application
+                            const activeUser = await ActiveUser.findById(belongsTo).select('belongsTo').lean(); // get the _id of the user that activeuser belongsTo
+                            if (activeUser && activeUser.belongsTo) {
+                                if (action === 'YY') {
+                                    createUserNotification(applicationYY({ brand, accountId, belongsTo: activeUser.belongsTo }));
+                                    await sendEmail({
+                                        templateId: 65, 
+                                        smtpParams: {
+                                            BRAND: brand,
+                                            ACCOUNTID: accountId,
+                                            EMAIL: email,
+                                            CURRENCY: currency
+                                        }, 
+                                        tags: ['Application'], 
+                                        email: email
+                                    })
+                                } else if (action === 'YN') {
+                                    createUserNotification(applicationYN({ brand, accountId, belongsTo: activeUser.belongsTo }));
+                                    await sendEmail({
+                                        templateId: 2, 
+                                        smtpParams: {
+                                            BRAND: brand,
+                                            ACCOUNTID: accountId,
+                                            EMAIL: email,
+                                            CURRENCY: currency
+                                        }, 
+                                        tags: ['Application'], 
+                                        email: email
+                                    })
+                                } else if (action === 'NN') {
+                                    createUserNotification(applicationNN({ brand, accountId, belongsTo: activeUser.belongsTo })); // Do not send email as covering NN below                    
+                                } else null;
+                            };
+
+                            // email if application is "light" application - only sent if YY or YN
+                            if (!belongsTo && (action === 'YY' || action === 'YN'))  {
+                                const buffer = await crypto.randomBytes(20);
+                                const token = buffer.toString('hex');
+                                await Application.findByIdAndUpdate(req.params._id, { applicationToken: token, applicationExpires: Date.now() + 86400000 }, { new: true })
+                                await sendEmail({
+                                    templateId: 4, 
+                                    smtpParams: {
+                                        BRAND: brand,
+                                        ACCOUNTID: accountId,
+                                        ID: token,
+                                        EMAIL: email,
+                                        CURRENCY: currency
+                                    }, 
+                                    tags: ['Application'], 
+                                    email: email
+                                })
+                            };
+
+                            if (action === 'NN') await sendEmail({
+                                templateId: 3, 
+                                smtpParams: {
+                                    BRAND: brand,
+                                    ACCOUNTID: accountId,
+                                    EMAIL: email
+                                }, 
+                                tags: ['Application'], 
+                                email: email
+                            });
+
+                            // if YY or YN call this function which will only create account and report if doesn't already exist
+                            if ((action === 'YY' || action === 'YN') && belongsTo) await createAccountReport({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
                         }
                     } catch (error) {
                         return error;
