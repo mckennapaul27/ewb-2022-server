@@ -28,14 +28,14 @@ const Application = new Schema({
     applicationExpires: Date
 });
 
-// Application.pre('save', async function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
-//     const a = this; // a = affApplication
-//     const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
-//     a.availableUpgrade.status = initialUpgrade;
-//     a.availableUpgrade.valid = false;
-//     a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
-//     next();   
-// });
+Application.pre('save', async function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+    const a = this; // a = affApplication
+    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+    a.availableUpgrade.status = initialUpgrade;
+    a.availableUpgrade.valid = false;
+    a.upgradeStatus = `Requested ${dayjs().format('DD/MM/YYYY')}`; 
+    next();   
+});
 
 module.exports = mongoose.model('application', Application);
 

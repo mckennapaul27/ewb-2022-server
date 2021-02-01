@@ -13,15 +13,15 @@ const Admin = new Schema({
     resetPasswordExpires: Date
 });
 
-// Admin.pre('validate', function (next) {
-//     const admin = this;
-//     if (!admin.isModified('password')) return next();
-//     bcrypt.hash(admin.password, 10)
-//     .then(hash => {
-//         admin.password = hash;
-//         next();
-//     }, err => next(err))
-// });
+Admin.pre('validate', function (next) {
+    const admin = this;
+    if (!admin.isModified('password')) return next();
+    bcrypt.hash(admin.password, 10)
+    .then(hash => {
+        admin.password = hash;
+        next();
+    }, err => next(err))
+});
 
 
 // compare password for login

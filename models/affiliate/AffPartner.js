@@ -117,18 +117,13 @@ const AffPartner = new Schema({
 // pre save hook to generate dealTier's and stats for affiliates
 AffPartner.pre('validate', async function (next) {
     const affPartner = this;
+    affPartner.epi = await getNextSequence('partnerid');
 
-    // ** For Data Transfer **
-    if (affPartner.deals.length === 0) {
-        affPartner.deals.push(affiliateDealOne('Neteller'));
-        affPartner.deals.push(affiliateDealOne('Skrill'));
-        affPartner.deals.push(affiliateDealTwo('ecoPayz'));
-    } 
-    if (!affPartner.epi) {
-        affPartner.epi = await getNextSequence('partnerid');
-    }
+    affPartner.deals.push(affiliateDealOne('Neteller'));
+    affPartner.deals.push(affiliateDealOne('Skrill'));
+    affPartner.deals.push(affiliateDealTwo('ecoPayz'));
+
     affPartner.stats = defaultAffStats;
-    // ** For Data Transfer **
     next();   
 });
 

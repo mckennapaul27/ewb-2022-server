@@ -50,22 +50,22 @@ const User = new Schema({
     },
 })
 
-// // using pre validate instead of pre save otherwise it will fail because activeUser is required: true
-// User.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
-//     const user = this;
-//     if (!user.isModified('password')) return next();
-//     bcrypt.hash(user.password, 10)
-//     .then(async hash => {
-//         const userId = await getNextSequence('userid');
-//         const activeUser = await createActiveUser(user._id, user.referredByActiveUser, user.email);
-//         const partner = await createAffPartner(user._id, user.referredByPartner, user.email);
-//         user.partner = partner;
-//         user.activeUser = activeUser;
-//         user.userId = userId;
-//         user.password = hash;
-//         next();
-//     }).catch(err => next(err))
-// })
+// using pre validate instead of pre save otherwise it will fail because activeUser is required: true
+User.pre('validate', function (next) { // https://stackoverflow.com/questions/30141492/mongoose-presave-does-not-trigger
+    const user = this;
+    if (!user.isModified('password')) return next();
+    bcrypt.hash(user.password, 10)
+    .then(async hash => {
+        const userId = await getNextSequence('userid');
+        const activeUser = await createActiveUser(user._id, user.referredByActiveUser, user.email);
+        const partner = await createAffPartner(user._id, user.referredByPartner, user.email);
+        user.partner = partner;
+        user.activeUser = activeUser;
+        user.userId = userId;
+        user.password = hash;
+        next();
+    }).catch(err => next(err))
+})
 
 
 // compare password for login
@@ -76,91 +76,91 @@ User.methods.checkPassword = function (password, callback) {
     })
 }
 
-// // google login
-// User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, referredByPartner, accessToken, refreshToken, profile, cb) {
-//     const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
-//     return userModelCopy.findOne({ 'googleProvider.id': profile.id }, async function(err, existingUser) {
-//         if (err) return next(err);
-//         else if (!existingUser) { // no user was found, lets create a new one
-//             const userId = await getNextSequence('userid');
-//             let newUser = new userModelCopy({      
-//                 name: `${profile._json.given_name} ${profile._json.family_name}`,        
-//                 email: profile.emails[0].value,          
-//                 userId,    
-//                 referredBy,
-//                 referredByActiveUser,   
-//                 referredByPartner,  
-//                 googleProvider: {
-//                     id: profile.id,
-//                     token: accessToken
-//                 }
-//             });
-//             newUser.partner = await createAffPartner(newUser._id, referredByPartner, profile.emails[0].value);
-//             newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser, profile.emails[0].value); 
-//             newUser.save(async function(error, savedUser) {
-//                 if (error) return error;
-//                 return cb(error, savedUser);
-//             });
-//         } else return cb(err, existingUser);
-//     });
-// };
+// google login
+User.statics.upsertGoogleUser = function(referredBy, referredByActiveUser, referredByPartner, accessToken, refreshToken, profile, cb) {
+    const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
+    return userModelCopy.findOne({ 'googleProvider.id': profile.id }, async function(err, existingUser) {
+        if (err) return next(err);
+        else if (!existingUser) { // no user was found, lets create a new one
+            const userId = await getNextSequence('userid');
+            let newUser = new userModelCopy({      
+                name: `${profile._json.given_name} ${profile._json.family_name}`,        
+                email: profile.emails[0].value,          
+                userId,    
+                referredBy,
+                referredByActiveUser,   
+                referredByPartner,  
+                googleProvider: {
+                    id: profile.id,
+                    token: accessToken
+                }
+            });
+            newUser.partner = await createAffPartner(newUser._id, referredByPartner, profile.emails[0].value);
+            newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser, profile.emails[0].value); 
+            newUser.save(async function(error, savedUser) {
+                if (error) return error;
+                return cb(error, savedUser);
+            });
+        } else return cb(err, existingUser);
+    });
+};
 
-// // facebook login
-// User.statics.upsertFbUser = function (referredBy, referredByActiveUser, referredByPartner, accessToken, refreshToken, profile, cb) {
-//     const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
-//     return userModelCopy.findOne({ 'facebookProvider.id': profile.id }, async function (err, existingUser) {
-//         if (err) return next(err);
-//         else if (!existingUser) {
-//             const userId = await getNextSequence('userid');
-//             let newUser = new userModelCopy({      
-//                 name: `${profile.name.givenName} ${profile.name.familyName}`,        
-//                 email: profile.emails[0].value,
-//                 userId,    
-//                 referredBy,
-//                 referredByActiveUser,   
-//                 referredByPartner,  
-//                 facebookProvider: {
-//                     id: profile.id,
-//                     token: accessToken
-//                 }
-//             });
-//             newUser.partner = await createAffPartner(newUser._id, referredByPartner, profile.emails[0].value);
-//             newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser, profile.emails[0].value); 
-//             newUser.save(async function(error, savedUser) {
-//                 if (error) return error;
-//                 return cb(error, savedUser);
-//             });
-//         } else return cb(err, existingUser)
-//     })
-// }
+// facebook login
+User.statics.upsertFbUser = function (referredBy, referredByActiveUser, referredByPartner, accessToken, refreshToken, profile, cb) {
+    const userModelCopy = this; // this is so that we can use User model without calling direct instance of User.create or whatever
+    return userModelCopy.findOne({ 'facebookProvider.id': profile.id }, async function (err, existingUser) {
+        if (err) return next(err);
+        else if (!existingUser) {
+            const userId = await getNextSequence('userid');
+            let newUser = new userModelCopy({      
+                name: `${profile.name.givenName} ${profile.name.familyName}`,        
+                email: profile.emails[0].value,
+                userId,    
+                referredBy,
+                referredByActiveUser,   
+                referredByPartner,  
+                facebookProvider: {
+                    id: profile.id,
+                    token: accessToken
+                }
+            });
+            newUser.partner = await createAffPartner(newUser._id, referredByPartner, profile.emails[0].value);
+            newUser.activeUser = await createActiveUser(newUser._id, referredByActiveUser, profile.emails[0].value); 
+            newUser.save(async function(error, savedUser) {
+                if (error) return error;
+                return cb(error, savedUser);
+            });
+        } else return cb(err, existingUser)
+    })
+}
 
-// // next sequence for userId
-// function getNextSequence (name) {
-//     return new Promise(resolve => {
-//         resolve(
-//             UserCounter.findOneAndUpdate(
-//                 { _id: name },
-//                 { $inc: { seq: 1 } } ,
-//                 { new: true }
-//             ).then(c => c.seq).catch(e => e)   
-//         )
-//     }) 
-// };
+// next sequence for userId
+function getNextSequence (name) {
+    return new Promise(resolve => {
+        resolve(
+            UserCounter.findOneAndUpdate(
+                { _id: name },
+                { $inc: { seq: 1 } } ,
+                { new: true }
+            ).then(c => c.seq).catch(e => e)   
+        )
+    }) 
+};
 
-// // create new ActiveUser with default dealTiers 
-// async function createActiveUser (belongsTo, referredBy, email) { // creates new activeuser, sets referredBy if applicable and pushes new active user to friends array [] of the referrer
-//     const newActiveUser = await ActiveUser.create({ belongsTo, referredBy, email });
-//     if (newActiveUser.referredBy) await ActiveUser.findByIdAndUpdate(newActiveUser.referredBy, { $push: { friends: newActiveUser } }, { new: true });
-//     return newActiveUser; // it has to RETURN the new active user, otherwise it won't work as the await await createActiveUser() expects activeUser to be returned.
-// };
+// create new ActiveUser with default dealTiers 
+async function createActiveUser (belongsTo, referredBy, email) { // creates new activeuser, sets referredBy if applicable and pushes new active user to friends array [] of the referrer
+    const newActiveUser = await ActiveUser.create({ belongsTo, referredBy, email });
+    if (newActiveUser.referredBy) await ActiveUser.findByIdAndUpdate(newActiveUser.referredBy, { $push: { friends: newActiveUser } }, { new: true });
+    return newActiveUser; // it has to RETURN the new active user, otherwise it won't work as the await await createActiveUser() expects activeUser to be returned.
+};
 
 
-// // create new AffPartner
-// async function createAffPartner (belongsTo, referredBy, email) {
-//     const newAffPartner = await AffPartner.create({ belongsTo, referredBy, email });
-//     if (newAffPartner.referredBy) await AffPartner.findByIdAndUpdate(newAffPartner.referredBy, { $push: { subPartners: newAffPartner } }, { new: true });
-//     return newAffPartner;
-// }
+// create new AffPartner
+async function createAffPartner (belongsTo, referredBy, email) {
+    const newAffPartner = await AffPartner.create({ belongsTo, referredBy, email });
+    if (newAffPartner.referredBy) await AffPartner.findByIdAndUpdate(newAffPartner.referredBy, { $push: { subPartners: newAffPartner } }, { new: true });
+    return newAffPartner;
+}
 
 module.exports = mongoose.model('user', User);
 
