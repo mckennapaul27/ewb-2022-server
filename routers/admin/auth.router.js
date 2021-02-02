@@ -15,15 +15,15 @@ const Admin = require('../../models/admin/Admin')
 const { getToken } = require('../../utils/token.utils')
 
 // POST /admin/auth/register
-router.post('/register', async (req, res, next) => {
-    try {
-        const admin = await Admin.create({ name: req.body.name, username: req.body.username, email: req.body.email, password: req.body.password });
-        const token = await jwt.sign(admin.toJSON(), secret);
-        return res.status(201).send({ admin, token: 'jwt' + token, msg: 'You have successfully registered.' });
-    } catch (err) {
-        return res.status(500).send({ msg: 'Server error: Please contact support' })
-    }
-});
+// router.post('/register', async (req, res, next) => {
+//     try {
+//         const admin = await Admin.create({ name: req.body.name, username: req.body.username, email: req.body.email, password: req.body.password });
+//         const token = await jwt.sign(admin.toJSON(), secret);
+//         return res.status(201).send({ admin, token: 'jwt' + token, msg: 'You have successfully registered.' });
+//     } catch (err) {
+//         return res.status(500).send({ msg: 'Server error: Please contact support' })
+//     }
+// });
 
 // POST /admin/auth/login
 router.post('/login', async (req, res, next) => {

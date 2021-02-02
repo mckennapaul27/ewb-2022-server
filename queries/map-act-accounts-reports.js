@@ -12,6 +12,7 @@ const {
 const { setCurrency } = require('../config/deals');
 const { updateActUserStats } = require('./map-act-dashboard-data');
 const { createUserNotification } = require('../utils/notifications-functions');
+const { sendEmail } = require('../utils/sib-helpers');
 
 const actDataReducer = (results, brand, month, date) => {
     let completedAccountMapping = results.reduce((previousAccount, nextAccount) => {
@@ -68,13 +69,22 @@ const mapAccountReports = async (a, brand, month, date) => {
                                 { belongsTo: existingApplication.belongsTo, accountEmail: existingApplication.email }, 
                                 { select: 'belongsTo accountEmail', new: true }
                             );
-                            await ActiveUser.findByIdAndUpdate(updatedAccount.belongsTo, { $push: { accounts: updatedAccount } }, { select: 'accounts', new: true });
+                            const activeUser = await ActiveUser.findByIdAndUpdate(updatedAccount.belongsTo, { $push: { accounts: updatedAccount } }, { select: 'accounts belongsTo', new: true })
+                            
                             createUserNotification({ 
                                 message: `Account ${updatedAccount.accountId} has been added to your dashboard and is now eligible`, 
                                 type: 'Account', 
                                 belongsTo: updatedAccount.belongsTo 
                             });
-                            // send email
+                            sendEmail({
+                                templateId: 22, 
+                                smtpParams: {
+                                    BRAND: brand,
+                                    ACCOUNTID: accountId 
+                                }, 
+                                tags: ['Account'], 
+                                email: activeUser.email
+                            })
                         } 
                         if (existingReport) { // [3-a] if existing Account and Report for the month = UPDATE IT
                             await Report.findByIdAndUpdate(existingReport._id, {
@@ -160,8 +170,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                             await newAccount.save(); //  and save it
                             await Application.findByIdAndUpdate(existingApplication._id, { status: 'Approved' }, { select: 'status', new: true });
                             await ActiveUser.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });
-                            // No need to createUserNotification as will be done with pre hooks
-                            // send email
+                            // No need to createUserNotification or email as will be done with pre hooks
                         } else { // [5] if no Application and no account or report - create without belongsToActiveUser for this accountId
                             const newAccount = await Account.create({ // create new account
                                 accountId,

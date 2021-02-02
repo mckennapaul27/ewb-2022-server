@@ -48,7 +48,7 @@ const updateActUserStats = async (brand, month, date) => {
                 return setBalance(nextPartner); // update balance  
             }, Promise.resolve());
             console.log('Processing activeuser data [3] ...');
-            processStatsThree.then(() => null) // return null to end sequence 
+            processStatsThree.then(() => console.log('Completed activeuser data ... ')) // return null to end sequence 
         })
     });
 };

@@ -6,17 +6,13 @@ const router = express.Router();
 
 const { getToken } = require('../../utils/token.utils')
 const {
-    AffApplication,
-    AffAccount,
     AffPartner,
     AffNotification
 } = require('../../models/affiliate/index');
-const {
-    User
-} = require('../../models/common/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const { createAffNotification } = require('../../utils/notifications-functions');
 const { createAdminJob } = require('../../utils/admin-job-functions');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 
 // POST /affiliate/partner/fetch-details/:_id
@@ -42,7 +38,7 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
     const token = getToken(req.headers);
     if (token) {
         try {
-            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { paymentDetails: req.body.paymentDetails }, { new: true, select: 'paymentDetails' })
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { paymentDetails: req.body.paymentDetails }, { new: true, select: 'paymentDetails email' })
             createAffNotification({
                 message: `You have updated your ${req.body.brand} payment details`,
                 type: 'Partner',
@@ -52,9 +48,17 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
                 message: `Partner has updated their payment details`,
                 completed: true,
                 status: 'Completed',
-                partner: req.params._id
+                partner: req.params._id,
+                type: 'Details'
             });
-            // send email
+            sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+                templateId: 19, 
+                smtpParams: {
+                    NONE: null
+                }, 
+                tags: ['Account'], 
+                email: partner.email
+            });
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ success: false });
@@ -69,7 +73,7 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
     const token = getToken(req.headers);
     if (token) {
         try {
-            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { brandAssets: req.body.brandAssets }, { new: true, select: 'brandAssets' })
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { brandAssets: req.body.brandAssets }, { new: true, select: 'brandAssets email' })
             createAffNotification({
                 message: `You have requested additional links for ${req.body.brand}`,
                 type: 'Partner',
@@ -78,9 +82,17 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
             createAdminJob({
                 message: `Partner has requested additional links for ${req.body.brand}`,
                 status: 'Pending',
-                partner: req.params._id
+                partner: req.params._id,
+                type: 'Links'
             });
-            // send email
+            sendEmail({ 
+                templateId: 44, 
+                smtpParams: {
+                    BRAND: req.body.brand
+                }, 
+                tags: ['Account'], 
+                email: partner.email
+            });
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ success: false });

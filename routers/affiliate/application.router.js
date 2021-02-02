@@ -7,11 +7,13 @@ const router = express.Router();
 const { getToken } = require('../../utils/token.utils')
 const {
     AffApplication,
+    AffPartner
 } = require('../../models/affiliate/index');
 const { Application } = require('../../models/personal/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const dayjs = require('dayjs');
 const { createAffNotification } = require('../../utils/notifications-functions');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 
 // POST /affiliate/application/create
@@ -23,8 +25,19 @@ router.post('/create', passport.authenticate('jwt', {
         try {
             const applications = await AffApplication.create(req.body.applications); // https://mongoosejs.com/docs/api.html#model_Model.create
             await applications.map(a =>  createAffNotification({ message: `Submitted application for ${a.brand} account ${a.accountId}`, type: 'Application', belongsTo: a.belongsTo }));            
+            if (applications.length > 1) { // if greater than 1 then it is a bulk submit
+                const partner = await AffPartner.findById(applications[0].belongsTo).select('email');
+                await sendEmail({
+                    templateId: 67, 
+                    smtpParams: {
+                        COUNT: applications.length,
+                    }, 
+                    tags: ['Application'], 
+                    email: partner.email
+                })
+            } 
             return res.status(201).send(applications)
-        } catch (err) {
+        } catch (err) {;
             return res.status(400).send({ success: false })
         }
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });

@@ -47,6 +47,7 @@ router.post('/create-new-user', async (req, res) => {
             return User.findById(user._id).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId referredBy' }).lean()  // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
             .then(async user => {
                 await createUserNotification(welcome(user)); 
+                // await addContactToList(3, [user.email]);
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
             .catch((err) => {

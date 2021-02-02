@@ -27,6 +27,7 @@ const { applicationYY, applicationYN, applicationNN } = require('../../utils/not
 const { createAccountReport } = require('../../utils/account-functions');
 const { updatePersonalBalance } = require('../../utils/balance-helpers');
 const { sendEmail } = require('../../utils/sib-helpers');
+const { Brand } = require('../../models/common');
 
 // POST /admin/active-user/get-active-user
 router.post('/get-active-user', passport.authenticate('admin', {
@@ -156,13 +157,15 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
             if (activeUser && activeUser.belongsTo) {
                 if (action === 'YY') {
                     createUserNotification(applicationYY({ brand, accountId, belongsTo: activeUser.belongsTo }));
+                    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
                     await sendEmail({
                         templateId: 65, 
                         smtpParams: {
                             BRAND: brand,
                             ACCOUNTID: accountId,
                             EMAIL: email,
-                            CURRENCY: currency
+                            CURRENCY: currency,
+                            OFFER: initialUpgrade
                         }, 
                         tags: ['Application'], 
                         email: email
@@ -202,7 +205,7 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
                     email: email
                 })
             };
-
+            // if application was rejected
             if (action === 'NN') await sendEmail({
                 templateId: 3, 
                 smtpParams: {
@@ -261,14 +264,38 @@ router.post('/update-payment/:_id', passport.authenticate('admin', {
         }
         try {
             const updatedPayment = await Payment.findByIdAndUpdate(req.params._id, update, { new: true });
-            const { currency, amount, belongsTo } = updatedPayment;
-            let _id = (await ActiveUser.findById(belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
+            const { currency, amount, belongsTo, brand, paymentAccount } = updatedPayment;
+            let activeUser = await ActiveUser.findById(belongsTo).select('belongsTo email') // get the _id of the user that activeuser belongsTo
             createUserNotification({
                 message: `Your payout request for ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} has been ${status.toLowerCase()}`,
                 type: 'Payment',
-                belongsTo: _id
+                belongsTo: activeUser.belongsTo
             });
-            // send email >>>>>>>>>>>>>
+            if (status === 'Paid') sendEmail({
+                templateId: 68, 
+                smtpParams: {
+                    AMOUNT: amount.toFixed(2),
+                    CURRENCY: currency,
+                    SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                    BRAND: brand,
+                    ACCOUNT: paymentAccount
+                }, 
+                tags: ['Payment'], 
+                email: activeUser.email
+            });
+            if (status === 'Rejected') sendEmail({
+                templateId: 69, 
+                smtpParams: {
+                    AMOUNT: amount.toFixed(2),
+                    CURRENCY: currency,
+                    SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                    BRAND: brand,
+                    ACCOUNT: paymentAccount
+                }, 
+                tags: ['Payment'], 
+                email: activeUser.email
+            })
+            
             req.body = updatedPayment;
             req.params._id = updatedPayment.belongsTo; // changing req.params._id to belongsTo to keep update balance function consistent
             next();

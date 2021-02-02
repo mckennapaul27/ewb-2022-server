@@ -6,6 +6,7 @@ const AdminJob = new Schema({ //
     message: String,
     completed: { type: Boolean, default: false },
     status: String,
+    type: String,
     partner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner'

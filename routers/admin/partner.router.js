@@ -29,6 +29,7 @@ const { createAffNotification } = require('../../utils/notifications-functions')
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createAffAccAffReport } = require('../../utils/account-functions');
 const { updateAffiliateBalance } = require('../../utils/balance-helpers');
+const { Brand } = require('../../models/common');
 
 
 // POST /admin/partner/get-partner
@@ -167,19 +168,55 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
     
             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
     
-            // notifications
-            if (action === 'YY') createAffNotification(applicationYY({ brand, accountId, belongsTo }));
-            if (action === 'YN') createAffNotification(applicationYN({ brand, accountId, belongsTo }));
-            if (action === 'NN') createAffNotification(applicationNN({ brand, accountId, belongsTo }));
+            const partner = await AffPartner.findById(belongsTo).select('email').lean()
+            // emails and notifications >>>>>
+            if (action === 'YY') { // template 65 needs params.OFFER
+                createAffNotification(applicationYY({ brand, accountId, belongsTo }));
+                const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+-               await sendEmail({
+                    templateId: 65, 
+                    smtpParams: {
+                        BRAND: brand,
+                        ACCOUNTID: accountId,
+                        EMAIL: '-',
+                        CURRENCY: '-',
+                        OFFER: initialUpgrade
+                    }, 
+                    tags: ['Application'], 
+                    email: partner.email
+                })
+            } else if (action === 'YN') {
+                createAffNotification(applicationYN({ brand, accountId, belongsTo }));
+                await sendEmail({
+                    templateId: 2, 
+                    smtpParams: {
+                        BRAND: brand,
+                        ACCOUNTID: accountId,
+                        EMAIL: '-',
+                        CURRENCY: '-'
+                    }, 
+                    tags: ['Application'], 
+                    email: partner.email
+                })
+            } else if (action === 'NN') {
+                createAffNotification(applicationNN({ brand, accountId, belongsTo })); // Do not send email as covering NN below 
+                await sendEmail({
+                    templateId: 3, 
+                    smtpParams: {
+                        BRAND: brand,
+                        ACCOUNTID: accountId,
+                        EMAIL: '-'
+                    }, 
+                    tags: ['Application'], 
+                    email: partner.email
+                });
 
-            // send emails >>>>>>>>>> 
+            } else null;
 
             if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
 
-
             return res.status(201).send(aa);
         } catch (error) {
-            return error;
             return res.status(400).send({ msg: 'Error whilst updating application' })
         }
     } else return res.status(403).send({ msg: 'Unauthorised' });

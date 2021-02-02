@@ -36,6 +36,7 @@ const { applicationYY, applicationYN, applicationNN } = require('../../utils/not
 const { createUserNotification, createAffNotification } = require('../../utils/notifications-functions');
 const { uploadAffReports } = require('../../queries/ecopayz-account-report');
 const { sendEmail } = require('../../utils/sib-helpers');
+const { Brand } = require('../../models/common');
 
 
 // POST /admin/api/call-daily-functions
@@ -130,11 +131,51 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         if (existingAffApplication) { // updating affiliate applications
                             const aa = await AffApplication.findByIdAndUpdate(existingAffApplication._id, update, { new: true });
                             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
-                            // notifications
-                            if (action === 'YY') createAffNotification(applicationYY({ brand, accountId, belongsTo }));
-                            if (action === 'YN') createAffNotification(applicationYN({ brand, accountId, belongsTo }));
-                            if (action === 'NN') createAffNotification(applicationNN({ brand, accountId, belongsTo }));
-                            // send emails  >>>>>>>>>>>>>
+                            const partner = await AffPartner.findById(belongsTo).select('email').lean()
+                            // emails and notifications >>>>>
+                            if (action === 'YY') { // template 65 needs params.OFFER
+                                createAffNotification(applicationYY({ brand, accountId, belongsTo }));
+                                const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+-                                await sendEmail({
+                                    templateId: 65, 
+                                    smtpParams: {
+                                        BRAND: brand,
+                                        ACCOUNTID: accountId,
+                                        EMAIL: '-',
+                                        CURRENCY: '-',
+                                        OFFER: initialUpgrade
+                                    }, 
+                                    tags: ['Application'], 
+                                    email: partner.email
+                                })
+                            } else if (action === 'YN') {
+                                createAffNotification(applicationYN({ brand, accountId, belongsTo }));
+                                await sendEmail({
+                                    templateId: 2, 
+                                    smtpParams: {
+                                        BRAND: brand,
+                                        ACCOUNTID: accountId,
+                                        EMAIL: '-',
+                                        CURRENCY: '-'
+                                    }, 
+                                    tags: ['Application'], 
+                                    email: partner.email
+                                })
+                            } else if (action === 'NN') {
+                                createAffNotification(applicationNN({ brand, accountId, belongsTo })); // Do not send email as covering NN below 
+                                await sendEmail({
+                                    templateId: 3, 
+                                    smtpParams: {
+                                        BRAND: brand,
+                                        ACCOUNTID: accountId,
+                                        EMAIL: '-'
+                                    }, 
+                                    tags: ['Application'], 
+                                    email: partner.email
+                                });
+
+                            } else null;
+                            // emails <<<<<
                             if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
                         };
 
@@ -145,13 +186,15 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                             if (activeUser && activeUser.belongsTo) {
                                 if (action === 'YY') {
                                     createUserNotification(applicationYY({ brand, accountId, belongsTo: activeUser.belongsTo }));
+                                    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
                                     await sendEmail({
                                         templateId: 65, 
                                         smtpParams: {
                                             BRAND: brand,
                                             ACCOUNTID: accountId,
                                             EMAIL: email,
-                                            CURRENCY: currency
+                                            CURRENCY: currency,
+                                            OFFER: initialUpgrade
                                         }, 
                                         tags: ['Application'], 
                                         email: email

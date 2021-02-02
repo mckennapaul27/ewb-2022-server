@@ -94,7 +94,8 @@ router.post('/fetch-admin-jobs', passport.authenticate('admin', {
             const jobs = await AdminJob.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).lean();
             const pageCount = await AdminJob.countDocuments(query);
             const statuses = await AdminJob.distinct('status');
-            return res.status(200).send({ jobs, pageCount, statuses }); 
+            const types = await AdminJob.distinct('type');
+            return res.status(200).send({ jobs, pageCount, statuses, types }); 
         } catch (err) {
             return res.status(400).send(err)
         }    

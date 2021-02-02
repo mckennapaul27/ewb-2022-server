@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { sendEmail } = require('../../utils/sib-helpers');
 const Schema = mongoose.Schema;
 const UserNotification = require('../common/UserNotification');
 const ActiveUser = require('./ActiveUser');
@@ -24,8 +25,17 @@ Account.pre('save', async function (next) {
     const a = this;
     try {
         if (a.isNew && a.belongsTo) {
-            let _id = (await ActiveUser.findById(a.belongsTo).select('belongsTo').lean()).belongsTo; // get the _id of the user that activeuser belongsTo
-            await createUserNotification({ message: `Account ${a.accountId} has been added to your dashboard and is now eligible`, type: 'Account', belongsTo: _id });
+            let activeUser = (await ActiveUser.findById(a.belongsTo).select('belongsTo email').lean()); // get the _id of the user that activeuser belongsTo
+            await createUserNotification({ message: `Account ${a.accountId} has been added to your dashboard and is now eligible`, type: 'Account', belongsTo: activeUser.belongsTo });
+            await sendEmail({
+                templateId: 22, 
+                smtpParams: {
+                    BRAND: a.brand,
+                    ACCOUNTID: a.accountId
+                }, 
+                tags: ['Account'], 
+                email: activeUser.email
+            })
             next();
         }
     } catch (error) {

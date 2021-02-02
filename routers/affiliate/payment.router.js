@@ -5,12 +5,14 @@ require('../../auth/passport')(passport);
 const { v4: uuidv4 } = require('uuid');
 const { getToken } = require('../../utils/token.utils')
 const {
-    AffPayment
+    AffPayment,
+    AffPartner
 } = require('../../models/affiliate');
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const { createAffNotification } = require('../../utils/notifications-functions');
 const { createAdminJob } = require('../../utils/admin-job-functions');
 const { updateAffiliateBalance } = require('../../utils/balance-helpers');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 // /affiliate/payment/create-payment/:_id
 router.post('/create-payment/:_id', passport.authenticate('jwt', {
@@ -37,9 +39,22 @@ async function createPayment (req, res, next) {
         createAdminJob({
             message: `Affiliate payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
             status: 'Pending',
+            type: 'Payouts',
             partner: belongsTo
         });
-        // >>>>>>>> send email
+        const email = (await AffPartner.findById(req.params._id).select('belongsTo').populate({ path: 'belongsTo', select: 'email' })).belongsTo.email;
+        sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+            templateId: 23, 
+            smtpParams: {
+                AMOUNT: amount.toFixed(2),
+                CURRENCY: currency,
+                SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                BRAND: brand,
+                ACCOUNT: paymentAccount
+            }, 
+            tags: ['Payment'], 
+            email
+        });
         req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
         next();
     } else return res.status(403).send({ msg: 'Unauthorised' })

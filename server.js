@@ -27,7 +27,6 @@ const {
     options,
     corsOptions
 } = require('./config/config');
-const { dataTransfer } = require('./data.transfer');
 
 app.use(compression())
 app.use(fileUpload());
@@ -41,6 +40,8 @@ app.use(express.static('public'));
 app.use(passport.initialize());
 app.use('/', routes); 
 
+// console.log(DB_URL);
+
 if (process.env.NODE_ENV !== 'dev') {
     app.use(session({
         secret: SECRET,
@@ -52,13 +53,6 @@ if (process.env.NODE_ENV !== 'dev') {
         })
     }));
 };
-
-// dataTransfer()
-
-
-
-
-
 
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;

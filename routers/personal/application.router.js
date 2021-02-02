@@ -212,7 +212,20 @@ router.post('/link-to-active-user/:activeUser', async (req, res) => {
             applicationToken: null,
             applicationExpires: null
         }, { new: true });
-        if (application) return res.status(201).send({ msg: `Successfully linked ${application.brand} account ${application.accountId}` });
+        
+        if (application) {
+            const email = (await ActiveUser.findById(req.params.activeUser).select('belongsTo').populate({ path: 'belongsTo', select: 'email' })).belongsTo.email;
+            await sendEmail({
+                templateId: 6, 
+                smtpParams: {
+                    BRAND: application.accountId,
+                    ACCOUNTID: application.brand
+                }, 
+                tags: ['Application'], 
+                email
+            })
+            return res.status(201).send({ msg: `Successfully linked ${application.brand} account ${application.accountId}` });
+        } 
     } catch (error) {
         return res.status(500).send({ success: false });
     };

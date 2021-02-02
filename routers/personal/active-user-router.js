@@ -15,6 +15,7 @@ const {
     Report
 } = require('../../models/personal');
 const { createUserNotification } = require('../../utils/notifications-functions');
+const { sendEmail } = require('../../utils/sib-helpers');
 
 
 // /personal/active-user/get-active-user/:_id
@@ -38,9 +39,17 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
         const update = req.body; // doing it this way so we can submit anything to it to update and therefore provide less routes
         const { notification } = req.body;
         try {
-            const partner = await ActiveUser.findByIdAndUpdate(req.params._id, update, { new: true, select: req.body.select });
-            if (notification) createUserNotification({ message: notification, type: 'Payment', belongsTo: req.params._id });
-            return res.status(200).send(partner);
+            const activeUser = await ActiveUser.findByIdAndUpdate(req.params._id, update, { new: true, select: req.body.select }).populate({ path: 'belongsTo', select: 'email' })
+            if (notification) createUserNotification({ message: notification, type: 'Payment', belongsTo: activeUser.belongsTo._id });
+            sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+                templateId: 19, 
+                smtpParams: {
+                    NONE: null
+                }, 
+                tags: ['Account'], 
+                email: activeUser.belongsTo.email
+            });
+            return res.status(200).send(activeUser);
         } catch (err) {
             return res.status(400).send({ success: false });
         }

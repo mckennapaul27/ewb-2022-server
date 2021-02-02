@@ -128,7 +128,7 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                 await newAccount.save(); //  and save it
                 await AffApplication.findByIdAndUpdate(application._id, { siteId }); // update original application with siteId
                 await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
-                // send emails and notifications
+               // emails and notifications done by hooks
                
             } else if (!existingAccount && !application && !defaultSiteIds.includes(siteId)) { // if account does not exist and site is neither ['75417', '75418', '40278', '56'] defaults
                 
@@ -170,7 +170,7 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                     await newAccount.save(); // and save it
                     await AffApplication.create({ brand, accountId, belongsTo: partner._id, siteId }); // Create new application with siteId
                     await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
-                    // send emails and notifications
+                    // emails and notifications done by hooks
                 } else return;
             } else return;
         } catch (error) {

@@ -11,15 +11,21 @@ apiKey.apiKey = process.env.SIBKEY;
 
 // 1. List functions
 
-// Add contact to list. Pass array of email addresses and listId
-function addContactToList (listId, emails) { // emails is Array of strings
+// Add contact to list. Pass array of email addresses and listId - This function is to move an EXISTING contact to a new list
+const addContactToList = async (listId, emails) => { // emails is Array of strings
     const apiInstance = new SibApiV3Sdk.ContactsApi();
     const contactEmails = new SibApiV3Sdk.AddContactToList();
     contactEmails.emails = emails;
-    apiInstance.addContactToList(listId, contactEmails)
-    .then(r => ({ success: true }))
-    .catch(e => ({ success: false }))
+    try {
+        const res = await apiInstance.addContactToList(listId, contactEmails);
+        console.log(res);
+        Promise.resolve(res);
+    } catch (error) {
+        console.log(error);
+        Promise.reject(error);
+    }
 }
+
 // addContactToList(9, ['mckennapaul27@gmail.com', 'paulmckenna191986@hotmail.co.uk']) // Test call
 
 // Remove contact from list. Pass array of email addresses and listId
@@ -31,6 +37,7 @@ function removeContactFromList (listId, emails) {
     .then(r => r)
     .catch(e => e)
 }
+
 // removeContactFromList(9, ['mckennapaul27@gmail.com', 'paulmckenna191986@hotmail.co.uk']) // Test call
 
 // 2. Attribute functions
@@ -87,6 +94,7 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => { // templa
     };
     try {
         const res = await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log(res);
         Promise.resolve(res);
     } catch (error) {
         console.log(error);
