@@ -172,7 +172,7 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
             // emails and notifications >>>>>
             if (action === 'YY') { // template 65 needs params.OFFER
                 createAffNotification(applicationYY({ brand, accountId, belongsTo }));
-                const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+                const { initialUpgrade } = await Brand.findOne({ brand }).select('initialUpgrade').lean();
 -               await sendEmail({
                     templateId: 65, 
                     smtpParams: {

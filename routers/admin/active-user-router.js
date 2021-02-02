@@ -157,7 +157,7 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
             if (activeUser && activeUser.belongsTo) {
                 if (action === 'YY') {
                     createUserNotification(applicationYY({ brand, accountId, belongsTo: activeUser.belongsTo }));
-                    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+                    const { initialUpgrade } = await Brand.findOne({ brand }).select('initialUpgrade').lean();
                     await sendEmail({
                         templateId: 65, 
                         smtpParams: {

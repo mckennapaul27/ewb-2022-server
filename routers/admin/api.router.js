@@ -115,7 +115,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                 applicationData = applicationData.reduce((acc, item) => acc.some(a => a.accountId === item.accountId) ? acc : (acc.push(item), acc), []); // remove duplicates - have to put second return of acc inside brackets (acc.push(item), acc) otherwise it will not return acc
                 applicationData.map(async app => {
                     const today = dayjs().format('DD/MM/YYYY');
-                    const update = {
+                    let update = {
                         'status': app.Tagged === 'Y' ? 'Approved' : 'Declined',
                         'upgradeStatus': (app.Upgraded === 'Y') ? `Upgraded ${today}` : (app.Tagged === 'Y' && app.Upgraded === 'N') ? `Not verified ${today}` : `Declined ${today}`,
                         'availableUpgrade.valid': (app.Upgraded === 'Y') ? false : ( app.Tagged === 'N') ? false : true 
@@ -125,18 +125,25 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                     let action = workOutAction(app.Tagged, app.Upgraded);
                     
                     try {
-                        const existingAffApplication = await AffApplication.findOne({ 'accountId': app.accountId }).select('accountId').lean();
-                        const existingDashApplication = await Application.findOne({ 'accountId': app.accountId }).select('accountId').lean();
+                        const existingAffApplication = await AffApplication.findOne({ 'accountId': app.accountId }).select('accountId brand').lean();
+                        const existingDashApplication = await Application.findOne({ 'accountId': app.accountId }).select('accountId brand').lean();
 
-                        if (existingAffApplication) { // updating affiliate applications
+                        if (existingAffApplication) { // AFFILIATE APPLICATIONS
+                            
+                            // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE - UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
+                            if (existingAffApplication.brand === 'Skrill') update['upgradeStatus'] = `Confirmed ${today}`;
+                            // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE- UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
+
                             const aa = await AffApplication.findByIdAndUpdate(existingAffApplication._id, update, { new: true });
                             const { brand, belongsTo, accountId } = aa; // deconstruct updated application
+
                             const partner = await AffPartner.findById(belongsTo).select('email').lean()
-                            // emails and notifications >>>>>
+
+                             // /* emails section */
                             if (action === 'YY') { // template 65 needs params.OFFER
                                 createAffNotification(applicationYY({ brand, accountId, belongsTo }));
-                                const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
--                                await sendEmail({
+                                const { initialUpgrade } = await Brand.findOne({ brand }).select('initialUpgrade').lean();
+                                await sendEmail({
                                     templateId: 65, 
                                     smtpParams: {
                                         BRAND: brand,
@@ -175,18 +182,23 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                                 });
 
                             } else null;
-                            // emails <<<<<
+                            // /* emails section */
                             if (action === 'YY' || action === 'YN') await createAffAccAffReport ({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
                         };
+                        
+                        if (existingDashApplication) { // PERSONAL APPLICATIONS
 
-                        if (existingDashApplication) { // updating dash / personal applications
+                            // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE - UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
+                            if (existingDashApplication.brand === 'Skrill') update['upgradeStatus'] = `Confirmed ${today}`;
+                            // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE- UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
+
                             const ab = await Application.findByIdAndUpdate(existingDashApplication._id, update, { new: true });
                             const { brand, belongsTo, accountId, email, currency } = ab; // deconstruct updated application
                             const activeUser = await ActiveUser.findById(belongsTo).select('belongsTo').lean(); // get the _id of the user that activeuser belongsTo
                             if (activeUser && activeUser.belongsTo) {
                                 if (action === 'YY') {
                                     createUserNotification(applicationYY({ brand, accountId, belongsTo: activeUser.belongsTo }));
-                                    const { initialUpgrade } = await Brand.findOne({ brand: a.brand }).select('initialUpgrade').lean();
+                                    const { initialUpgrade } = await Brand.findOne({ brand }).select('initialUpgrade').lean();
                                     await sendEmail({
                                         templateId: 65, 
                                         smtpParams: {
@@ -251,6 +263,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                             if ((action === 'YY' || action === 'YN') && belongsTo) await createAccountReport({ accountId, brand, belongsTo }); // create affaccount and affreport if not already created (Only if YY or YN)
                         }
                     } catch (error) {
+                        console.log(error);
                         return error;
                     }
                 })
