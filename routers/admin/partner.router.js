@@ -30,7 +30,7 @@ const { applicationYY, applicationYN, applicationNN } = require('../../utils/not
 const { createAffAccAffReport } = require('../../utils/account-functions');
 const { updateAffiliateBalance } = require('../../utils/balance-helpers');
 const { Brand } = require('../../models/common');
-
+const { sendEmail } = require('../../utils/sib-helpers');
 
 // POST /admin/partner/get-partner
 router.post('/get-partner', passport.authenticate('admin', {
@@ -319,9 +319,37 @@ router.post('/update-payment/:_id', passport.authenticate('admin', {
         }
         try {
             const updatedPayment = await AffPayment.findByIdAndUpdate(req.params._id, update, { new: true });
-            const { currency, amount, belongsTo } = updatedPayment;
-            // send email >>>>>>>>>>>>>
-            createAffNotification({ message: `Your payout request for ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} has been ${status.toLowerCase()}`, type: 'Payment', belongsTo })
+            const { currency, amount, belongsTo, brand, paymentAccount } = updatedPayment;
+            const partner = await AffPartner.findById(belongsTo).select('email');
+            createAffNotification({ 
+                message: `Your payout request for ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} has been ${status.toLowerCase()}`, 
+                type: 'Payment', 
+                belongsTo 
+            });
+            if (status === 'Paid') sendEmail({
+                templateId: 68, 
+                smtpParams: {
+                    AMOUNT: amount.toFixed(2),
+                    CURRENCY: currency,
+                    SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                    BRAND: brand,
+                    ACCOUNT: paymentAccount
+                }, 
+                tags: ['Payment'], 
+                email: partner.email
+            });
+            if (status === 'Rejected') sendEmail({
+                templateId: 69, 
+                smtpParams: {
+                    AMOUNT: amount.toFixed(2),
+                    CURRENCY: currency,
+                    SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                    BRAND: brand,
+                    ACCOUNT: paymentAccount
+                }, 
+                tags: ['Payment'], 
+                email: partner.email
+            })
             req.body = updatedPayment;
             req.params._id = updatedPayment.belongsTo; // changing req.params._id to belongsTo to keep update balance function consistent
             next();
