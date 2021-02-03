@@ -116,7 +116,7 @@ router.post('/create-new-application', passport.authenticate('jwt', {
                 STATUS: newApp.status
             }, 
             tags: ['Application'], 
-            email: 'mckennapaul27@gmail.com' 
+            email
         });
         req.newApp = newApp;        
         next();
