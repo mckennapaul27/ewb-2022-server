@@ -21,7 +21,7 @@ const {
 
 const crypto = require('crypto');
 
-const { mapRegexQueryFromObj, mapQueryForAggregate } = require('../../utils/helper-functions');
+const { mapRegexQueryFromObj, mapQueryForAggregate, mapQueryForPopulate, isPopulatedValue } = require('../../utils/helper-functions');
 const { createUserNotification } = require('../../utils/notifications-functions');
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createAccountReport } = require('../../utils/account-functions');
@@ -238,14 +238,31 @@ router.post('/fetch-payments', passport.authenticate('admin', {
         let { sort, query } = req.body;
         let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
         let searchQuery = mapRegexQueryFromObj(query); 
+        let populateQuery = mapQueryForPopulate(query); 
+        let payments;
         try {
-            const payments = await Payment.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize)
+            if (isPopulatedValue(query)) {
+                payments = (await Payment.find(searchQuery).
+                collation({ locale: 'en', strength: 1 })
+                .sort(sort)
+                .skip(skippage)
+                .limit(pageSize)
+                .populate({ path: 'belongsTo', select: 'belongsTo', populate: { path: 'belongsTo', match: populateQuery } })).filter(a => a.belongsTo.belongsTo)
+            } else {
+                payments = await Payment.find(searchQuery).
+                collation({ locale: 'en', strength: 1 })
+                .sort(sort)
+                .skip(skippage)
+                .limit(pageSize)
+                .populate({ path: 'belongsTo', select: 'belongsTo', populate: { path: 'belongsTo', select: 'userId' } })
+            }
             const pageCount = await Payment.countDocuments(searchQuery);
             const brands = await Payment.distinct('brand'); 
             const statuses = await Payment.distinct('status');   
             const currencies = await Payment.distinct('currency');           
             return res.status(200).send({ payments, pageCount, brands, statuses, currencies }); 
         } catch (err) {
+            console.log(err);
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' })

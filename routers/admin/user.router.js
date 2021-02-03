@@ -34,9 +34,21 @@ router.post('/fetch-users', passport.authenticate('admin', {
 
         try {
             if (isPopulatedValue(query)) { // use this way to query for a populated field - in this case, partner.epi
-                users = (await User.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'partner', match: populateQuery })).filter(a => a.partner); // this works because we are only populating partner where the epi matches the query epi so it firstly returns all the users and then filters out all where the partner is null. the partner will be null if it does not match the query
+                users = (await User.find(searchQuery)
+                .collation({ locale: 'en', strength: 1 })
+                .sort(sort)
+                .skip(skippage)
+                .limit(pageSize)
+                .populate({ path: 'partner', match: populateQuery }))
+                .filter(a => a.partner); // this works because we are only populating partner where the epi matches the query epi so it firstly returns all the users and then filters out all where the partner is null. the partner will be null if it does not match the query
             } else {
-                users = await User.find(searchQuery).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize).populate({ path: 'partner', select: 'epi' }).select('-password')
+                users = await User.find(searchQuery)
+                .collation({ locale: 'en', strength: 1 })
+                .sort(sort)
+                .skip(skippage)
+                .limit(pageSize)
+                .populate({ path: 'partner', select: 'epi' })
+                .select('-password')
             };
             const pageCount = await User.countDocuments(searchQuery);
             return res.status(200).send({ users, pageCount }); 
