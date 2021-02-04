@@ -9,7 +9,7 @@ let apiKey = defaultClient.authentications['api-key'];
 apiKey.apiKey = process.env.SIBKEY;
 
 
-// 1. List functions
+// // 1. List functions
 
 // Add contact to list. Pass array of email addresses and listId - This function is to move an EXISTING contact to a new list
 const addContactToList = async (listId, emails) => { // emails is Array of strings
@@ -18,14 +18,11 @@ const addContactToList = async (listId, emails) => { // emails is Array of strin
     contactEmails.emails = emails;
     try {
         const res = await apiInstance.addContactToList(listId, contactEmails);
-        console.log(res);
         Promise.resolve(res);
     } catch (error) {
-        console.log(error);
         Promise.reject(error);
     }
 }
-
 // addContactToList(9, ['mckennapaul27@gmail.com', 'paulmckenna191986@hotmail.co.uk']) // Test call
 
 // Remove contact from list. Pass array of email addresses and listId
@@ -37,10 +34,9 @@ function removeContactFromList (listId, emails) {
     .then(r => r)
     .catch(e => e)
 }
-
 // removeContactFromList(9, ['mckennapaul27@gmail.com', 'paulmckenna191986@hotmail.co.uk']) // Test call
 
-// 2. Attribute functions
+// // 2. Attribute functions
 
 // Get all contact attributes
 function getAttributes () {
@@ -59,7 +55,27 @@ function updateAttribute (attributeName) {
     .catch(e => e)
 }
 
-// 3. Contact functions
+// // 3. Contact functions
+
+// create new contact by passing email, name, userId, country and regDate
+const createNewContact = async ({ email, name, userId, country, regDate }) => {
+    const apiInstance = new SibApiV3Sdk.ContactsApi();
+    let createContact = new SibApiV3Sdk.CreateContact();
+    createContact.email = email;
+    createContact.attributes = {
+        FIRSTNAME: name,
+        USERID: userId,
+        COUNTRY: country,
+        REG_DATE: regDate
+    };
+    createContact.listIds = [3];
+    try {
+        const res = await apiInstance.createContact(createContact);
+        Promise.resolve(res);
+    } catch (error) {
+        Promise.reject(error);
+    }
+}
 
 // Update contact by passing email, attributes object, listIds to link and unlink
 function updateContact (email, attributes, listIds, unlinkListIds) { // Pass in email, object of attrbutes, array of listIds and unlinkIds
@@ -94,10 +110,8 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => { // templa
     };
     try {
         const res = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log(res);
         Promise.resolve(res);
     } catch (error) {
-        console.log(error);
         Promise.reject(error);
     }
 }
@@ -108,7 +122,8 @@ module.exports = {
     getAttributes,
     updateAttribute,
     updateContact,
-    sendEmail
+    sendEmail,
+    createNewContact
 }
 
 

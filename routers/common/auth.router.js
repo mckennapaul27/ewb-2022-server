@@ -21,7 +21,7 @@ const { AffPartner } = require('../../models/affiliate/index');
 const { createUserNotification } = require('../../utils/notifications-functions');
 const { generateToken, sendToken } = require('../../utils/token.utils');
 const { welcome, welcomeSocial } = require('../../utils/notifications-list');
-const { sendEmail } = require('../../utils/sib-helpers');
+const { sendEmail, createNewContact } = require('../../utils/sib-helpers');
 
 
 // /common/auth/create-new-user 
@@ -46,8 +46,9 @@ router.post('/create-new-user', async (req, res) => {
             const token = jwt.sign(user.toJSON(), secret);
             return User.findById(user._id).select('name email userId _id activeUser partner').populate({ path: 'partner', select: 'isSubPartner epi siteId referredBy' }).lean()  // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user 
             .then(async user => {
+                const { email, name, userId, country, regDate } = user;
                 await createUserNotification(welcome(user)); 
-                // await addContactToList(3, [user.email]);
+                await createNewContact({ email, name, userId, country, regDate })
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
             .catch((err) => {
