@@ -359,6 +359,18 @@ router.post('/update-payment/:_id', passport.authenticate('admin', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 }, updateBalances);
 
+// POST /admin/partner/delete-application { _id }
+router.post('/delete-application', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    try { 
+        const application = await AffApplication.findByIdAndDelete(req.body._id);
+        return res.status(200).send(application); 
+    } catch (err) {
+        return res.status(400).send(err)
+    }    
+});
+
 function updateBalances (req, res) { // After next() is called on /update-payment/:_id it comes next to updateBalances()
     return updateAffiliateBalance({ _id: req.params._id })
     .then(() => res.status(201).send({ msg: `You have paid  ${req.body.currency} ${req.body.amount} ` }))
