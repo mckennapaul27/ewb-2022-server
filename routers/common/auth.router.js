@@ -18,7 +18,7 @@ const axios = require('axios');
 
 const { User } = require('../../models/common/index');
 const { AffPartner } = require('../../models/affiliate/index');
-const { createUserNotification } = require('../../utils/notifications-functions');
+const { createUserNotification, createAffNotification } = require('../../utils/notifications-functions');
 const { generateToken, sendToken } = require('../../utils/token.utils');
 const { welcome, welcomeSocial } = require('../../utils/notifications-list');
 const { sendEmail, createNewContact } = require('../../utils/sib-helpers');
@@ -48,7 +48,18 @@ router.post('/create-new-user', async (req, res) => {
             .then(async user => {
                 const { email, name, userId, country, regDate } = user;
                 await createUserNotification(welcome(user)); 
-                await createNewContact({ email, name, userId, country, regDate })
+                await createNewContact({ 
+                    email, 
+                    name, 
+                    userId, 
+                    country, 
+                    regDate 
+                });
+                if (referredByPartner) createAffNotification({ 
+                    message: `${user.email} has registered as your subpartner`, 
+                    type: 'Partner', 
+                    belongsTo: referredByPartner
+                });
                 return res.status(201).send({ user, token: 'jwt ' + token, msg: 'You have successfully registered.' })
             })
             .catch((err) => {
