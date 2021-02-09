@@ -48,7 +48,7 @@ router.post('/get-partner', passport.authenticate('admin', {
 });
 
 // POST /admin/partner/update-partner/:_id
-router.post('/update-partner/:_id', passport.authenticate('admin', {
+router.post('/update-partner/:_id', passport.authenticate('admin', { // this function is used to update brand deals and brand assets from admin
     session: false
 }), async (req, res) => {
     const token = getToken(req.headers);
@@ -56,6 +56,14 @@ router.post('/update-partner/:_id', passport.authenticate('admin', {
     if (token) {
         try {
             const partner = await AffPartner.findByIdAndUpdate(req.params._id, update, { new: true });
+            if (update.brandAssets) await sendEmail({ // if the update includes brandAssets, send confirmation email
+                templateId: 45, 
+                smtpParams: {
+                    BRAND: req.query.brand
+                }, 
+                tags: ['Affiliate'], 
+                email: partner.email
+            })
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ msg: 'Server error' })
