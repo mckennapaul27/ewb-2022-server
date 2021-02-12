@@ -301,7 +301,7 @@ router.post('/fetch-monthly-statement', async (req, res) => {
                 eNetworkShare
             });
         } catch (error) {
-            return error;
+            // return error;
             return res.status(403).send({ success: false, msg: error });
         }
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
