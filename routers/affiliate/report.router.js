@@ -201,7 +201,6 @@ router.post('/fetch-monthly-summary', async (req, res) => {
                 sClicks
             });
         } catch (error) {
-            return error;
             return res.status(403).send({ success: false, msg: error });
         };
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
@@ -240,14 +239,14 @@ router.post('/fetch-deal-progress', async (req, res) => {
     if (token) {
         const { _id, month } = req.body;
         try {
-            const partner = await AffPartner.findById(req.body._id).select('referredBy deals isSubPartner').lean()
-            const { referredBy, deals, isSubPartner } = partner;
+            const partner = await AffPartner.findById(req.body._id).select('referredBy deals isSubPartner revShareActive').lean()
+            const { referredBy, deals, isSubPartner, revShareActive } = partner;
 
             const nRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'Neteller', month });
             const sRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'Skrill', month });
             const eRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'ecoPayz', month });
 
-            return res.status(200).send({ nRate, sRate, eRate, deals });
+            return res.status(200).send({ nRate, sRate, eRate, deals, revShareActive });
         } catch (error) {
             return res.status(403).send({ success: false, msg: error });
         }

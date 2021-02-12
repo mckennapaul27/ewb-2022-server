@@ -379,6 +379,19 @@ router.post('/delete-application', passport.authenticate('admin', {
     }    
 });
 
+// POST /admin/partner/toggle-rev-share { _id, revShareActive }
+router.post('/toggle-rev-share', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    try { 
+        await AffPartner.findByIdAndUpdate(req.body._id, {
+            revShareActive: req.body.revShareActive
+        }, { new: true, select: 'revShareActive' })
+        return res.status(201).send({ success: true })
+    } catch (err) {
+        return res.status(400).send(err)
+    }    
+});
 function updateBalances (req, res) { // After next() is called on /update-payment/:_id it comes next to updateBalances()
     return updateAffiliateBalance({ _id: req.params._id })
     .then(() => res.status(201).send({ msg: `You have paid  ${req.body.currency} ${req.body.amount} ` }))
