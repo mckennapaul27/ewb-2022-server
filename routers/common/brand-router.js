@@ -24,7 +24,7 @@ router.post('/update-brand', passport.authenticate('admin', {
 }), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
-        const { brand, branding, initialUpgrade, benefits, terms, link } = req.body;
+        const { brand, branding, initialUpgrade, benefits, terms, link, infoLink } = req.body;
         try {
             await Brand.bulkWrite([
                 {
@@ -37,7 +37,8 @@ router.post('/update-brand', passport.authenticate('admin', {
                                 initialUpgrade,
                                 benefits,
                                 terms,
-                                link
+                                link,
+                                infoLink
                             }
                         },
                         upsert: true // upsert must be placed within updateOne object or every object that is traversed through / https://stackoverflow.com/questions/39988848/trying-to-do-a-bulk-upsert-with-mongoose-whats-the-cleanest-way-to-do-this

@@ -10,6 +10,7 @@ const Brand = new Schema({
         currencySymbol: String,
     },
     link: String,
+    infoLink: String,
     initialUpgrade: String,
     benefits: [String],
     terms: [String]
