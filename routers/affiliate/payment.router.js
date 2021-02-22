@@ -36,12 +36,12 @@ async function createPayment (req, res, next) {
             type: 'Payment', 
             belongsTo 
         });
-        createAdminJob({
-            message: `Affiliate payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
-            status: 'Pending',
-            type: 'Payouts',
-            partner: belongsTo
-        });
+        // createAdminJob({
+        //     message: `Affiliate payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
+        //     status: 'Pending',
+        //     type: 'Payouts',
+        //     partner: belongsTo
+        // });
         const email = (await AffPartner.findById(req.params._id).select('belongsTo').populate({ path: 'belongsTo', select: 'email' })).belongsTo.email;
         sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
             templateId: 23, 

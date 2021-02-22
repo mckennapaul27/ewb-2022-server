@@ -44,13 +44,13 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
                 type: 'Partner',
                 belongsTo: req.params._id
             });
-            createAdminJob({
-                message: `Partner has updated their payment details`,
-                completed: true,
-                status: 'Completed',
-                partner: req.params._id,
-                type: 'Details'
-            });
+            // createAdminJob({
+            //     message: `Partner has updated their payment details`,
+            //     completed: true,
+            //     status: 'Completed',
+            //     partner: req.params._id,
+            //     type: 'Details'
+            // });
             sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
                 templateId: 19, 
                 smtpParams: {

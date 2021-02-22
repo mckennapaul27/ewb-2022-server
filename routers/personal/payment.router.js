@@ -40,12 +40,12 @@ async function createPayment (req, res, next) {
             type: 'Payment', 
             belongsTo: activeUser.belongsTo._id 
         });
-        createAdminJob({
-            message: `Activeuser payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
-            status: 'Pending',
-            type: 'Payouts',
-            activeUser: belongsTo
-        });
+        // createAdminJob({
+        //     message: `Activeuser payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
+        //     status: 'Pending',
+        //     type: 'Payouts',
+        //     activeUser: belongsTo
+        // });
         sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
             templateId: 23, 
             smtpParams: {
