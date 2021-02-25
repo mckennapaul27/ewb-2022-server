@@ -36,12 +36,6 @@ async function createPayment (req, res, next) {
             type: 'Payment', 
             belongsTo 
         });
-        // createAdminJob({
-        //     message: `Affiliate payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
-        //     status: 'Pending',
-        //     type: 'Payouts',
-        //     partner: belongsTo
-        // });
         const email = (await AffPartner.findById(req.params._id).select('belongsTo').populate({ path: 'belongsTo', select: 'email' })).belongsTo.email;
         sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
             templateId: 23, 
@@ -55,6 +49,21 @@ async function createPayment (req, res, next) {
             tags: ['Payment'], 
             email
         });
+        const cryptos = ['BitCoin', 'CoinBase'];
+        if (cryptos.includes(req.body.brand)) {
+            sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+                templateId: 70, 
+                smtpParams: {
+                    AMOUNT: amount.toFixed(2),
+                    CURRENCY: currency,
+                    SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                    BRAND: brand,
+                    ACCOUNT: paymentAccount
+                }, 
+                tags: ['Payment'], 
+                email
+            });
+        }
         req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
         next();
     } else return res.status(403).send({ msg: 'Unauthorised' })
