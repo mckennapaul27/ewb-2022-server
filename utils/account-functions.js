@@ -2,12 +2,18 @@ const {
     AffPartner,
     AffReport,
     AffAccount,
+    AffReportMonthly,
+    AffSubReport,
 } = require('../models/affiliate/index');
 const {
     ActiveUser,
     Account,
     Report,
+    SubReport
 } = require('../models/personal/index');
+const {
+    User
+} = require('../models/common')
 
 let dayjs = require('dayjs');
 let advancedFormat = require('dayjs/plugin/advancedFormat');
@@ -73,7 +79,63 @@ const createAffAccAffReport = ({ accountId, brand, belongsTo }) => {
     })
 };
 
+// deleting after wrong month upload
+const deleteReportsWrongMonth = async () => {
+    try {
+        const affreports = await AffReport.deleteMany({
+            month: 'March 2021',
+            brand: 'ecoPayz',
+        });
+        const affreportsmonthly = await AffReportMonthly.deleteMany({
+            month: 'March 2021',
+            brand: 'ecoPayz',
+        });
+        const affsubreports = await AffSubReport.find({
+            month: 'March 2021',
+            brand: 'ecoPayz',
+        })
+        const reports = await Report.deleteMany({
+            month: 'March 2021',
+            brand: 'ecoPayz',
+        })
+        const subreport = await SubReport.deleteMany({
+            month: 'March 2021',
+            brand: 'ecoPayz',
+        })  
+
+        console.log(subreport)
+    } catch (error) {
+        console.log(error)
+    }
+};
+
+// connecting accountid to user 
+const connectAccountIdToUser = async () => {
+    try {
+        const user = await User.findOne({ email: 'sigsun95@gmail.com' });
+        console.log(user);
+        const updatedAccount = await Account.findOneAndUpdate({ accountId: '1100896201' }, {
+            belongsTo: user.activeUser,
+        }, { new: true });
+        const activeUserUpdate = await ActiveUser.findByIdAndUpdate(user.activeUser, {
+            $push: {
+                accounts: updatedAccount
+            }
+        });
+        const updatedReport = await Report.updateMany({ 'account.accountId': '1100896201' }, {
+            belongsTo: updatedAccount._id,
+            belongsToActiveUser: updatedAccount.belongsTo
+        }, { new: true })
+        console.log(updatedAccount);
+        console.log(updatedReport);
+    } catch (error) {
+        console.log(error);
+    };
+}
+
 module.exports = {
     createAccountReport,
-    createAffAccAffReport
+    createAffAccAffReport,
+    deleteReportsWrongMonth,
+    connectAccountIdToUser
 }

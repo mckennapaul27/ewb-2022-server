@@ -314,6 +314,47 @@ router.post('/fetch-monthly-reports', passport.authenticate('admin', {
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
+// POST /admin/partner/create-payment-paid/:_id
+router.post('/create-payment-paid/:_id', passport.authenticate('admin', {
+    session: false
+}), async (req, res, next) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const {
+            amount,
+            status,
+            requestDate,
+            paidDate,
+            currency,
+            brand,
+            paymentAccount,
+            belongsTo,
+        } = req.body;
+        try {
+            const newPayment = AffPayment.create({
+                amount,
+                status,
+                requestDate,
+                paidDate,
+                currency,
+                brand,
+                paymentAccount,
+                belongsTo,
+            })
+            req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
+            next();
+        } catch (error) {
+            return res.status(400).send(error);
+        }
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+}, updateBalances);
+
+function updateBalances (req, res) { // After next() is called on createPayment() it comes next to updateBalances()
+    return updateAffiliateBalance({ _id: req.params._id }) 
+    .then(() => res.status(201).send({ newPayment: req.newPayment, msg: `You have paid ${req.body.currency} ${req.body.amount.toFixed(2)} ` }))
+    .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
+};
+
 // POST /admin/partner/update-payment/:_id`, { status });
 router.post('/update-payment/:_id', passport.authenticate('admin', {
     session: false

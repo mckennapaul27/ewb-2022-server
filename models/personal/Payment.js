@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const { v4: uuidv4 } = require('uuid');
 
 const Payment = new Schema({ 
     amount: Number,
@@ -19,6 +20,12 @@ const Payment = new Schema({
         required: false
     }
 });
+
+Payment.pre('validate', async function (next) {
+    const a = this;
+    if (a.isNew && !a.transactionId) a.transactionId = uuidv4();
+    next();
+})
 
 
 module.exports = mongoose.model('payment', Payment);

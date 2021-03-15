@@ -27,6 +27,8 @@ const {
     options,
     corsOptions
 } = require('./config/config');
+const { deleteReportsWrongMonth, connectAccountIdToUser } = require('./utils/account-functions');
+const { updateActUserStats } = require('./queries/map-act-dashboard-data');
 
 app.use(compression())
 app.use(fileUpload());
@@ -53,6 +55,7 @@ if (process.env.NODE_ENV !== 'dev') {
         })
     }));
 };
+
 
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;

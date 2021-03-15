@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 require('../../auth/passport')(passport);
-const { v4: uuidv4 } = require('uuid');
 const { getToken } = require('../../utils/token.utils')
 const {
     AffPayment,
@@ -24,7 +23,6 @@ async function createPayment (req, res, next) {
     if (token) {        
         const newPayment = await AffPayment.create({
             amount: req.body.amount,
-            transactionId: uuidv4(),
             currency: req.body.currency,            
             brand: req.body.brand,
             paymentAccount: req.body.paymentAccount,
