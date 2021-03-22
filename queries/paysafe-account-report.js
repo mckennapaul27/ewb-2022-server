@@ -18,6 +18,7 @@ const fetchAccountReport = async ({ brand, month, date, url }) => {
             const res = await request.get(url).proxy(proxy);
             checkData(res.text, brand, month, date, url);
         } catch (err) {
+            console.log(err);
             return err;
         }
     })();
@@ -35,6 +36,7 @@ const checkData = async (res, brand, month, date, url) => {
         return mapRawData(data, brand, month, date);
     } catch (err) {
         if (err.message === 'Permission denied') setTimeout(() => {
+            console.log(err);
             fetchAccountReport ({ brand, month, date, url }); // need to add fetchData parameters
         }, 500);
     };

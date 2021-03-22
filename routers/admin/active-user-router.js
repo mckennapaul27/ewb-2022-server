@@ -329,6 +329,18 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
     .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
 };
 
+// POST /admin/active-user/delete-application { _id }
+router.post('/delete-application', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    try { 
+        const application = await Application.findByIdAndDelete(req.body._id);
+        return res.status(200).send(application); 
+    } catch (err) {
+        return res.status(400).send(err)
+    }    
+});
+
 
 
 

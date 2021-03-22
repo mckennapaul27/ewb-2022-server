@@ -23,7 +23,8 @@ const fetchPlayerRegistrationsReport = ({ brand, month, date, url }) => {
             const res = await request.get(url).proxy(proxy);
             checkData(res.text, brand, month, date, url);
         } catch (err) {
-           return err;
+            console.log(err);
+            return err;
         }
     })();
 };
@@ -39,6 +40,7 @@ const checkData = async (res, brand, month, date, url) => {
         const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
         return mapRawData(data, brand, month, date);
     } catch (err) {
+        console.log(err);
         if (err.message === 'Permission denied') setTimeout(() => {
             fetchPlayerRegistrationsReport ({ brand, month, date, url }); // need to add fetchData parameters if it fails api fetch
         }, 500);
