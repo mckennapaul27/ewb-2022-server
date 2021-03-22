@@ -58,12 +58,12 @@ const updatePartnerStats = async (brand, month, date) => {
                         type: 'Report', 
                         isGeneral: true 
                     });
-                    // createAdminJob({
-                    //     message: `${brand} reports and dashboard data were successfully mapped and updated on ${dayjs().format('LLLL')}`, 
-                    //     completed: true,
-                    //     status: 'Completed',
-                    //     type: 'Reports'
-                    // });
+                    createAdminJob({
+                        message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`, 
+                        completed: true,
+                        status: 'Completed',
+                        type: 'Reports'
+                    });
                     console.log('Completed partner data ... ')
                 })
             })            
