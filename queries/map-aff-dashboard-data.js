@@ -54,16 +54,16 @@ const updatePartnerStats = async (brand, month, date) => {
                 console.log('Processing partner stats [4] ...');
                 processStatsFour.then(() => {
                     createAffNotification({ // once complete - add notification
-                        message: `Your ${brand} reports were updated on ${dayjs().format('LLLL')}`, 
+                        message: `${brand} data was fetched on ${dayjs().format('LLLL')}`, 
                         type: 'Report', 
                         isGeneral: true 
                     });
-                    createAdminJob({
-                        message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`, 
-                        completed: true,
-                        status: 'Completed',
-                        type: 'Reports'
-                    });
+                    // createAdminJob({
+                    //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`, 
+                    //     completed: true,
+                    //     status: 'Completed',
+                    //     type: 'Reports'
+                    // });
                     console.log('Completed partner data ... ')
                 })
             })            

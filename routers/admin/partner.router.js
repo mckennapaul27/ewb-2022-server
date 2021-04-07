@@ -439,6 +439,28 @@ function updateBalances (req, res) { // After next() is called on /update-paymen
     .catch(() => res.status(500).send({ msg: 'Server error: Please contact support' }))
 };
 
+// POST /admin/partner/toggle-pause-partner { _id, isDisabled }
+router.post('/toggle-pause-partner', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    try {
+        const partner = await AffPartner.findByIdAndUpdate(req.body._id, {
+            isDisabled: req.body.isDisabled
+        }, { new: true, select: 'email isDisabled' });
+        if (req.body.isDisabled) {
+            await sendEmail({
+                templateId: 29, 
+                tags: ['Application'], 
+                email: partner.email
+            });
+        };
+        return res.status(201).send({ success: true, msg: `${partner.email} has been ${req.body.isDisabled ? 'disabled' : 're-activated'}` })
+    } catch (error) {
+        return res.status(400).send(err);
+    }
+});
+
+
 
 
 
