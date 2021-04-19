@@ -110,6 +110,14 @@ const AffPartner = new Schema({
     isDisabled: {
         type: Boolean,
         default: false
+    },
+    isPermitted: {
+        type: Boolean,
+        default: true // if we decide to only allow some accounts to be permitted, the default should be set to false and then we can manually approve some accounts from admin
+    },
+    termsAccepted: {
+        type: Boolean,
+        default: false
     }
 });
 

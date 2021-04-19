@@ -102,7 +102,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                                 brand,
                                 dateAdded,
                                 belongsTo: application.belongsTo,
-                                accountId
+                                accountId,
+                                country
                             });
                             const newReport = await AffReport.create({ // create new report
                                 date,
@@ -139,7 +140,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                                     brand,
                                     dateAdded,
                                     belongsTo: partner._id,
-                                    accountId
+                                    accountId,
+                                    country
                                 });
                                 const newReport = await AffReport.create({ // create new report
                                     date,

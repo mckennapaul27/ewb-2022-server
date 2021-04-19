@@ -20,7 +20,10 @@ router.post('/create-payment/:_id', passport.authenticate('jwt', {
 
 async function createPayment (req, res, next) {
     const token = getToken(req.headers);    
-    if (token) {        
+    if (token) {  
+        const balance = (await AffPartner.findById(req.params._id).select('stats')).stats.balance.find(a => a.currency === req.body.currency).amount;
+        if (balance < req.body.amount) return res.status(403).send({ msg: 'You have insufficient funds to request this amount' });
+                
         const newPayment = await AffPayment.create({
             amount: req.body.amount,
             currency: req.body.currency,            

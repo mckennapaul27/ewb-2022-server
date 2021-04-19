@@ -460,6 +460,26 @@ router.post('/toggle-pause-partner', passport.authenticate('admin', {
     }
 });
 
+// POST /admin/partner/toggle-permitted { _id, isPermitted }
+router.post('/toggle-permitted', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    try {
+        const partner = await AffPartner.findByIdAndUpdate(req.body._id, {
+            isPermitted: req.body.isPermitted
+        }, { new: true, select: 'email isPermitted' });
+        // if (req.body.isPermitted) { // send email saying referral of IN and BD accounts are permitted
+        //     await sendEmail({
+        //         templateId: 71, 
+        //         tags: ['Partner'], 
+        //         email: partner.email
+        //     });
+        // };
+        return res.status(201).send({ success: true, msg: `${partner.email} has been ${req.body.isPermitted ? 'made eligible' : 'refused eligibility'}` })
+    } catch (error) {
+        return res.status(400).send(err);
+    }
+});
 
 
 

@@ -78,13 +78,16 @@ const getSubPartnerRate = async ({ referredBy }) => { // finding the partner tha
     } else return 0;
 }
 
-const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, epi }, brand, month) => {
+const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, epi, isPermitted }, brand, month) => {
 
     return new Promise(resolve => {
         resolve (
             (async () => {
                 const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
-                const reports = await AffReport.find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue account.commission account.earnedFee').lean(); // only find accounts that have transValue > 0
+                const reports = await AffReport
+                .find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } })
+                .select('account.transValue account.commission account.earnedFee country')
+                .lean(); // only find accounts that have transValue > 0
                 const subPartnerRate = (await getSubPartnerRate({ referredBy })).subPartnerRate;
 
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
@@ -92,7 +95,8 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
 
                     const { transValue, commission, earnedFee } = nextReport.account;
                     const levels = (twentyPercentRate, c) => { // c = commission
-                        if (c === 0) return 0;
+                        if ((nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined && !isPermitted)) return 0; // If the report country is IN or BD and partner isPermitted = false return 0;
+                        else if (c === 0) return 0;
                         else if (revShareActive) return rate; // if revShareActive, just return rate like 25% or 27.5%
                         else if (fixedDealActive['isActive']) return fixedDealActive['rate']; // if fixed deal active return the rate. Have put it in ['rate'] just in case in passes rate from function param
                         else if (twentyPercentRate < 0.0050 && rate >= 0.0050) return twentyPercentRate;
@@ -113,7 +117,8 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                         'account.cashbackRate': verifiedRate,
                         'account.cashback': cashback,
                         'account.subAffCommission': subAffCommission,
-                        'account.profit': profit
+                        'account.profit': profit,
+                        comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined && !isPermitted) ? 'IN & BD accounts not eligible for commission' : ''
                     }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.subAffCommission account.profit' }).exec();
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise

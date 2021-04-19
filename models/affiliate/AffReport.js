@@ -39,7 +39,8 @@ const AffReport = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner',
         required: false
-    }
+    },
+    comment: String
 });
 
 // using pre validate to set report currency - very important for calculating balances.

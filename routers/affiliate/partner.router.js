@@ -162,6 +162,22 @@ router.post('/update-notifications', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
+// GET /affiliate/partner/accept-terms/:_id
+router.get('/accept-terms/:_id', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { _id } = req.params;
+        try {
+            const partner = await AffPartner.findByIdAndUpdate(_id, { termsAccepted: true }, { new: true, select: 'termsAccepted' })
+            return res.status(200).send(partner); 
+        } catch (err) {
+            return res.status(400).send(err)
+        }    
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+})
+
 
 
 

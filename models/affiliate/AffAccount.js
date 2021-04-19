@@ -7,6 +7,7 @@ const AffPartner = require('./AffPartner');
 const AffAccount = new Schema({ 
     brand: String,
     accountId: String,
+    country: String,
     dateAdded: { type: Number, default: Date.now },
     reports: [{
         type: mongoose.Schema.Types.ObjectId,
