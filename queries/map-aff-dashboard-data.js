@@ -15,9 +15,12 @@ const {
     AffSubReport 
 } = require('../models/affiliate/index');
 
+
+
 const { createAffNotification } = require('../utils/notifications-functions');
 const { createAdminJob } = require('../utils/admin-job-functions');
 const { updateAffiliateBalance } = require('../utils/balance-helpers');
+const { getQuarterData } = require('../utils/quarter-helpers');
 
 const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({ 
@@ -53,11 +56,11 @@ const updatePartnerStats = async (brand, month, date) => {
                 }, Promise.resolve());
                 console.log('Processing partner stats [4] ...');
                 processStatsFour.then(() => {
-                    createAffNotification({ // once complete - add notification
-                        message: `${brand} data was fetched on ${dayjs().format('LLLL')}`, 
-                        type: 'Report', 
-                        isGeneral: true 
-                    });
+                    // createAffNotification({ // once complete - add notification
+                    //     message: `${brand} data was fetched on ${dayjs().format('LLLL')}`, 
+                    //     type: 'Report', 
+                    //     isGeneral: true 
+                    // });
                     // createAdminJob({
                     //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`, 
                     //     completed: true,
@@ -76,7 +79,7 @@ const getSubPartnerRate = async ({ referredBy }) => { // finding the partner tha
         const rate = await AffPartner.findById(referredBy).select('subPartnerRate epi').exec();
         return rate;
     } else return 0;
-}
+};
 
 const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, epi, isPermitted }, brand, month) => {
 
@@ -111,15 +114,19 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                     ) : 0;   
                     
                     const profit = commission - (subAffCommission + cashback);
-
+                    const quarter = (brand === 'Skrill' || brand === 'Neteller') ? (await getQuarterData({ month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
+                        
                     await AffReport.findByIdAndUpdate(nextReport._id, {
                         lastUpdate: Date.now(),
                         'account.cashbackRate': verifiedRate,
                         'account.cashback': cashback,
                         'account.subAffCommission': subAffCommission,
                         'account.profit': profit,
-                        comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined && !isPermitted) ? 'IN & BD accounts not eligible for commission' : ''
-                    }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.subAffCommission account.profit' }).exec();
+                        comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission' : '',
+                        quarter
+                    }, { new: true }).exec();
+
+                    // await setAffQuarterData({ month, brand, accountId: nextReport.account.accountId, quarter })
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());

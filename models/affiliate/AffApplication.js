@@ -44,8 +44,9 @@ AffApplication.pre('validate', async function (next) { // https://stackoverflow.
 // };
 
 // AffApplication.pre('findOneAndUpdate', async function () { // https://stackoverflow.com/questions/44614734/modifying-mongoose-document-on-pre-hook-of-findoneandupdate
-//     // const docToUpdate = await this.model.findOne(this.getQuery())
-// })
+//     const docToUpdate = await this.model.findOne(this.getFilter());
+//     console.log('docToUpdate: ', docToUpdate); 
+// });
 
 module.exports = mongoose.model('affapplication', AffApplication);
 

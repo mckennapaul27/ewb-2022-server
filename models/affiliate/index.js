@@ -8,6 +8,7 @@ module.exports = {
     AffReportMonthly: require('./AffReportMonthly'),
     AffPayment: require('./AffPayment'),
     AffReportDaily: require('./AffReportDaily'),
-    AffSubReport: require('./AffSubReport') 
+    AffSubReport: require('./AffSubReport'),
+    AffUpgrade: require('./AffUpgrade') 
 };
   

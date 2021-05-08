@@ -12,7 +12,8 @@ const {
     AffReportDaily,
     AffReportMonthly,
     AffPartner,
-    AffApplication
+    AffApplication,
+    AffUpgrade
 } = require('../../models/affiliate/index');
 const { 
     mapRegexQueryFromObj, 
@@ -23,6 +24,7 @@ const {
     getVolumeByBrand,
     getCashBackByBrand, 
 } = require('../../queries/map-aff-dashboard-data');
+const { Quarter } = require('../../models/common');
 
 
 // POST /affiliate/application/create
@@ -247,6 +249,22 @@ router.post('/fetch-deal-progress', async (req, res) => {
             const eRate = await getCashbackRate({ _id, referredBy, deals, isSubPartner, brand: 'ecoPayz', month });
 
             return res.status(200).send({ nRate, sRate, eRate, deals, revShareActive });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /affiliate/report/fetch-quarter-data
+router.post('/fetch-quarter-data', async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, quarter } = req.body;
+        try {
+            const q = await Quarter.findOne({ accountId, quarter });
+            const offers = await AffApplication.find({ accountId, 'availableUpgrade.valid': true })
+            const upgrades = await AffUpgrade.find({ accountId, quarter })
+            return res.status(200).send({ offers, q, upgrades });
         } catch (error) {
             return res.status(403).send({ success: false, msg: error });
         }

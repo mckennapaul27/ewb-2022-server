@@ -40,7 +40,8 @@ const AffReport = new Schema({
         ref: 'affpartner',
         required: false
     },
-    comment: String
+    comment: String,
+    // quarter: String
 });
 
 // using pre validate to set report currency - very important for calculating balances.
@@ -51,11 +52,27 @@ AffReport.pre('validate', async function (next) { // https://stackoverflow.com/q
         report.epi = partner.epi; // setting epi
         report.referredByEpi = partner.referredBy ? partner.referredBy.epi : null; // setting referredByEpi
         report.account.currency = setCurrency(report.brand); // setting currency (this does not always work because when we set account: {} object properties in map-dashboard-data etc we update full object)
+        report.quarter = (report.brand === 'Skrill' || report.brand === 'Neteller') ? (await getQuarterData({ month: report.month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
         next();
     } catch (error) {
         next();
     } 
 });
+
+const getQuarterData = ({ month }) => { // use this to find current quarter from month input // for some reaspon have to include this function here instead of requiring it from /quarter-helpers.js - otherwise Affreport in quarter-helpers.js does not work
+    const m = month.slice(0, -5);
+    const year = month.slice(-4);
+    const quarter = `${quarters[m]} ${year}`;
+    const months = quartersArr[quarters[m]].map(x => `${x} ${year}`);
+    const startDate = Number(dayjs(months[0]).startOf('month').format('x'));
+    const endDate = Number(dayjs(months[2]).endOf('month').format('x'));
+    return Promise.resolve({
+        months,
+        quarter,
+        startDate,
+        endDate
+    });
+}
 
 
 

@@ -7,13 +7,15 @@ const router = express.Router();
 const { getToken } = require('../../utils/token.utils')
 const {
     AffApplication,
-    AffPartner
+    AffPartner,
+    AffUpgrade
 } = require('../../models/affiliate/index');
 const { Application } = require('../../models/personal/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions');
 const dayjs = require('dayjs');
 const { createAffNotification } = require('../../utils/notifications-functions');
 const { sendEmail } = require('../../utils/sib-helpers');
+const { Quarter } = require('../../models/common');
 
 
 // POST /affiliate/application/create
@@ -97,5 +99,22 @@ async function getApplications (req, res) {
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
 };
+
+// POST /affiliate/application/request-extra-upgrade` { accountId, quarter, level }
+router.post('/request-extra-upgrade', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, quarter, level } = req.body;
+        await AffApplication.findOneAndUpdate({ accountId }, {
+            upgradeStatus: `Requested ${dayjs().format('DD/MM/YYYY')}`,
+            'availableUpgrade.valid': false,
+            requestCount: 1
+        }, { new: true }).select('availableUpgrade.status accountId belongsTo').lean()
+        await AffUpgrade.deleteOne({ accountId, quarter, level })
+        return res.status(200).send({ msg: `We have received your ${level} VIP request for ${accountId}` });
+    } else return res.status(403).send({ msg: 'Unauthorised' });
+});
 
 module.exports = router;

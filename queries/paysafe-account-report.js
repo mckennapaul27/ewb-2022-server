@@ -11,6 +11,9 @@ const { formatEpi } = require('../utils/helper-functions');
 const { affDataReducer } = require('./map-aff-accounts-reports');
 const { actDataReducer } = require('./map-act-accounts-reports');
 
+let count = 0;
+
+
 const fetchAccountReport = async ({ brand, month, date, url }) => {
     console.log('here: ', brand, month, date, url);
     (async () => {
@@ -37,6 +40,8 @@ const checkData = async (res, brand, month, date, url) => {
     } catch (err) {
         if (err.message === 'Permission denied') setTimeout(() => {
             console.log(err);
+            count ++;
+            console.log(`count: ${count}`);
             fetchAccountReport ({ brand, month, date, url }); // need to add fetchData parameters
         }, 500);
     };

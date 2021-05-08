@@ -23,41 +23,42 @@ router.post('/create-payment/:_id', passport.authenticate('jwt', {
 
 async function createPayment (req, res, next) {
     const token = getToken(req.headers);    
-    if (token) {        
-        const newPayment = await Payment.create({
-            amount: req.body.amount,
-            currency: req.body.currency,            
-            brand: req.body.brand,
-            paymentAccount: req.body.paymentAccount,
-            belongsTo: req.params._id
-        });
-        const { currency, amount, brand, paymentAccount, belongsTo } = newPayment;
-        let activeUser = await ActiveUser.findById(belongsTo).select('belongsTo').populate({ path: 'belongsTo', select: 'email' }) // get the _id and email of the user that activeuser belongsTo;
-        createUserNotification({ 
-            message: `You have requested ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} to be sent to ${brand} account ${paymentAccount}`, 
-            type: 'Payment', 
-            belongsTo: activeUser.belongsTo._id 
-        });
-        // createAdminJob({
-        //     message: `Activeuser payout request: ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} with method ${brand}`,
-        //     status: 'Pending',
-        //     type: 'Payouts',
-        //     activeUser: belongsTo
-        // });
-        sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
-            templateId: 23, 
-            smtpParams: {
-                AMOUNT: amount.toFixed(2),
-                CURRENCY: currency,
-                SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
-                BRAND: brand,
-                ACCOUNT: paymentAccount
-            }, 
-            tags: ['Payment'], 
-            email: activeUser.belongsTo.email
-        });
-        req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
-        next();
+    if (token) {      
+        console.log(req.params._id) 
+        const balance  = (await ActiveUser.findById(req.params._id).select('stats')).stats.balance.find(a => a.currency === req.body.currency).amount;
+        if (balance < req.body.amount) { // check if duplicate request - if so, update balance and then send err message
+            updatePersonalBalance({ _id: req.params._id })
+            return res.status(403).send({ msg: 'You have insufficient funds to request this amount' }) 
+        } else {
+            const newPayment = await Payment.create({
+                amount: req.body.amount,
+                currency: req.body.currency,            
+                brand: req.body.brand,
+                paymentAccount: req.body.paymentAccount,
+                belongsTo: req.params._id
+            });
+            const { currency, amount, brand, paymentAccount, belongsTo } = newPayment;
+            let activeUser = await ActiveUser.findById(belongsTo).select('belongsTo').populate({ path: 'belongsTo', select: 'email' }) // get the _id and email of the user that activeuser belongsTo;
+            createUserNotification({ 
+                message: `You have requested ${currency === 'USD' ? '$': '€'}${amount.toFixed(2)} to be sent to ${brand} account ${paymentAccount}`, 
+                type: 'Payment', 
+                belongsTo: activeUser.belongsTo._id 
+            });
+            sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
+                templateId: 23, 
+                smtpParams: {
+                    AMOUNT: amount.toFixed(2),
+                    CURRENCY: currency,
+                    SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
+                    BRAND: brand,
+                    ACCOUNT: paymentAccount
+                }, 
+                tags: ['Payment'], 
+                email: activeUser.belongsTo.email
+            });
+            req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
+            next();
+        }
     } else return res.status(403).send({ msg: 'Unauthorised' })
 }
 
