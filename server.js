@@ -28,7 +28,7 @@ const {
     corsOptions
 } = require('./config/config');
 
-const { setAffQuarterData } = require('./utils/quarter-helpers');
+const { setAffQuarterData, setPersonalQuarterData } = require('./utils/quarter-helpers');
 
 app.use(compression())
 app.use(fileUpload());
@@ -56,8 +56,8 @@ if (process.env.NODE_ENV !== 'dev') {
     }));
 };
 
-setAffQuarterData({ month: 'May 2021', brand: 'Neteller', accountId: '551526189747', quarter: 'Q2 2021' })
-
+setPersonalQuarterData({ month: 'May 2021', brand: 'Skrill', accountId: '88434174' });
+setAffQuarterData({ month: 'May 2021', brand: 'Neteller', accountId: '551526189747' });
 
 
 

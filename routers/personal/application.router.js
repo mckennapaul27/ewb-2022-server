@@ -6,7 +6,8 @@ const dayjs = require('dayjs')
 const { getToken } = require('../../utils/token.utils')
 const {
     Application,
-    ActiveUser
+    ActiveUser,
+    Upgrade
 } = require('../../models/personal');
 const {
     AffApplication
@@ -229,6 +230,23 @@ router.post('/link-to-active-user/:activeUser', async (req, res) => {
     } catch (error) {
         return res.status(500).send({ success: false });
     };
+});
+
+// POST /personal/application/request-extra-upgrade` { accountId, quarter, level } 
+router.post('/request-extra-upgrade', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, quarter, level } = req.body;
+        await Application.findOneAndUpdate({ accountId }, {
+            upgradeStatus: `Requested ${dayjs().format('DD/MM/YYYY')}`,
+            'availableUpgrade.valid': false,
+            requestCount: 1
+        }, { new: true }).select('availableUpgrade.status availableUpgrade.valid requestCount accountId belongsTo').lean()
+        await Upgrade.deleteOne({ accountId, quarter, level })
+        return res.status(200).send({ msg: `We have received your ${level} VIP request for ${accountId}` });
+    } else return res.status(403).send({ msg: 'Unauthorised' });
 });
 
 

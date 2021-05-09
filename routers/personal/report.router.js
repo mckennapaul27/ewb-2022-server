@@ -4,11 +4,12 @@ const passport = require('passport');
 require('../../auth/passport')(passport);
 const { getToken } = require('../../utils/token.utils')
 const {
-    User,
+    User, Quarter,
 } = require('../../models/common/index');
 const {
     Report,
-    SubReport
+    SubReport,
+    Upgrade
 } = require('../../models/personal/index');
 const { mapRegexQueryFromObj, mapQueryForAggregate } = require('../../utils/helper-functions')
 
@@ -26,48 +27,57 @@ router.get('/get-user', passport.authenticate('jwt', {
 });
 
 // /personal/report/fetch-reports - testing for react-table population
-router.post('/fetch-reports', async (req, res) => {
-
-    let pageSize = parseInt(req.query.pageSize);
-    let pageIndex = parseInt(req.query.pageIndex);
-    let { sort, query } = req.body;
-    let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
+router.post('/fetch-reports', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        let pageSize = parseInt(req.query.pageSize);
+        let pageIndex = parseInt(req.query.pageIndex);
+        let { sort, query } = req.body;
+        let skippage = pageSize * (pageIndex); // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
+        
+        let aggregateQuery = mapQueryForAggregate(query); // have to create this for aggregation query because need to make it mongoose.Types.ObjectId        
+        query = mapRegexQueryFromObj(query); // turn react-table query into regex query
     
-    let aggregateQuery = mapQueryForAggregate(query); // have to create this for aggregation query because need to make it mongoose.Types.ObjectId        
-    query = mapRegexQueryFromObj(query); // turn react-table query into regex query
-
-    const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // data for pagination
-    const pageCount = await Report.countDocuments(query); // total documents to create pageCount 
-    const brands = await Report.distinct('brand'); // number of distinct brands in reports collection for select filter
-    const months = await Report.distinct('month'); // number of distinct brands in brands collection for select filter
-    const totals = await Report.aggregate([ 
-        { $match: { $and: [ aggregateQuery ] } }, 
-        { $group: {
-                _id: {
-                    currency: '$account.currency',
-                },
-                cashback: { $sum: '$account.cashback' }, 
-                volume: { $sum: '$account.transValue' },
-                deposits: { $sum: '$account.deposits' } 
-            } 
-        }
-    ]); 
-    return res.send({ reports, totals, pageCount, brands, months });
+        const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // data for pagination
+        const pageCount = await Report.countDocuments(query); // total documents to create pageCount 
+        const brands = await Report.distinct('brand'); // number of distinct brands in reports collection for select filter
+        const months = await Report.distinct('month'); // number of distinct brands in brands collection for select filter
+        const totals = await Report.aggregate([ 
+            { $match: { $and: [ aggregateQuery ] } }, 
+            { $group: {
+                    _id: {
+                        currency: '$account.currency',
+                    },
+                    cashback: { $sum: '$account.cashback' }, 
+                    volume: { $sum: '$account.transValue' },
+                    deposits: { $sum: '$account.deposits' } 
+                } 
+            }
+        ]); 
+        return res.send({ reports, totals, pageCount, brands, months });
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+    
 });
 
 // /personal/report/accountId/table
-router.post('/accountId/table', async (req, res) => {
-
-    let pageSize = parseInt(req.query.pageSize);
-    let pageIndex = parseInt(req.query.pageIndex);
+router.post('/accountId/table', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        let pageSize = parseInt(req.query.pageSize);
+        let pageIndex = parseInt(req.query.pageIndex);
+        
+        let { sort, query } = req.body;
+        let skippage = pageSize * (pageIndex);
     
-    let { sort, query } = req.body;
-    let skippage = pageSize * (pageIndex);
-
-    const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // NEED TO ADD SELECT AND LEAN
-    const pageCount = await Report.countDocuments(query);
-
-    return res.send({ reports, pageCount });
+        const reports = await Report.find(query).collation({ locale: 'en', strength: 1 }).sort(sort).skip(skippage).limit(pageSize); // NEED TO ADD SELECT AND LEAN
+        const pageCount = await Report.countDocuments(query);
+    
+        return res.send({ reports, pageCount });
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
 // /personal/report/accountId/chart
@@ -112,6 +122,23 @@ router.post('/fetch-sub-reports', passport.authenticate('jwt', {
         } catch (err) {
             return res.status(400).send(err)
         }    
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /personal/report/fetch-quarter-data
+router.post('/fetch-quarter-data', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, quarter } = req.body;
+        try {
+            const q = await Quarter.findOne({ accountId, quarter });
+            const upgrades = await Upgrade.find({ accountId, quarter })
+            return res.status(200).send({ q, upgrades });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        }
     } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 

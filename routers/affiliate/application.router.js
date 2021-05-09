@@ -111,7 +111,7 @@ router.post('/request-extra-upgrade', passport.authenticate('jwt', {
             upgradeStatus: `Requested ${dayjs().format('DD/MM/YYYY')}`,
             'availableUpgrade.valid': false,
             requestCount: 1
-        }, { new: true }).select('availableUpgrade.status accountId belongsTo').lean()
+        }, { new: true }).select('availableUpgrade.status availableUpgrade.valid requestCount accountId belongsTo').lean()
         await AffUpgrade.deleteOne({ accountId, quarter, level })
         return res.status(200).send({ msg: `We have received your ${level} VIP request for ${accountId}` });
     } else return res.status(403).send({ msg: 'Unauthorised' });

@@ -23,8 +23,7 @@ router.post('/create-payment/:_id', passport.authenticate('jwt', {
 
 async function createPayment (req, res, next) {
     const token = getToken(req.headers);    
-    if (token) {      
-        console.log(req.params._id) 
+    if (token) {     
         const balance  = (await ActiveUser.findById(req.params._id).select('stats')).stats.balance.find(a => a.currency === req.body.currency).amount;
         if (balance < req.body.amount) { // check if duplicate request - if so, update balance and then send err message
             updatePersonalBalance({ _id: req.params._id })

@@ -15,12 +15,10 @@ const {
     AffSubReport 
 } = require('../models/affiliate/index');
 
-
-
 const { createAffNotification } = require('../utils/notifications-functions');
 const { createAdminJob } = require('../utils/admin-job-functions');
 const { updateAffiliateBalance } = require('../utils/balance-helpers');
-const { getQuarterData } = require('../utils/quarter-helpers');
+const { getQuarterData, setAffQuarterData } = require('../utils/quarter-helpers');
 
 const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({ 
@@ -56,11 +54,11 @@ const updatePartnerStats = async (brand, month, date) => {
                 }, Promise.resolve());
                 console.log('Processing partner stats [4] ...');
                 processStatsFour.then(() => {
-                    // createAffNotification({ // once complete - add notification
-                    //     message: `${brand} data was fetched on ${dayjs().format('LLLL')}`, 
-                    //     type: 'Report', 
-                    //     isGeneral: true 
-                    // });
+                    createAffNotification({ // once complete - add notification
+                        message: `${brand} data was fetched on ${dayjs().format('LLLL')}`, 
+                        type: 'Report', 
+                        isGeneral: true 
+                    });
                     // createAdminJob({
                     //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`, 
                     //     completed: true,
@@ -96,7 +94,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
                     await previousReport;
 
-                    const { transValue, commission, earnedFee } = nextReport.account;
+                    const { transValue, commission, earnedFee, accountId } = nextReport.account;
                     const levels = (twentyPercentRate, c) => { // c = commission
                         if ((nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined && !isPermitted)) return 0; // If the report country is IN or BD and partner isPermitted = false return 0;
                         else if (c === 0) return 0;
@@ -125,8 +123,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                         comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission' : '',
                         quarter
                     }, { new: true }).exec();
-
-                    // await setAffQuarterData({ month, brand, accountId: nextReport.account.accountId, quarter })
+                    // await setAffQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());

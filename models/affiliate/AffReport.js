@@ -41,7 +41,7 @@ const AffReport = new Schema({
         required: false
     },
     comment: String,
-    // quarter: String
+    quarter: String
 });
 
 // using pre validate to set report currency - very important for calculating balances.
@@ -72,7 +72,7 @@ const getQuarterData = ({ month }) => { // use this to find current quarter from
         startDate,
         endDate
     });
-}
+};
 
 
 

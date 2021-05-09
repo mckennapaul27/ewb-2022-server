@@ -116,7 +116,9 @@ router.post('/fetch-sub-reports', passport.authenticate('jwt', {
 });
 
 // POST /affiliate/report/fetch-daily-reports
-router.post('/fetch-daily-reports', async (req, res) => {
+router.post('/fetch-daily-reports', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { _id, startDate, endDate } = req.body;
@@ -130,7 +132,9 @@ router.post('/fetch-daily-reports', async (req, res) => {
 });
 
 // POST /affiliate/report/fetch-daily-reports
-router.post('/fetch-daily-reports', async (req, res) => {
+router.post('/fetch-daily-reports', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { _id, startDate, endDate } = req.body;
@@ -144,7 +148,9 @@ router.post('/fetch-daily-reports', async (req, res) => {
 });
 
 // POST /affiliate/report/fetch-monthly-reports
-router.post('/fetch-monthly-reports', async (req, res) => {
+router.post('/fetch-monthly-reports', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { _id, months } = req.body;
@@ -158,7 +164,9 @@ router.post('/fetch-monthly-reports', async (req, res) => {
 });
 
 // POST /affiliate/report/fetch-monthly-summary
-router.post('/fetch-monthly-summary', async (req, res) => {
+router.post('/fetch-monthly-summary', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { _id, month, start, end } = req.body;
@@ -209,7 +217,9 @@ router.post('/fetch-monthly-summary', async (req, res) => {
 });
 
 // POST /affiliate/report/accountId/table
-router.post('/accountId/table', async (req, res) => {
+router.post('/accountId/table', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         let pageSize = parseInt(req.query.pageSize);
@@ -226,7 +236,9 @@ router.post('/accountId/table', async (req, res) => {
 });
 
 // POST /affiliate/report/accountId/chart
-router.post('/accountId/chart', async (req, res) => {
+router.post('/accountId/chart', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         let { months, query } = req.body;
@@ -236,7 +248,9 @@ router.post('/accountId/chart', async (req, res) => {
 });
 
 // POST /affiliate/report/fetch-deal-progress
-router.post('/fetch-deal-progress', async (req, res) => {
+router.post('/fetch-deal-progress', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { _id, month } = req.body;
@@ -256,15 +270,16 @@ router.post('/fetch-deal-progress', async (req, res) => {
 });
 
 // POST /affiliate/report/fetch-quarter-data
-router.post('/fetch-quarter-data', async (req, res) => {
+router.post('/fetch-quarter-data', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { accountId, quarter } = req.body;
         try {
             const q = await Quarter.findOne({ accountId, quarter });
-            const offers = await AffApplication.find({ accountId, 'availableUpgrade.valid': true })
             const upgrades = await AffUpgrade.find({ accountId, quarter })
-            return res.status(200).send({ offers, q, upgrades });
+            return res.status(200).send({ q, upgrades });
         } catch (error) {
             return res.status(403).send({ success: false, msg: error });
         }
@@ -272,7 +287,9 @@ router.post('/fetch-quarter-data', async (req, res) => {
 });
 
 // POST /affiliate/report/fetch-monthly-statement
-router.post('/fetch-monthly-statement', async (req, res) => {
+router.post('/fetch-monthly-statement', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
     const token = getToken(req.headers);
     if (token) {
         const { _id, month } = req.body;

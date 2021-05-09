@@ -15,7 +15,7 @@ const {
     ActiveUser,
     Payment
 } = require('../models/personal/index');
-
+const { getQuarterData, setPersonalQuarterData } = require('../utils/quarter-helpers');
 const { createUserNotification } = require('../utils/notifications-functions');
 const { updatePersonalBalance } = require('../utils/balance-helpers');
 // createUserNotification = ({ message, type, belongsTo }) => UserNotification.create({ message, type, belongsTo });
@@ -64,19 +64,23 @@ const setCashback = ({ _id, deals, referredBy }, brand, month) => {
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
                     await previousReport;
 
-                    const { commission, earnedFee, transValue } = nextReport.account;
+                    const { commission, earnedFee, transValue, accountId } = nextReport.account;
                     const cashback = earnedFee * rate;
                     const rafCashback = referredBy ? cashback * 0.05 : 0;
                     const cashbackRate = cashback / transValue;
                     const profit = commission - (cashback + rafCashback);
+                    const quarter = (brand === 'Skrill' || brand === 'Neteller') ? (await getQuarterData({ month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
 
                     await Report.findByIdAndUpdate(nextReport._id, {
                         lastUpdate: Date.now(),
                         'account.cashbackRate': cashbackRate,
                         'account.cashback': cashback,
                         'account.rafCashback': rafCashback,
-                        'account.profit': profit
+                        'account.profit': profit,
+                        quarter
                     }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.rafCashback account.profit' }).exec();
+
+                    // await setPersonalQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());

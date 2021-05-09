@@ -26,19 +26,18 @@ AffUpgrade.pre('save', async function (next) { // https://medium.com/@justinmana
         if (isNew) {
             const { belongsTo } = (await AffApplication.findOne({ accountId }).select('belongsTo').lean()); // find affpartner
             const { email } = (await AffPartner.findById(belongsTo).select('email').lean()); // find email
-
-            // await createAffNotification({ message: `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`, type: 'Application', belongsTo });
-            // await sendEmail({
-            //     templateId: 22, 
-            //     smtpParams: {
-            //         BRAND: brand,
-            //         ACCOUNTID: accountId,
-            //         QUARTER: quarter,
-            //         LEVEL: level
-            //     }, 
-            //     tags: ['Application'], 
-            //     email
-            // })
+            await createAffNotification({ message: `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`, type: 'Application', belongsTo });
+            await sendEmail({
+                templateId: 73, 
+                smtpParams: {
+                    BRAND: brand,
+                    ACCOUNTID: accountId,
+                    QUARTER: quarter,
+                    LEVEL: level
+                }, 
+                tags: ['Application'], 
+                email
+            })
             next();
         }
     } catch (error) {

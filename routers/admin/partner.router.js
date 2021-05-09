@@ -21,7 +21,8 @@ const {
     AffApplication,
     AffPayment,
     AffReportMonthly,
-    AffSubReport
+    AffSubReport,
+    AffUpgrade
 } = require('../../models/affiliate/index');
 
 const { mapRegexQueryFromObj, isPopulatedValue, mapQueryForAggregate, mapQueryForPopulate } = require('../../utils/helper-functions');
@@ -29,7 +30,7 @@ const { createAffNotification } = require('../../utils/notifications-functions')
 const { applicationYY, applicationYN, applicationNN } = require('../../utils/notifications-list');
 const { createAffAccAffReport } = require('../../utils/account-functions');
 const { updateAffiliateBalance } = require('../../utils/balance-helpers');
-const { Brand } = require('../../models/common');
+const { Brand, Quarter } = require('../../models/common');
 const { sendEmail } = require('../../utils/sib-helpers');
 
 // POST /admin/partner/get-partner
@@ -479,6 +480,23 @@ router.post('/toggle-permitted', passport.authenticate('admin', {
     } catch (error) {
         return res.status(400).send(err);
     }
+});
+
+// POST /admin/partner/fetch-quarter-data
+router.post('/fetch-quarter-data', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, quarter } = req.body;
+        try {
+            const q = await Quarter.findOne({ accountId, quarter });
+            const upgrades = await AffUpgrade.find({ accountId, quarter })
+            return res.status(200).send({ q, upgrades });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
 
