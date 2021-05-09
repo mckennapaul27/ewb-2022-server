@@ -28,8 +28,6 @@ const {
     corsOptions
 } = require('./config/config');
 
-const { setAffQuarterData, setPersonalQuarterData } = require('./utils/quarter-helpers');
-
 app.use(compression())
 app.use(fileUpload());
 app.use(cors(corsOptions));
@@ -55,10 +53,6 @@ if (process.env.NODE_ENV !== 'dev') {
         })
     }));
 };
-
-setPersonalQuarterData({ month: 'May 2021', brand: 'Skrill', accountId: '88434174' });
-setAffQuarterData({ month: 'May 2021', brand: 'Neteller', accountId: '551526189747' });
-
 
 
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.

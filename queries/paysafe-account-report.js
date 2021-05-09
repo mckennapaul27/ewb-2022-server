@@ -54,7 +54,7 @@ const mapRawData = async (data, brand, month, date) => {
             siteId: item.siteid[0],
             playerId: item.playerid[0],
             accountId: item.merchplayername[0],
-            epi: item.affcustomid[0] === '' ? null : formatEpi(item.affcustomid[0]),
+            epi: (item.affcustomid[0] === '' || item.affcustomid[0] === 'null') ? null : formatEpi(item.affcustomid[0]),
             country: item.playercountry[0] === '' ? '' : item.playercountry[0],
             commission: Number(item.Commission[0]),
             transValue: Number(item.Commission[0]) === 0 ? 0 : Number(item.trans_value[0]),

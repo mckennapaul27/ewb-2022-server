@@ -110,7 +110,6 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                     const subAffCommission = referredBy ?  (
                         (twentyPercentRate < 0.005 && rate >= 0.005) ? cashback * 0.05 : cashback * subPartnerRate
                     ) : 0;   
-                    
                     const profit = commission - (subAffCommission + cashback);
                     const quarter = (brand === 'Skrill' || brand === 'Neteller') ? (await getQuarterData({ month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
                         
@@ -123,6 +122,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                         comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission' : '',
                         quarter
                     }, { new: true }).exec();
+                    
                     // await setAffQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise

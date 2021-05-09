@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const { setCurrency } = require('../../config/deals');
+const { getQuarterData } = require('../../utils/quarter-data');
 
 const Report = new Schema({
     date: Number, // first day of month
@@ -40,19 +41,6 @@ Report.pre('validate', async function (next) { // https://stackoverflow.com/ques
     next();
 });
 
-const getQuarterData = ({ month }) => { // use this to find current quarter from month input // for some reaspon have to include this function here instead of requiring it from /quarter-helpers.js - otherwise Affreport in quarter-helpers.js does not work
-    const m = month.slice(0, -5);
-    const year = month.slice(-4);
-    const quarter = `${quarters[m]} ${year}`;
-    const months = quartersArr[quarters[m]].map(x => `${x} ${year}`);
-    const startDate = Number(dayjs(months[0]).startOf('month').format('x'));
-    const endDate = Number(dayjs(months[2]).endOf('month').format('x'));
-    return Promise.resolve({
-        months,
-        quarter,
-        startDate,
-        endDate
-    });
-};
+
 
 module.exports = mongoose.model('report', Report);
