@@ -88,7 +88,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                 const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
                 const reports = await AffReport
                 .find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } })
-                .select('account.transValue account.commission account.earnedFee country account.accountId')
+                .select('account.transValue account.commission account.earnedFee country account.accountId belongsToPartner')
                 .lean(); // only find accounts that have transValue > 0
                 const subPartnerRate = (await getSubPartnerRate({ referredBy })).subPartnerRate;
 
@@ -122,7 +122,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                         comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission' : '',
                         quarter
                     }, { new: true }).exec();
-                    await setAffQuarterData({ month, brand, accountId });
+                    await setAffQuarterData({ month, brand, accountId, _id: nextReport.belongsToPartner });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());

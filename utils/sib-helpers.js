@@ -112,6 +112,7 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => { // templa
         const res = await apiInstance.sendTransacEmail(sendSmtpEmail);
         Promise.resolve(res);
     } catch (error) {
+        console.log(error);
         Promise.reject(error);
     }
 }

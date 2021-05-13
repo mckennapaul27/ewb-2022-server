@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { sendEmail } = require('../../utils/sib-helpers');
+const UserNotification = require('../common/UserNotification');
 const ActiveUser = require('./ActiveUser');
 const Application = require('./Application');
 const Schema = mongoose.Schema;

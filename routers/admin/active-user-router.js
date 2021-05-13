@@ -17,6 +17,7 @@ const {
     ActiveUser,
     Report,
     Payment,
+    Upgrade,
 } = require('../../models/personal/index');
 
 const crypto = require('crypto');
@@ -27,7 +28,7 @@ const { applicationYY, applicationYN, applicationNN } = require('../../utils/not
 const { createAccountReport } = require('../../utils/account-functions');
 const { updatePersonalBalance } = require('../../utils/balance-helpers');
 const { sendEmail } = require('../../utils/sib-helpers');
-const { Brand } = require('../../models/common');
+const { Brand, Quarter } = require('../../models/common');
 
 // POST /admin/active-user/get-active-user
 router.post('/get-active-user', passport.authenticate('admin', {
@@ -339,6 +340,23 @@ router.post('/delete-application', passport.authenticate('admin', {
     } catch (err) {
         return res.status(400).send(err)
     }    
+});
+
+// POST /admin/active-user/fetch-quarter-data
+router.post('/fetch-quarter-data', passport.authenticate('admin', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        const { accountId, quarter } = req.body;
+        try {
+            const q = await Quarter.findOne({ accountId, quarter });
+            const upgrades = await Upgrade.find({ accountId, quarter })
+            return res.status(200).send({ q, upgrades });
+        } catch (error) {
+            return res.status(403).send({ success: false, msg: error });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
 });
 
 
