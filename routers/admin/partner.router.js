@@ -149,9 +149,13 @@ router.post('/fetch-applications', passport.authenticate('admin', {
             };
             const pageCount = await AffApplication.countDocuments(searchQuery);
             const brands = await AffApplication.distinct('brand');
-            const statuses = await AffApplication.distinct('status');      
-            return res.status(200).send({ applications, pageCount, brands, statuses  }); 
+            const statuses = await AffApplication.distinct('status');   
+            const upgrades = (await AffApplication.aggregate([
+               { $group: { _id: null, values: { $addToSet: '$availableUpgrade.status' } }}
+            ]))[0].values;
+            return res.status(200).send({ applications, pageCount, brands, statuses, upgrades  }); 
         } catch (err) {
+            console.log(err);
             return res.status(400).send(err)
         }    
     } else return res.status(403).send({ msg: 'Unauthorised' });
@@ -491,7 +495,7 @@ router.post('/fetch-quarter-data', passport.authenticate('admin', {
         const { accountId, quarter } = req.body;
         try {
             const q = await Quarter.findOne({ accountId, quarter });
-            const upgrades = await AffUpgrade.find({ accountId, quarter })
+            const upgrades = await AffUpgrade.find({ accountId, quarter });
             return res.status(200).send({ q, upgrades });
         } catch (error) {
             return res.status(403).send({ success: false, msg: error });
