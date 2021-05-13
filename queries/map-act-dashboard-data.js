@@ -15,9 +15,10 @@ const {
     ActiveUser,
     Payment
 } = require('../models/personal/index');
-const { getQuarterData, setPersonalQuarterData } = require('../utils/quarter-helpers');
+const { setPersonalQuarterData } = require('../utils/quarter-helpers');
 const { createUserNotification } = require('../utils/notifications-functions');
 const { updatePersonalBalance } = require('../utils/balance-helpers');
+const { getQuarterData } = require('../utils/quarter-data');
 // createUserNotification = ({ message, type, belongsTo }) => UserNotification.create({ message, type, belongsTo });
 
 const updateActUserStats = async (brand, month, date) => {
@@ -59,7 +60,10 @@ const setCashback = ({ _id, deals, referredBy }, brand, month) => {
         resolve (
             (async () => {
                 const rate = await getCashbackRate({ _id, deals, brand, month });
-                const reports = await Report.find({ belongsToActiveUser: _id, brand, month, 'account.transValue': { $gt: 0 } }).select('account.transValue account.commission account.earnedFee').lean(); // only find accounts that have transValue > 0
+                const reports = await Report
+                .find({ belongsToActiveUser: _id, brand, month, 'account.transValue': { $gt: 0 } })
+                .select('account.transValue account.accountId account.commission account.earnedFee')
+                .lean(); // only find accounts that have transValue > 0
                 
                 await reports.reduce(async (previousReport, nextReport) => { // this was previously causing the process to not run synchronously - important bit is to await it
                     await previousReport;
@@ -70,7 +74,7 @@ const setCashback = ({ _id, deals, referredBy }, brand, month) => {
                     const cashbackRate = cashback / transValue;
                     const profit = commission - (cashback + rafCashback);
                     const quarter = (brand === 'Skrill' || brand === 'Neteller') ? (await getQuarterData({ month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
-
+            
                     await Report.findByIdAndUpdate(nextReport._id, {
                         lastUpdate: Date.now(),
                         'account.cashbackRate': cashbackRate,
@@ -80,6 +84,7 @@ const setCashback = ({ _id, deals, referredBy }, brand, month) => {
                         quarter
                     }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.rafCashback account.profit' }).exec();
 
+                    console.log( month, brand, accountId)
                     await setPersonalQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise

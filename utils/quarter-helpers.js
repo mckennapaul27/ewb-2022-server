@@ -19,7 +19,7 @@ const { getQuarterData, checkUpgradeOffer } = require('./quarter-data')
 
 // Affiliate system quarter data
 const setAffQuarterData = ({ month, brand, accountId }) => { 
-    console.log(`called setAffQuarterData() with ${ month, brand, accountId}`);
+    console.log(`called setAffQuarterData() with ${month}, ${brand}, ${accountId} ...`);
     return new Promise(resolve => {
         resolve (
             (async () => {
@@ -94,7 +94,7 @@ const getQuarterVolumeByAffReport = async ({ accountId, months }) => {
 
 // Personal system quarter data
 const setPersonalQuarterData = ({ month, brand, accountId }) => { 
-    console.log(`setPersonalQuarterData() with ${ month, brand, accountId}`);
+    console.log(`called setPersonalQuarterData() with ${month}, ${brand}, ${accountId} ...`);
     return new Promise(resolve => {
         resolve (
             (async () => {
@@ -170,5 +170,4 @@ const getQuarterVolumeByReport = async ({ accountId, months }) => {
 module.exports = {
     setAffQuarterData,
     setPersonalQuarterData,
-    getQuarterData,
 }

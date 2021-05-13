@@ -18,7 +18,8 @@ const {
 const { createAffNotification } = require('../utils/notifications-functions');
 const { createAdminJob } = require('../utils/admin-job-functions');
 const { updateAffiliateBalance } = require('../utils/balance-helpers');
-const { getQuarterData, setAffQuarterData } = require('../utils/quarter-helpers');
+const { setAffQuarterData } = require('../utils/quarter-helpers');
+const { getQuarterData } = require('../utils/quarter-data');
 
 const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({ 
@@ -87,7 +88,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                 const rate = await getCashbackRate({ _id, referredBy, deals, brand, month });
                 const reports = await AffReport
                 .find({ belongsToPartner: _id, brand, month, 'account.transValue': { $gt: 0 } })
-                .select('account.transValue account.commission account.earnedFee country')
+                .select('account.transValue account.commission account.earnedFee country account.accountId')
                 .lean(); // only find accounts that have transValue > 0
                 const subPartnerRate = (await getSubPartnerRate({ referredBy })).subPartnerRate;
 
@@ -112,7 +113,6 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                     ) : 0;   
                     const profit = commission - (subAffCommission + cashback);
                     const quarter = (brand === 'Skrill' || brand === 'Neteller') ? (await getQuarterData({ month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
-                        
                     await AffReport.findByIdAndUpdate(nextReport._id, {
                         lastUpdate: Date.now(),
                         'account.cashbackRate': verifiedRate,
@@ -122,7 +122,6 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                         comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission' : '',
                         quarter
                     }, { new: true }).exec();
-                    
                     await setAffQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise

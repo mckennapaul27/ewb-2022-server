@@ -202,7 +202,7 @@ const mapAccountReports = async (a, brand, month, date) => {
                         }
                     }
                 } catch (error) {
-                    console.log(error);
+                    // console.log(error);
                     return error;
                 };
             })() // which we have to call
