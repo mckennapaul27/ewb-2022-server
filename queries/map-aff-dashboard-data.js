@@ -123,7 +123,7 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                         quarter
                     }, { new: true }).exec();
                     
-                    // await setAffQuarterData({ month, brand, accountId });
+                    await setAffQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());

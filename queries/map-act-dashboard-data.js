@@ -80,7 +80,7 @@ const setCashback = ({ _id, deals, referredBy }, brand, month) => {
                         quarter
                     }, { new: true, select: 'lastUpdate account.cashbackRate account.accountId account.cashback account.rafCashback account.profit' }).exec();
 
-                    // await setPersonalQuarterData({ month, brand, accountId });
+                    await setPersonalQuarterData({ month, brand, accountId });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise
                 }, Promise.resolve());
