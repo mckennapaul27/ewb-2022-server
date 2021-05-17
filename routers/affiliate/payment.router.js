@@ -50,7 +50,7 @@ async function createPayment (req, res, next) {
             tags: ['Payment'], 
             email
         });
-        const cryptos = ['BitCoin', 'CoinBase'];
+        const cryptos = ['BitCoin'];
         if (cryptos.includes(req.body.brand)) {
             sendEmail({ // send email ( doesn't matter if belongsTo or not because it is just submitting );
                 templateId: 70, 
