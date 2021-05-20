@@ -51,21 +51,21 @@ const nextUpgrades = {
         },
     ],
     Skrill: [ // For all conversions to USD I have added a bit extra to factor currency conversions
-        { 
-            level: 'Silver',
-            minVol: 6200, // conversion €5000 to USD
-            maxVol: 19000 // conversion €15,000 to USD
-        },
-        { 
-            level: 'Gold',
-            minVol: 28000, // conversion €22,500 to USD
-            maxVol: 56000 // conversion €45,000 to USD
-        },
-        { 
-            level: 'Diamond',
-            minVol: 56000, // conversion €45,000 to USD 
-            maxVol: 111000 // conversion €90,000 to USD
-        },
+        // { 
+        //     level: 'Silver',
+        //     minVol: 6200, // conversion €5000 to USD
+        //     maxVol: 19000 // conversion €15,000 to USD
+        // },
+        // { 
+        //     level: 'Gold',
+        //     minVol: 28000, // conversion €22,500 to USD
+        //     maxVol: 56000 // conversion €45,000 to USD
+        // },
+        // { 
+        //     level: 'Diamond',
+        //     minVol: 56000, // conversion €45,000 to USD 
+        //     maxVol: 111000 // conversion €90,000 to USD
+        // },
     ]
 };
 
