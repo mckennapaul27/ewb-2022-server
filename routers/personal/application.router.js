@@ -185,7 +185,7 @@ router.post('/fetch-brand', passport.authenticate('jwt', {
     } else return res.status(403).send({ msg: 'Unauthorised' })
 });
 
-// /personal/application/fetch-application
+// /personal/application/fetch-application?apptoken=${}
 router.get('/fetch-application', async (req, res) => {
     let parsedUrl = url.parse(req.url);
     let parsedQs = querystring.parse(parsedUrl.query);

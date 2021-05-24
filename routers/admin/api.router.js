@@ -235,7 +235,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                             if (!belongsTo && (action === 'YY' || action === 'YN'))  {
                                 const buffer = await crypto.randomBytes(20);
                                 const token = buffer.toString('hex');
-                                await Application.findByIdAndUpdate(req.params._id, { applicationToken: token, applicationExpires: Date.now() + 86400000 }, { new: true })
+                                await Application.findByIdAndUpdate(existingDashApplication._id, { applicationToken: token, applicationExpires: Date.now() + 86400000 }, { new: true })
                                 await sendEmail({
                                     templateId: 4, 
                                     smtpParams: {
