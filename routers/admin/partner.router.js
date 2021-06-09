@@ -168,7 +168,7 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
     const token = getToken(req.headers);
     if (token) {
         try {
-            const { action } = req.body;
+            const { action, status } = req.body;
             const today = dayjs().format('DD/MM/YYYY');
             const update = {
                 'status': (action === 'YY' || action === 'YN') ? 'Approved' : 'Declined',
@@ -193,7 +193,7 @@ router.post('/update-application/:_id', passport.authenticate('admin', {
                         ACCOUNTID: accountId,
                         EMAIL: '-',
                         CURRENCY: '-',
-                        OFFER: initialUpgrade
+                        OFFER: status ? status : initialUpgrade
                     }, 
                     tags: ['Application'], 
                     email: partner.email
