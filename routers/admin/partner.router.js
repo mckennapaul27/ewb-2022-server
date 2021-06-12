@@ -57,14 +57,16 @@ router.post('/update-partner/:_id', passport.authenticate('admin', { // this fun
     if (token) {
         try {
             const partner = await AffPartner.findByIdAndUpdate(req.params._id, update, { new: true });
-            if (update.brandAssets) await sendEmail({ // if the update includes brandAssets, send confirmation email
-                templateId: 45, 
-                smtpParams: {
-                    BRAND: req.query.brand
-                }, 
-                tags: ['Affiliate'], 
-                email: partner.email
-            })
+            if (update.brandAssets) {
+                await sendEmail({ // if the update includes brandAssets, send confirmation email
+                    templateId: 45, 
+                    smtpParams: {
+                        BRAND: req.query.brand
+                    }, 
+                    tags: ['Affiliate'], 
+                    email: partner.email
+                })
+            }
             return res.status(200).send(partner);
         } catch (err) {
             return res.status(400).send({ msg: 'Server error' })
@@ -473,13 +475,13 @@ router.post('/toggle-permitted', passport.authenticate('admin', {
         const partner = await AffPartner.findByIdAndUpdate(req.body._id, {
             isPermitted: req.body.isPermitted
         }, { new: true, select: 'email isPermitted' });
-        // if (req.body.isPermitted) { // send email saying referral of IN and BD accounts are permitted
-        //     await sendEmail({
-        //         templateId: 71, 
-        //         tags: ['Partner'], 
-        //         email: partner.email
-        //     });
-        // };
+        if (req.body.isPermitted) { // send email saying referral of IN and BD accounts are permitted
+            await sendEmail({
+                templateId: 71, 
+                tags: ['Partner'], 
+                email: partner.email
+            });
+        };
         return res.status(201).send({ success: true, msg: `${partner.email} has been ${req.body.isPermitted ? 'made eligible' : 'refused eligibility'}` })
     } catch (error) {
         return res.status(400).send(err);

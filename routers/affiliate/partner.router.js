@@ -73,20 +73,54 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
     const token = getToken(req.headers);
     if (token) {
         try {
-            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { brandAssets: req.body.brandAssets }, { new: true, select: 'brandAssets email' })
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { brandAssets: req.body.brandAssets }, { new: true, select: 'brandAssets email epi' })
             createAffNotification({
                 message: `You have requested additional links for ${req.body.brand}`,
                 type: 'Partner',
                 belongsTo: req.params._id
             });
             createAdminJob({
-                message: `Partner has requested additional links for ${req.body.brand}`,
+                message: `Partner ${partner.email} / ${partner.epi} has requested additional links for ${req.body.brand}`,
                 status: 'Pending',
                 partner: req.params._id,
                 type: 'Links'
             });
             sendEmail({ 
                 templateId: 44, 
+                smtpParams: {
+                    BRAND: req.body.brand
+                }, 
+                tags: ['Account'], 
+                email: partner.email
+            });
+            return res.status(200).send(partner);
+        } catch (err) {
+            return res.status(400).send({ success: false });
+        }
+    } else res.status(403).send({ success: false, msg: 'Unauthorised' });
+});
+
+// POST /affiliate/partner/request-approval/:_id
+router.post('/request-approval/:_id', passport.authenticate('jwt', {
+    session: false
+}), async (req, res) => {
+    const token = getToken(req.headers);
+    if (token) {
+        try {
+            const partner = await AffPartner.findByIdAndUpdate(req.params._id, { requestedApproval: true }, { new: true, select: 'requestedApproval email' })
+            createAffNotification({
+                message: `You have requested approval for ${req.body.brand} Exclusive links`,
+                type: 'Partner',
+                belongsTo: req.params._id
+            });
+            createAdminJob({
+                message: `Partner has requested approval for ${req.body.brand}`,
+                status: 'Pending',
+                partner: req.params._id,
+                type: 'Links'
+            });
+            sendEmail({ 
+                templateId: 76, 
                 smtpParams: {
                     BRAND: req.body.brand
                 }, 

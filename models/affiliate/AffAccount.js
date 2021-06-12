@@ -24,18 +24,22 @@ AffAccount.pre('save', async function (next) { // https://medium.com/@justinmana
     const a = this;
     try {
         if (a.isNew) {
-            await createAffNotification({ message: `Account ${a.accountId} has been added to your dashboard`, type: 'Account', belongsTo: a.belongsTo });
-            const email = (await AffPartner.findById(a.belongsTo).select('email').lean()).email;
-            await sendEmail({
-                templateId: 22, 
-                smtpParams: {
-                    BRAND: a.brand,
-                    ACCOUNTID: a.accountId
-                }, 
-                tags: ['Account'], 
-                email
-            })
-            next();
+            const { email, isPermitted } = (await AffPartner.findById(a.belongsTo).select('email isPermitted').lean());
+            if (isPermitted) {
+                await createAffNotification({ message: `Account ${a.accountId} has been added to your dashboard`, type: 'Account', belongsTo: a.belongsTo });
+                await sendEmail({
+                    templateId: 22, 
+                    smtpParams: {
+                        BRAND: a.brand,
+                        ACCOUNTID: a.accountId
+                    }, 
+                    tags: ['Account'], 
+                    email
+                })
+                next();
+            } else {
+                next()
+            }
         } 
     } catch (error) {
         next();
