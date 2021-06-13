@@ -97,8 +97,9 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
 
                     const { transValue, commission, earnedFee, accountId } = nextReport.account;
                     const levels = (twentyPercentRate, c) => { // c = commission
-                        if ((nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted)) return 0; // If the report country is IN or BD and partner isPermitted = false return 0;
-                        else if (c === 0) return 0;
+                        // 
+                        // if ((nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted)) return 0; // If the report country is IN or BD and partner isPermitted = false return 0;
+                        if (c === 0) return 0;
                         else if (revShareActive) return rate; // if revShareActive, just return rate like 25% or 27.5%
                         else if (fixedDealActive['isActive']) return fixedDealActive['rate']; // if fixed deal active return the rate. Have put it in ['rate'] just in case in passes rate from function param
                         else if (twentyPercentRate < 0.0050 && rate >= 0.0050) return twentyPercentRate;
@@ -113,15 +114,17 @@ const setCashback = ({ _id, deals, referredBy, revShareActive, fixedDealActive, 
                     ) : 0;   
                     const profit = commission - (subAffCommission + cashback);
                     const quarter = (brand === 'Skrill' || brand === 'Neteller') ? (await getQuarterData({ month })).quarter : '-'; // if brand is skrill or neteller, set the quarter of the report
+
                     await AffReport.findByIdAndUpdate(nextReport._id, {
                         lastUpdate: Date.now(),
                         'account.cashbackRate': verifiedRate,
                         'account.cashback': cashback,
                         'account.subAffCommission': subAffCommission,
                         'account.profit': profit,
-                        comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission' : '',
+                        comment: (nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted) ? 'IN & BD accounts not eligible for commission from 1st July' : '',
                         quarter
                     }, { new: true }).exec();
+
                     await setAffQuarterData({ month, brand, accountId, _id: nextReport.belongsToPartner });
 
                     return new Promise(resolve => resolve(nextReport)); // this is important bit - we return a promise that resolves to another promise

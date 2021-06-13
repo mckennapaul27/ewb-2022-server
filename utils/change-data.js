@@ -254,7 +254,7 @@ const arr = [
 const changeIsPermitted = () => {
     return arr.map(async epi => {
         await AffPartner.findOneAndUpdate({ epi }, {
-            isPermitted: true
+            isPermitted: false
         }, {
             new: true,
             select: 'isPermitted'
