@@ -1,51 +1,63 @@
-const proxy = process.env.QUOTAGUARDSTATIC_URL;
-const util = require('util');
+const proxy = process.env.QUOTAGUARDSTATIC_URL
+const util = require('util')
 
-const request = require('superagent');
-require('superagent-proxy')(request);
+const request = require('superagent')
+require('superagent-proxy')(request)
 
-const parseString = require('xml2js').parseString;
-const parseStringPromise = util.promisify(parseString);
+const parseString = require('xml2js').parseString
+const parseStringPromise = util.promisify(parseString)
 
-const { setCurrency } = require('../config/deals');
+const { setCurrency } = require('../config/deals')
 
 const {
     AffAccount,
     AffReport,
     AffApplication,
-    AffPartner
-} = require('../models/affiliate/index');
+    AffPartner,
+} = require('../models/affiliate/index')
 
-const fetchPlayerRegistrationsReport = ({ brand, month, date, url }) => {  
-    console.log('here: ', brand, month, date, url);
-    (async () => {
+const fetchPlayerRegistrationsReport = ({ brand, month, date, url }) => {
+    console.log('here: ', brand, month, date, url)
+    ;(async () => {
         try {
-            const res = await request.get(url).proxy(proxy);
-            checkData(res.text, brand, month, date, url);
+            const res = await request.get(url).proxy(proxy)
+            checkData(res.text, brand, month, date, url)
         } catch (err) {
-            console.log(err);
-            return err;
+            console.log(err)
+            return err
         }
-    })();
-};
+    })()
+}
 
 const checkData = async (res, brand, month, date, url) => {
     try {
-        const reports = await parseStringPromise(res);
-        if (!reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['reportresponse']) {
-            if (reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['SOAP-ENV:Fault'][0].faultstring[0] === 'no permission 1' || reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['SOAP-ENV:Fault'][0].faultstring[0] === 'no permission 2') {
+        const reports = await parseStringPromise(res)
+        if (
+            !reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0]['reportresponse']
+        ) {
+            if (
+                reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0][
+                    'SOAP-ENV:Fault'
+                ][0].faultstring[0] === 'no permission 1' ||
+                reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0][
+                    'SOAP-ENV:Fault'
+                ][0].faultstring[0] === 'no permission 2'
+            ) {
                 throw new Error('Permission denied')
-            } else throw new Error('No reports'); 
-        };
-        const data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row
-        return mapRawData(data, brand, month, date);
+            } else throw new Error('No reports')
+        }
+        const data =
+            reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0]
+                .row
+        return mapRawData(data, brand, month, date)
     } catch (err) {
-        console.log(err);
-        if (err.message === 'Permission denied') setTimeout(() => {
-            fetchPlayerRegistrationsReport ({ brand, month, date, url }); // need to add fetchData parameters if it fails api fetch
-        }, 500);
-    };
-};
+        console.log(err)
+        if (err.message === 'Permission denied')
+            setTimeout(() => {
+                fetchPlayerRegistrationsReport({ brand, month, date, url }) // need to add fetchData parameters if it fails api fetch
+            }, 500)
+    }
+}
 
 const mapRawData = async (data, brand, month, date) => {
     const results = data.reduce((acc, item) => {
@@ -65,15 +77,15 @@ const mapRawData = async (data, brand, month, date) => {
             earnedFee: 0,
             cashbackRate: 0,
             commissionRate: 0,
-            profit: 0
-        });
-        return acc;
-    }, []);
-    return mapPlayerRegistrations(results, brand, month, date); // just follows same entry path as paysafe-account-report 
-};
+            profit: 0,
+        })
+        return acc
+    }, [])
+    return mapPlayerRegistrations(results, brand, month, date) // just follows same entry path as paysafe-account-report
+}
 
 const mapPlayerRegistrations = async (results, brand, month, date) => {
-    await results.map(async a => {
+    await results.map(async (a) => {
         const {
             currency,
             memberId,
@@ -89,21 +101,26 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
             profit,
             earnedFee,
             cashbackRate,
-            commissionRate
-        } = a;
+            commissionRate,
+        } = a
         // console.log(siteId);
-        const defaultSiteIds = ['75417', '75418', '40278', '56']; 
+        const defaultSiteIds = ['75417', '75418', '40278', '56']
         try {
-            const existingAccount = await AffAccount.exists({ accountId });
-            const application = await AffApplication.findOne({ accountId }).select('accountId belongsTo').lean();
-            if (!existingAccount && application) {  // if application for account ID exists and AffAccount does not exist
-                const newAccount = await AffAccount.create({ // create new account
+            const existingAccount = await AffAccount.exists({ accountId })
+            const application = await AffApplication.findOne({ accountId })
+                .select('accountId belongsTo')
+                .lean()
+            if (!existingAccount && application) {
+                // if application for account ID exists and AffAccount does not exist
+                const newAccount = await AffAccount.create({
+                    // create new account
                     brand,
                     belongsTo: application.belongsTo,
                     accountId,
-                    country
-                });
-                const newReport = await AffReport.create({ // create new report
+                    country,
+                })
+                const newReport = await AffReport.create({
+                    // create new report
                     date,
                     month,
                     brand,
@@ -114,39 +131,53 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                     belongsTo: newAccount._id,
                     belongsToPartner: newAccount.belongsTo,
                     account: {
-                        accountId,  
+                        accountId,
                         deposits,
                         transValue,
                         commission,
-                        commissionRate, 
+                        commissionRate,
                         earnedFee,
-                        currency, 
+                        currency,
                         cashbackRate,
                         cashback,
                         subAffCommission,
-                        profit
-                    }
-                });         
-                newAccount.reports.push(newReport); // Push new report to reports array
-                await newAccount.save(); //  and save it
-                await AffApplication.findByIdAndUpdate(application._id, { siteId }); // update original application with siteId
-                await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
-               // emails and notifications done by hooks
-               
-            } else if (!existingAccount && !application && !defaultSiteIds.includes(siteId)) { // if account does not exist and site is neither ['75417', '75418', '40278', '56'] defaults
-                
+                        profit,
+                    },
+                })
+                newAccount.reports.push(newReport) // Push new report to reports array
+                await newAccount.save() //  and save it
+                await AffApplication.findByIdAndUpdate(application._id, {
+                    siteId,
+                }) // update original application with siteId
+                await AffPartner.findByIdAndUpdate(
+                    newAccount.belongsTo,
+                    { $push: { accounts: newAccount } },
+                    { select: 'accounts', new: true }
+                ) // Put select into options // push new account to partner array of accounts
+                // emails and notifications done by hooks
+            } else if (
+                !existingAccount &&
+                !application &&
+                !defaultSiteIds.includes(siteId)
+            ) {
+                // if account does not exist and site is neither ['75417', '75418', '40278', '56'] defaults
+
                 // db.inventory.find( { "instock": { $elemMatch: { qty: 5, warehouse: "A" } } } )
 
-                const partner = await AffPartner.findOne({ brandAssets: { $elemMatch: { brand, siteId } } }).select('_id');
+                const partner = await AffPartner.findOne({
+                    brandAssets: { $elemMatch: { brand, siteId } },
+                }).select('_id')
                 // This works >> 'brandAssets.brand': brand, 'brandAssets.siteId': siteId }).select('_id');
                 if (partner) {
-                    const newAccount = await AffAccount.create({ // create new account
+                    const newAccount = await AffAccount.create({
+                        // create new account
                         brand,
                         belongsTo: partner._id,
                         accountId,
-                        country
-                    });
-                    const newReport = await AffReport.create({ // create new report
+                        country,
+                    })
+                    const newReport = await AffReport.create({
+                        // create new report
                         date,
                         month,
                         brand,
@@ -157,37 +188,43 @@ const mapPlayerRegistrations = async (results, brand, month, date) => {
                         belongsTo: newAccount._id,
                         belongsToPartner: newAccount.belongsTo,
                         account: {
-                            accountId,  
+                            accountId,
                             deposits,
                             transValue,
                             commission,
-                            commissionRate, 
+                            commissionRate,
                             earnedFee,
-                            currency, 
+                            currency,
                             cashbackRate,
                             cashback,
                             subAffCommission,
-                            profit
-                        }
-                    }); 
-                    newAccount.reports.push(newReport); // Push new report to reports array
-                    await newAccount.save(); // and save it
-                    await AffApplication.create({ brand, accountId, belongsTo: partner._id, siteId }); // Create new application with siteId
-                    await AffPartner.findByIdAndUpdate(newAccount.belongsTo, { $push: { accounts: newAccount } }, { select: 'accounts', new: true });  // Put select into options // push new account to partner array of accounts
+                            profit,
+                        },
+                    })
+                    newAccount.reports.push(newReport) // Push new report to reports array
+                    await newAccount.save() // and save it
+                    await AffApplication.create({
+                        brand,
+                        accountId,
+                        belongsTo: partner._id,
+                        siteId,
+                    }) // Create new application with siteId
+                    await AffPartner.findByIdAndUpdate(
+                        newAccount.belongsTo,
+                        { $push: { accounts: newAccount } },
+                        { select: 'accounts', new: true }
+                    ) // Put select into options // push new account to partner array of accounts
                     // emails and notifications done by hooks
-                } else return;
-            } else return;
+                } else return
+            } else return
         } catch (error) {
-            return error;
+            return error
         }
     })
 }
 
-
-
 module.exports = {
-    fetchPlayerRegistrationsReport
+    fetchPlayerRegistrationsReport,
 }
-
 
 // https://stackoverflow.com/questions/31978347/fs-writefile-in-a-promise-asynchronous-synchronous-stuff

@@ -1,4 +1,4 @@
-module.exports = {    
+module.exports = {
     AffReport: require('./AffReport'),
     AffAccount: require('./AffAccount'),
     AffPartner: require('./AffPartner'),
@@ -9,6 +9,6 @@ module.exports = {
     AffPayment: require('./AffPayment'),
     AffReportDaily: require('./AffReportDaily'),
     AffSubReport: require('./AffSubReport'),
-    AffUpgrade: require('./AffUpgrade') 
-};
-  
+    AffUpgrade: require('./AffUpgrade'),
+    AffApproval: require('./AffApproval'),
+}
