@@ -22,6 +22,7 @@ const {
     AffReportMonthly,
     AffSubReport,
     AffUpgrade,
+    AffApproval,
 } = require('../../models/affiliate/index')
 
 const {
@@ -158,17 +159,15 @@ router.post(
                         },
                     },
                 ])
-                return res
-                    .status(200)
-                    .send({
-                        reports,
-                        pageCount,
-                        brands,
-                        months,
-                        currencies,
-                        totals,
-                        allTotals,
-                    })
+                return res.status(200).send({
+                    reports,
+                    pageCount,
+                    brands,
+                    months,
+                    currencies,
+                    totals,
+                    allTotals,
+                })
             } catch (err) {
                 return res.status(400).send(err)
             }
@@ -235,15 +234,13 @@ router.post(
                         },
                     ])
                 )[0].values
-                return res
-                    .status(200)
-                    .send({
-                        applications,
-                        pageCount,
-                        brands,
-                        statuses,
-                        upgrades,
-                    })
+                return res.status(200).send({
+                    applications,
+                    pageCount,
+                    brands,
+                    statuses,
+                    upgrades,
+                })
             } catch (err) {
                 console.log(err)
                 return res.status(400).send(err)
@@ -469,17 +466,15 @@ router.post(
                         },
                     },
                 ])
-                return res
-                    .status(200)
-                    .send({
-                        reports,
-                        pageCount,
-                        brands,
-                        months,
-                        currencies,
-                        totals,
-                        allTotals,
-                    })
+                return res.status(200).send({
+                    reports,
+                    pageCount,
+                    brands,
+                    months,
+                    currencies,
+                    totals,
+                    allTotals,
+                })
             } catch (err) {
                 return res.status(400).send(err)
             }
@@ -531,14 +526,12 @@ function updateBalances(req, res) {
     // After next() is called on createPayment() it comes next to updateBalances()
     return updateAffiliateBalance({ _id: req.params._id })
         .then(() =>
-            res
-                .status(201)
-                .send({
-                    newPayment: req.newPayment,
-                    msg: `You have paid ${
-                        req.body.currency
-                    } ${req.body.amount.toFixed(2)} `,
-                })
+            res.status(201).send({
+                newPayment: req.newPayment,
+                msg: `You have paid ${
+                    req.body.currency
+                } ${req.body.amount.toFixed(2)} `,
+            })
         )
         .catch(() =>
             res
@@ -669,11 +662,9 @@ function updateBalances(req, res) {
     // After next() is called on /update-payment/:_id it comes next to updateBalances()
     return updateAffiliateBalance({ _id: req.params._id })
         .then(() =>
-            res
-                .status(201)
-                .send({
-                    msg: `You have paid  ${req.body.currency} ${req.body.amount} `,
-                })
+            res.status(201).send({
+                msg: `You have paid  ${req.body.currency} ${req.body.amount} `,
+            })
         )
         .catch(() =>
             res
@@ -704,14 +695,12 @@ router.post(
                     email: partner.email,
                 })
             }
-            return res
-                .status(201)
-                .send({
-                    success: true,
-                    msg: `${partner.email} has been ${
-                        req.body.isDisabled ? 'disabled' : 're-activated'
-                    }`,
-                })
+            return res.status(201).send({
+                success: true,
+                msg: `${partner.email} has been ${
+                    req.body.isDisabled ? 'disabled' : 're-activated'
+                }`,
+            })
         } catch (error) {
             return res.status(400).send(err)
         }
@@ -741,16 +730,14 @@ router.post(
                     email: partner.email,
                 })
             }
-            return res
-                .status(201)
-                .send({
-                    success: true,
-                    msg: `${partner.email} has been ${
-                        req.body.isPermitted
-                            ? 'made eligible'
-                            : 'refused eligibility'
-                    }`,
-                })
+            return res.status(201).send({
+                success: true,
+                msg: `${partner.email} has been ${
+                    req.body.isPermitted
+                        ? 'made eligible'
+                        : 'refused eligibility'
+                }`,
+            })
         } catch (error) {
             return res.status(400).send(err)
         }
@@ -775,6 +762,133 @@ router.post(
                 return res.status(403).send({ success: false, msg: error })
             }
         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
+    }
+)
+
+// POST /admin/partner/fetch-approvals
+router.post(
+    '/fetch-approvals',
+    passport.authenticate('admin', {
+        session: false,
+    }),
+    async (req, res) => {
+        const token = getToken(req.headers)
+        if (token) {
+            let pageSize = parseInt(req.query.pageSize)
+            let pageIndex = parseInt(req.query.pageIndex)
+            let { sort, query } = req.body
+            let skippage = pageSize * pageIndex // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
+
+            let searchQuery = mapRegexQueryFromObj(query)
+            let populateQuery = mapQueryForPopulate(query)
+
+            let applications
+
+            try {
+                if (isPopulatedValue(query)) {
+                    // use this way to query for a populated field - in this case, belongsTo.epi
+                    applications = (
+                        await AffApproval.find(searchQuery)
+                            .collation({ locale: 'en', strength: 1 })
+                            .sort(sort)
+                            .skip(skippage)
+                            .limit(pageSize)
+                            .populate({
+                                path: 'belongsTo',
+                                match: populateQuery,
+                            })
+                    ).filter((a) => a.belongsTo) // this works because we are only populating partner where the epi matches the query epi so it firstly returns all the users and then filters out all where the belongsTo is null. the belongsTo field will be null if it does not match the query
+                } else {
+                    applications = await AffApproval.find(searchQuery)
+                        .collation({ locale: 'en', strength: 1 })
+                        .sort(sort)
+                        .skip(skippage)
+                        .limit(pageSize)
+                        .populate({ path: 'belongsTo', select: 'epi' })
+                        .lean()
+                }
+                const pageCount = await AffApproval.countDocuments(searchQuery)
+                const brands = await AffApproval.distinct('brand')
+                const statuses = await AffApproval.distinct('status')
+
+                return res.status(200).send({
+                    applications,
+                    pageCount,
+                    brands,
+                    statuses,
+                })
+            } catch (err) {
+                console.log(err)
+                return res.status(400).send(err)
+            }
+        } else return res.status(403).send({ msg: 'Unauthorised' })
+    }
+)
+
+// POST /admin/partner/delete-approval { _id }
+router.post(
+    '/delete-approval',
+    passport.authenticate('admin', {
+        session: false,
+    }),
+    async (req, res) => {
+        try {
+            const application = await AffApproval.findByIdAndDelete(
+                req.body._id
+            )
+            return res.status(200).send(application)
+        } catch (err) {
+            return res.status(400).send(err)
+        }
+    }
+)
+
+// if approved
+// set permitted to true
+// set status of approval to 'Approved'
+// send email and Notification
+// Route to partner manager to set up site links
+
+// POST /admin/partner/update-approval { _id, belongsTo }
+router.post(
+    '/update-approval',
+    passport.authenticate('admin', {
+        session: false,
+    }),
+    async (req, res) => {
+        try {
+            const { decision, _id, belongsTo } = req.body
+            const approval = await AffApproval.findByIdAndUpdate(
+                _id,
+                {
+                    status: decision ? 'Approved' : 'Rejected',
+                },
+                { new: true }
+            )
+            const partner = await AffPartner.findByIdAndUpdate(
+                belongsTo,
+                {
+                    isPermitted: decision ? true : false,
+                },
+                { new: true, select: 'isPermitted email' }
+            )
+
+            // send email saying referral of IN and BD accounts are permitted
+            await sendEmail({
+                templateId: decision ? 71 : 80,
+                tags: ['Partner'],
+                email: partner.email,
+            })
+
+            return res.status(201).send({
+                success: decision ? true : false,
+                msg: `${partner.email} has been ${
+                    decision ? 'made eligible' : 'refused eligibility'
+                }`,
+            })
+        } catch (error) {
+            return res.status(400).send(error)
+        }
     }
 )
 

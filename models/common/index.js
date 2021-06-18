@@ -3,5 +3,6 @@ module.exports = {
     UserCounter: require('./UserCounter'),
     UserNotification: require('./UserNotification'),
     Brand: require('./Brand'),
-    Quarter: require('./Quarter')
+    Quarter: require('./Quarter'),
+    Allow: require('./Allow'),
 }

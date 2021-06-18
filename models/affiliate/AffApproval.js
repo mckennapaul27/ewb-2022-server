@@ -5,6 +5,10 @@ const AffApproval = new Schema({
     brand: String,
     accountId: String,
     name: String,
+    status: {
+        type: String,
+        default: 'Pending',
+    },
     dateAdded: { type: Number, default: Date.now },
     belongsTo: {
         type: mongoose.Schema.Types.ObjectId,

@@ -20,8 +20,10 @@ const { createAdminJob } = require('../utils/admin-job-functions')
 const { updateAffiliateBalance } = require('../utils/balance-helpers')
 const { setAffQuarterData } = require('../utils/quarter-helpers')
 const { getQuarterData } = require('../utils/quarter-data')
+const { Allow } = require('../models/common/index')
 
 const updatePartnerStats = async (brand, month, date) => {
+    let allowed = (await Allow.findById('1')).status
     let arr = await AffPartner.find({
         $or: [
             // only find() partners that have at least 1 account in the accounts array or have referred subpartners
@@ -34,7 +36,7 @@ const updatePartnerStats = async (brand, month, date) => {
 
     let processStatsOne = arr.reduce(async (previousPartner, nextPartner) => {
         await previousPartner
-        return setCashback(nextPartner, brand, month).then(() => {
+        return setCashback(nextPartner, brand, month, allowed).then(() => {
             return partnerStatusCheck(nextPartner)
         })
     }, Promise.resolve())
@@ -114,7 +116,8 @@ const setCashback = (
         isPermitted,
     },
     brand,
-    month
+    month,
+    allowed
 ) => {
     return new Promise((resolve) => {
         resolve(
@@ -148,7 +151,13 @@ const setCashback = (
                     const levels = (twentyPercentRate, c) => {
                         // c = commission
                         //
-                        // if ((nextReport.country === 'IN' || nextReport.country === 'BD') && (isPermitted !== undefined || !isPermitted)) return 0; // If the report country is IN or BD and partner isPermitted = false return 0;
+                        if (
+                            (nextReport.country === 'IN' ||
+                                nextReport.country === 'BD') &&
+                            (isPermitted !== undefined || !isPermitted) &&
+                            !allowed
+                        )
+                            return 0 // If the report country is IN or BD and partner isPermitted = false return 0;
                         if (c === 0) return 0
                         else if (revShareActive) return rate
                         // if revShareActive, just return rate like 25% or 27.5%
@@ -192,7 +201,7 @@ const setCashback = (
                                 (nextReport.country === 'IN' ||
                                     nextReport.country === 'BD') &&
                                 (isPermitted !== undefined || !isPermitted)
-                                    ? 'IN & BD accounts not eligible for commission from 1st July'
+                                    ? 'IN & BD accounts not eligible for commission'
                                     : '',
                             quarter,
                         },

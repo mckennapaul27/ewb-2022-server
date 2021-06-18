@@ -4,7 +4,12 @@ mongoose.Promise = global.Promise
 const C = require('chance')
 const moment = require('moment')
 const chance = new C()
-const { UserCounter, Notification, App } = require('../models/common/index')
+const {
+    UserCounter,
+    Notification,
+    App,
+    Allow,
+} = require('../models/common/index')
 const { Report, Application } = require('../models/personal/index')
 const {
     AffAccount,
@@ -47,21 +52,20 @@ const arr = [
     3864, 3868,
 ]
 
-const changeIsPermitted = () => {
-    console.log(arr.length)
-    return arr.map(async (epi) => {
-        await AffPartner.findOneAndUpdate(
-            { epi },
-            {
-                isPermitted: false,
-                requestedApproval: false,
-            },
-            {
-                new: true,
-                select: 'isPermitted',
-            }
-        )
-    })
+const changeIsPermitted = async () => {
+    // return arr.map(async (epi) => {
+    //     await AffPartner.findOneAndUpdate(
+    //         { epi },
+    //         {
+    //             isPermitted: false,
+    //             requestedApproval: false,
+    //         },
+    //         {
+    //             new: true,
+    //             select: 'isPermitted',
+    //         }
+    //     )
+    // })
 }
 
 module.exports = {
