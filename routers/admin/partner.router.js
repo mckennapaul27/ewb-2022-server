@@ -126,6 +126,7 @@ router.post(
                 const pageCount = await AffReport.countDocuments(searchQuery)
                 const brands = await AffReport.distinct('brand')
                 const months = await AffReport.distinct('month')
+                const siteIds = await AffReport.distinct('siteId')
                 const currencies = await AffReport.distinct('account.currency')
                 const totals = await AffReport.aggregate([
                     { $match: { $and: [aggregateQuery] } },
@@ -163,6 +164,7 @@ router.post(
                     reports,
                     pageCount,
                     brands,
+                    siteIds,
                     months,
                     currencies,
                     totals,
