@@ -200,7 +200,8 @@ const setCashback = (
                             comment:
                                 (nextReport.country === 'IN' ||
                                     nextReport.country === 'BD') &&
-                                (isPermitted !== undefined || !isPermitted)
+                                isPermitted !== undefined && // does not equal undefined and equals false - so checking first that it is not undefined. If it is not undefined and is false then we add comment
+                                !isPermitted
                                     ? 'IN & BD accounts not eligible for commission'
                                     : '',
                             quarter,
