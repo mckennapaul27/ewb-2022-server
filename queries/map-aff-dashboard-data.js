@@ -149,12 +149,11 @@ const setCashback = (
                     const { transValue, commission, earnedFee, accountId } =
                         nextReport.account
                     const levels = (twentyPercentRate, c) => {
-                        // c = commission
-                        //
                         if (
                             (nextReport.country === 'IN' ||
                                 nextReport.country === 'BD') &&
-                            (isPermitted !== undefined || !isPermitted) &&
+                            isPermitted !== undefined &&
+                            !isPermitted &&
                             !allowed
                         )
                             return 0 // If the report country is IN or BD and partner isPermitted = false return 0;

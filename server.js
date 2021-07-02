@@ -32,6 +32,7 @@ const {
     setAffQuarterData,
 } = require('./utils/quarter-helpers')
 const { changeIsPermitted } = require('./utils/change-data')
+const { updatePartnerStats } = require('./queries/map-aff-dashboard-data')
 
 app.use(compression())
 app.use(fileUpload())
@@ -62,6 +63,8 @@ if (process.env.NODE_ENV !== 'dev') {
 }
 
 // changeIsPermitted()
+
+// updatePartnerStats('Neteller', 'July 2021', 1625094000000)
 
 // setPersonalQuarterData({ month: 'May 2021', accountId: '107423543', brand: 'Skrill' });
 // setAffQuarterData({ month: 'May 2021', accountId: '552526513171', brand: 'Neteller', _id: '5ec92bf37a156f00049926e5' })
