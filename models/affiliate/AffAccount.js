@@ -30,20 +30,20 @@ AffAccount.pre('save', async function (next) {
             const { email } = await AffPartner.findById(a.belongsTo)
                 .select('email')
                 .lean()
-            await createAffNotification({
-                message: `Account ${a.accountId} has been added to your dashboard`,
-                type: 'Account',
-                belongsTo: a.belongsTo,
-            })
-            await sendEmail({
-                templateId: 22,
-                smtpParams: {
-                    BRAND: a.brand,
-                    ACCOUNTID: a.accountId,
-                },
-                tags: ['Account'],
-                email,
-            })
+            // await createAffNotification({
+            //     message: `Account ${a.accountId} has been added to your dashboard`,
+            //     type: 'Account',
+            //     belongsTo: a.belongsTo,
+            // })
+            // await sendEmail({
+            //     templateId: 22,
+            //     smtpParams: {
+            //         BRAND: a.brand,
+            //         ACCOUNTID: a.accountId,
+            //     },
+            //     tags: ['Account'],
+            //     email,
+            // })
             next()
         }
     } catch (error) {

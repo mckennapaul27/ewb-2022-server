@@ -27,8 +27,10 @@ const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({
         $or: [
             // only find() partners that have at least 1 account in the accounts array or have referred subpartners
-            { isSubPartner: true },
-            { 'accounts.0': { $exists: true } },
+            { epi: 566 },
+            { referredBy: '5e2f053a1172020004798372' }, // this is _id of 566
+            // { isSubPartner: true },
+            // { 'accounts.0': { $exists: true } },
         ],
     }).select(
         '-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails'

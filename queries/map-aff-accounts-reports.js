@@ -103,6 +103,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                                     deposits,
                                     transValue,
                                     commission,
+                                    cashback: 0,
+                                    cashbackRate: 0,
                                     commissionRate,
                                     earnedFee,
                                     currency,
@@ -150,6 +152,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                                     transValue,
                                     commission,
                                     commissionRate,
+                                    cashback: 0,
+                                    cashbackRate: 0,
                                     earnedFee,
                                     currency,
                                     cashbackRate,
@@ -200,6 +204,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                                         transValue,
                                         commission,
                                         commissionRate,
+                                        cashback: 0,
+                                        cashbackRate: 0,
                                         earnedFee,
                                         currency,
                                         cashbackRate,
@@ -212,12 +218,12 @@ const mapAccountReports = async (a, brand, month, date) => {
                                     { $push: { accounts: newAccount } },
                                     { select: 'accounts', new: true }
                                 ) // push new account to partner array of accounts
-                                await AffApplication.create({
-                                    brand,
-                                    accountId,
-                                    belongsTo: partner._id,
-                                    siteId,
-                                }) // Create new application with siteId
+                                // await AffApplication.create({
+                                //     brand,
+                                //     accountId,
+                                //     belongsTo: partner._id,
+                                //     siteId,
+                                // }) // Create new application with siteId
                             }
                         } else if (
                             // if no application and site ID is not a default ['75417', '75418', '40278', '56']
@@ -256,6 +262,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                                         transValue,
                                         commission,
                                         commissionRate,
+                                        cashback: 0,
+                                        cashbackRate: 0,
                                         earnedFee,
                                         currency,
                                         cashbackRate,
@@ -268,12 +276,12 @@ const mapAccountReports = async (a, brand, month, date) => {
                                     { $push: { accounts: newAccount } },
                                     { select: 'accounts', new: true }
                                 ) // push new account to partner array of accounts
-                                await AffApplication.create({
-                                    brand,
-                                    accountId,
-                                    belongsTo: partner._id,
-                                    siteId,
-                                }) // Create new application with siteId
+                                // await AffApplication.create({
+                                //     brand,
+                                //     accountId,
+                                //     belongsTo: partner._id,
+                                //     siteId,
+                                // }) // Create new application with siteId
                             }
                         } else return
                     }
