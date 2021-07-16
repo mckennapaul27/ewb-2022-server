@@ -15,6 +15,10 @@ const {
     AffSubReport,
 } = require('../models/affiliate/index')
 
+const lucyNetwork = [
+    566, 583, 671, 753, 1099, 3636, 585, 578, 577, 585, 585, 3654, 703, 911,
+]
+
 const { createAffNotification } = require('../utils/notifications-functions')
 const { createAdminJob } = require('../utils/admin-job-functions')
 const { updateAffiliateBalance } = require('../utils/balance-helpers')
@@ -27,10 +31,12 @@ const updatePartnerStats = async (brand, month, date) => {
     let arr = await AffPartner.find({
         $or: [
             // only find() partners that have at least 1 account in the accounts array or have referred subpartners
-            { epi: 566 },
-            { referredBy: '5e2f053a1172020004798372' }, // this is _id of 566
-            // { isSubPartner: true },
-            // { 'accounts.0': { $exists: true } },
+            { isSubPartner: true },
+            { 'accounts.0': { $exists: true } },
+
+            // testing
+            // { epi: 566 },
+            // { referredBy: '5e2f053a1172020004798372' }, // this is _id of 566
         ],
     }).select(
         '-accounts -stats -notifications -statistics -subPartners -subAffReports -paymentDetails'
@@ -176,7 +182,9 @@ const setCashback = (
                         brand === 'Skrill' || brand === 'Neteller'
                             ? levels(twentyPercentRate, commission)
                             : rate
-                    const cashback = revShareActive
+                    const cashback = !lucyNetwork.includes(epi)
+                        ? 0
+                        : revShareActive
                         ? earnedFee * verifiedRate
                         : transValue * verifiedRate
                     const subAffCommission = referredBy
