@@ -17,6 +17,7 @@ const {
 
 const lucyNetwork = [
     566, 583, 671, 753, 1099, 3636, 585, 578, 577, 585, 585, 3654, 703, 911,
+    805,
 ]
 
 const { createAffNotification } = require('../utils/notifications-functions')
