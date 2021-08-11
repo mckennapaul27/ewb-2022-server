@@ -159,13 +159,10 @@ const setCashback = (
                         nextReport.account
                     const levels = (twentyPercentRate, c) => {
                         if (
-                            (nextReport.country === 'IN' ||
-                                nextReport.country === 'BD') &&
-                            isPermitted !== undefined &&
-                            !isPermitted &&
-                            !allowed
+                            nextReport.country === 'IN' || // If the report country is IN or BD return 0;
+                            nextReport.country === 'BD'
                         )
-                            return 0 // If the report country is IN or BD and partner isPermitted = false return 0;
+                            return 0
                         if (c === 0) return 0
                         else if (revShareActive) return rate
                         // if revShareActive, just return rate like 25% or 27.5%
@@ -183,9 +180,7 @@ const setCashback = (
                         brand === 'Skrill' || brand === 'Neteller'
                             ? levels(twentyPercentRate, commission)
                             : rate
-                    const cashback = !lucyNetwork.includes(epi)
-                        ? 0
-                        : revShareActive
+                    const cashback = revShareActive
                         ? earnedFee * verifiedRate
                         : transValue * verifiedRate
                     const subAffCommission = referredBy
@@ -208,13 +203,11 @@ const setCashback = (
                             'account.subAffCommission': subAffCommission,
                             'account.profit': profit,
                             comment:
-                                (nextReport.country === 'IN' ||
-                                    nextReport.country === 'BD') &&
-                                !allowed && // only add comment if allowed = false
-                                isPermitted !== undefined && // does not equal undefined and equals false - so checking first that it is not undefined. If it is not undefined and is false then we add comment
-                                !isPermitted
+                                nextReport.country === 'IN' ||
+                                nextReport.country === 'BD'
                                     ? 'IN & BD accounts not eligible for commission'
                                     : '',
+
                             quarter,
                         },
                         { new: true }
