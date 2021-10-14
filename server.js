@@ -62,7 +62,7 @@ if (process.env.NODE_ENV !== 'dev') {
     )
 }
 
-// changeIsPermitted()
+// changeIsPermitted() test
 
 // updatePartnerStats('Neteller', 'July 2021', 1625094000000)
 
