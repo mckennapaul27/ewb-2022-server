@@ -33,6 +33,7 @@ const {
 } = require('./utils/quarter-helpers')
 const { changeIsPermitted } = require('./utils/change-data')
 const { updatePartnerStats } = require('./queries/map-aff-dashboard-data')
+const { fetchAccountReport } = require('./queries/paysafe-account-report')
 
 app.use(compression())
 app.use(fileUpload())
@@ -63,6 +64,12 @@ if (process.env.NODE_ENV !== 'dev') {
 }
 
 // changeIsPermitted() test
+// fetchAccountReport({
+//     brand: 'Neteller',
+//     month: 'October 2021',
+//     date: 1633042800000,
+//     url: 'https://affiliates.neteller.com/api/affreporting.asp?key=1a76f23b338c47f7834c9063e6f2d141&reportname=AccountReport&reportformat=xml&reportmerchantid=0&reportstartdate=2021/10/1&reportenddate=2021/10/18',
+// })
 
 // updatePartnerStats('Neteller', 'July 2021', 1625094000000)
 
