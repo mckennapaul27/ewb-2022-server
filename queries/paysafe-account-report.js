@@ -70,7 +70,7 @@ const mapRawData = async (data, brand, month, date) => {
                     ? null
                     : formatEpi(item.affcustomid[0]),
             country: item.playercountry[0] === '' ? '' : item.playercountry[0],
-            commission: Number(item.Commission[0]),
+            commission: Number(item.Commission[0]), // 
             transValue:
                 Number(item.Commission[0]) === 0
                     ? 0
