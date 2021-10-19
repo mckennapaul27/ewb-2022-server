@@ -17,7 +17,8 @@ const fetchAccountReport = async ({ brand, month, date, url }) => {
     console.log('here: ', brand, month, date, url)
     ;(async () => {
         try {
-            const res = await request.get(url).proxy(proxy)
+            const res = await request.get(url)
+            // .proxy(proxy)
             checkData(res.text, brand, month, date, url)
         } catch (err) {
             console.log(err)
@@ -70,7 +71,7 @@ const mapRawData = async (data, brand, month, date) => {
                     ? null
                     : formatEpi(item.affcustomid[0]),
             country: item.playercountry[0] === '' ? '' : item.playercountry[0],
-            commission: Number(item.Commission[0]), // 
+            commission: Number(item.Commission[0]), //
             transValue:
                 Number(item.Commission[0]) === 0
                     ? 0
