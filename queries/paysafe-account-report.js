@@ -82,6 +82,7 @@ const mapRawData = async (data, brand, month, date) => {
         })
         return acc
     }, [])
+    //
     actDataReducer(results, brand, month, date)
     affDataReducer(results, brand, month, date)
 }
