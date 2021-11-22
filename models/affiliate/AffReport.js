@@ -14,7 +14,10 @@ const AffReport = new Schema({
     lastUpdate: { type: Number, default: Date.now }, // The static Date.now() method returns the number of milliseconds elapsed since January 1, 1970 00:00:00 UTC
     brand: String,
     account: {
-        accountId: String,
+        accountId: {
+            type: String,
+            required: true,
+        },
         deposits: Number,
         transValue: Number,
         commission: Number,
