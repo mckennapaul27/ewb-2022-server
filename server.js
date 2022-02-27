@@ -17,11 +17,13 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const passport = require('passport')
 const fileUpload = require('express-fileupload')
+const { faker } = require('@faker-js/faker')
 
 const routes = require('./router')
 
 const {
     DB_URL,
+    LOCAL_DB_URL,
     SECRET,
     PORT,
     options,
@@ -34,6 +36,8 @@ const {
 const { changeIsPermitted } = require('./utils/change-data')
 const { updatePartnerStats } = require('./queries/map-aff-dashboard-data')
 const { fetchAccountReport } = require('./queries/paysafe-account-report')
+const { Report, Account } = require('./models/personal')
+const DB = process.env.NODE_ENV === 'dev' ? LOCAL_DB_URL : DB_URL
 
 app.use(compression())
 app.use(fileUpload())
@@ -79,10 +83,10 @@ if (process.env.NODE_ENV !== 'dev') {
 // let db;
 // Connect to the database before starting the application server.
 mongoose
-    .connect(DB_URL, options)
+    .connect(DB, options)
     .then((database) => {
         app.listen(PORT, () => console.log('App listening on port...' + PORT)) // listen to the app before doing anything else
     })
-    .catch((e) => e)
+    .catch((e) => console.log(e))
 
 module.exports = app
