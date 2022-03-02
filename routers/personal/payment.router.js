@@ -2,23 +2,21 @@ const express = require('express')
 const router = express.Router()
 const passport = require('passport')
 require('../../auth/passport')(passport)
-const mongoose = require('mongoose')
 const { getToken } = require('../../utils/token.utils')
-const {
-    ActiveUser,
-    Payment,
-    Report,
-    SubReport,
-} = require('../../models/personal')
+const { ActiveUser, Payment } = require('../../models/personal')
 const {
     createUserNotification,
 } = require('../../utils/notifications-functions')
+const { requestedPayment } = require('../../utils/notifications-list')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions')
-const { createAdminJob } = require('../../utils/admin-job-functions')
 const { updatePersonalBalance } = require('../../utils/balance-helpers')
 const { sendEmail } = require('../../utils/sib-helpers')
+const { sibPaymentRequest } = require('../../utils/sib-transactional-templates')
+const { msgPaymentRequest } = require('../../utils/success-messages')
+const { formatMoney } = require('accounting')
+const { serverErr } = require('../../utils/error-messages')
 
-// /personal/payment/create-payment/:_id
+// /personal/payment/create-payment/:_id - THIS IS UP-TO-DATE 1/3/22
 router.post(
     '/create-payment/:_id',
     passport.authenticate('jwt', {
@@ -29,6 +27,7 @@ router.post(
 ) // returns activeUser
 
 async function createPayment(req, res, next) {
+    // - THIS IS UP-TO-DATE 1/3/22
     const token = getToken(req.headers)
     if (token) {
         const current = (
@@ -55,35 +54,37 @@ async function createPayment(req, res, next) {
             let activeUser = await ActiveUser.findById(belongsTo)
                 .select('belongsTo')
                 .populate({ path: 'belongsTo', select: 'email' })
-            // get the _id and email of the user that activeuser belongsTo;
 
-            createUserNotification({
-                message: `You have requested ${
-                    currency === 'USD' ? '$' : '€'
-                }${amount.toFixed(
-                    2
-                )} to be sent to ${brand} account ${paymentAccount}`,
-                type: 'Payment',
-                belongsTo: activeUser.belongsTo._id,
-            })
-            sendEmail({
-                // send email ( doesn't matter if belongsTo or not because it is just submitting );
-                templateId: 23,
-                smtpParams: {
-                    AMOUNT: amount.toFixed(2),
-                    CURRENCY: currency,
-                    SYMBOL:
-                        currency === 'USD'
-                            ? '$'
-                            : currency === 'EUR'
-                            ? '€'
-                            : '$',
-                    BRAND: brand,
-                    ACCOUNT: paymentAccount,
-                },
-                tags: ['Payment'],
-                email: activeUser.belongsTo.email,
-            })
+            createUserNotification(
+                requestedPayment({
+                    symbol: currency === 'USD' ? '$' : '€',
+                    amount,
+                    brand,
+                    paymentAccount,
+                    locale: req.body.locale,
+                    belongsTo: activeUser.belongsTo._id,
+                })
+            )
+
+            sendEmail(
+                sibPaymentRequest({
+                    locale: req.body.locale,
+                    smtpParams: {
+                        AMOUNT: amount.toFixed(2),
+                        CURRENCY: currency,
+                        SYMBOL:
+                            currency === 'USD'
+                                ? '$'
+                                : currency === 'EUR'
+                                ? '€'
+                                : '$',
+                        BRAND: brand,
+                        ACCOUNT: paymentAccount,
+                    },
+                    email: activeUser.belongsTo.email,
+                })
+            )
+
             req.newPayment = newPayment // creates new payment and then adds it to req object before calling return next()
             next()
         }
@@ -95,21 +96,29 @@ function updateBalances(req, res) {
 
     return updatePersonalBalance({ _id: req.params._id, brand: req.body.brand })
         .then(() =>
-            res.status(201).send({
-                newPayment: req.newPayment,
-                msg: `You have requested ${
-                    req.body.currency
-                } ${req.body.amount.toFixed(2)} `,
-            })
+            res.status(201).send(
+                msgPaymentRequest({
+                    locale: req.body.locale,
+                    currency: req.body.currency,
+                    amount: formatMoney(
+                        req.body.amount,
+                        req.body.currency === 'USD'
+                            ? '$'
+                            : req.body.currency === 'EUR'
+                            ? '€'
+                            : '$',
+                        2
+                    ),
+                    newPayment: req.newPayment,
+                })
+            )
         )
         .catch((err) => {
-            return res
-                .status(500)
-                .send({ msg: 'Server error: Please contact support' })
+            return res.status(500).send(serverErr({ locale: req.body.locale }))
         })
 }
 
-// POST /personal/payment/fetch-payments
+// POST /personal/payment/fetch-payments - THIS IS UP-TO-DATE 1/3/22
 router.post(
     '/fetch-payments',
     passport.authenticate('jwt', {

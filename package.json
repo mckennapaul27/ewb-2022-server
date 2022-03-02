@@ -18,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "accounting": "^0.4.1",
     "async-each-series": "^1.1.0",
     "axios": "^0.21.4",
     "bcrypt": "^5.0.1",

@@ -4,15 +4,16 @@ const passport = require('passport')
 require('../../auth/passport')(passport)
 const mongoose = require('mongoose')
 const { getToken } = require('../../utils/token.utils')
-const { User, Notification } = require('../../models/common/index')
-const { ActiveUser, Payment, Report } = require('../../models/personal')
-const {
-    createUserNotification,
-} = require('../../utils/notifications-functions')
+const { ActiveUser, Report } = require('../../models/personal')
+
 const { sendEmail } = require('../../utils/sib-helpers')
 const { serverErr } = require('../../utils/error-messages')
+const {
+    sibPaymentDetailsUpdate,
+} = require('../../utils/sib-transactional-templates')
+const { msgPaymentDetailsUpdate } = require('../../utils/success-messages')
 
-// /personal/active-user/get-active-user/:_id
+// /personal/active-user/get-active-user/:_id - THIS IS UP-TO-DATE 1/3/22
 router.get(
     '/get-active-user/:_id',
     passport.authenticate('jwt', {
@@ -34,7 +35,7 @@ router.get(
     }
 )
 
-// /personal/active-user/get-active-user-balance-brand/:_id/:brand
+// /personal/active-user/get-active-user-balance-brand/:_id/:brand - THIS IS UP-TO-DATE 1/3/22
 router.get(
     '/get-active-user-balances-brand/:_id/:brand',
     passport.authenticate('jwt', {
@@ -56,9 +57,9 @@ router.get(
     }
 )
 
-// /personal/active-user/update-payment-details/:_id
+// /personal/active-user/update-payment-details/:_id/:locale - THIS IS UP-TO-DATE 1/3/22
 router.post(
-    '/update-payment-details/:_id',
+    '/update-payment-details/:_id/:locale',
     passport.authenticate('jwt', {
         session: false,
     }),
@@ -66,7 +67,7 @@ router.post(
         const token = getToken(req.headers)
         if (token) {
             const update = req.body // doing it this way so we can submit anything to it to update and therefore provide less routes
-
+            const { locale } = req.params
             try {
                 const activeUser = await ActiveUser.findByIdAndUpdate(
                     req.params._id,
@@ -74,24 +75,26 @@ router.post(
                     { new: true, select: req.body.select }
                 ).populate({ path: 'belongsTo', select: 'email' })
 
-                // sendEmail({
-                //     // send email ( doesn't matter if belongsTo or not because it is just submitting );
-                //     templateId: 19,
-                //     smtpParams: {
-                //         NONE: null,
-                //     },
-                //     tags: ['Account'],
-                //     email: activeUser.belongsTo.email,
-                // })
-                return res.status(200).send(activeUser)
+                await sendEmail(
+                    sibPaymentDetailsUpdate({
+                        locale,
+                        smtpParams: {
+                            NONE: null, // including otherwise get error
+                        },
+                        email: activeUser.belongsTo.email,
+                    })
+                )
+                return res
+                    .status(200)
+                    .send(msgPaymentDetailsUpdate({ locale, activeUser }))
             } catch (err) {
-                return res.status(400).send({ success: false })
+                return res.status(400).send(serverErr({ locale }))
             }
         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
     }
 )
 
-// /personal/active-user/fetch-deal-data/:_id
+// /personal/active-user/fetch-deal-data/:_id - THIS IS UP-TO-DATE 1/3/22
 router.post(
     '/fetch-deal-data/:_id',
     passport.authenticate('jwt', {
@@ -178,14 +181,6 @@ router.post(
                               .level
                         : 1
 
-                    console.log(
-                        deal,
-                        achievedRate,
-                        percentage,
-                        transValue,
-                        mySubVol,
-                        level
-                    )
                     return res.status(200).send({
                         deal,
                         achievedRate,

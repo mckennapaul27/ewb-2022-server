@@ -22,10 +22,9 @@ const {
     createUserNotification,
     createAffNotification,
 } = require('../../utils/notifications-functions')
-const { generateToken, sendToken } = require('../../utils/token.utils')
 const {
     welcome,
-    welcomeSocial,
+
     newSubPartnerRegistered,
     hasApplied,
     linksRequested,
@@ -41,19 +40,27 @@ const {
     err3,
     err4,
     err7,
+    errNoAccountExists,
+    errInvalidToken,
 } = require('../../utils/error-messages')
-const { success1 } = require('../../utils/success-messages')
+const {
+    msgRegistered,
+    msgForgotPassword,
+    msgPasswordReset,
+} = require('../../utils/success-messages')
 const dayjs = require('dayjs')
 const { createAdminJob } = require('../../utils/admin-job-functions')
 const {
-    sibApplicationApply,
     sibRequestLinks,
+    sibPersonalApplicationSubmit,
+    sibForgotPassword,
 } = require('../../utils/sib-transactional-templates')
 
-// /common/auth/create-new-user
+// /common/auth/create-new-user - THIS IS UP-TO-DATE 1/3/22
 router.post('/create-new-user', createUser, createApplication)
 
 async function createUser(req, res, next) {
+    // THIS IS UP-TO-DATE 1/3/22
     let {
         name,
         email,
@@ -117,6 +124,7 @@ async function createUser(req, res, next) {
                         )}`
                         acc.push({ brand, link: requested, siteId: requested })
                         createAffNotification(
+                            // THIS IS UP-TO-DATE 1/3/22
                             linksRequested({
                                 locale,
                                 brand,
@@ -124,6 +132,7 @@ async function createUser(req, res, next) {
                             })
                         )
                         sendEmail(
+                            // THIS IS UP-TO-DATE 1/3/22
                             sibRequestLinks({
                                 locale,
                                 smtpParams: {
@@ -140,6 +149,7 @@ async function createUser(req, res, next) {
                         { new: true, select: 'brandAssets email epi' }
                     )
                     createAdminJob({
+                        // THIS IS UP-TO-DATE 1/3/22
                         message: `Partner ${partner.email} / ${partner.epi} has requested  links`,
                         status: 'Pending',
                         partner: partner._id,
@@ -148,28 +158,23 @@ async function createUser(req, res, next) {
                 }
                 const token = jwt.sign(user.toJSON(), secret)
                 return User.findById(user._id)
-                    .select('name email userId _id activeUser partner')
+                    .select(
+                        'name email userId _id activeUser partner locale regDate country'
+                    )
                     .populate({
                         path: 'partner',
                         select: 'isSubPartner epi siteId referredBy',
                     })
                     .lean() // .populate({ path: 'activeUser', select: 'belongsTo dealTier _id' }) // not needed as we return activeUser _id from user
                     .then(async (user) => {
-                        const {
-                            email,
-                            name,
-                            userId,
-                            country,
-                            regDate,
-                            locale,
-                        } = user
-
-                        await createUserNotification(welcome({ user, locale }))
-                        // await createNewContact({
-                        //     user,
-                        // })
+                        await createUserNotification(welcome({ user, locale })) // THIS IS UP-TO-DATE 1/3/22
+                        await createNewContact({
+                            // THIS IS UP-TO-DATE 1/3/22
+                            user,
+                        })
                         if (referredByPartner)
                             createAffNotification(
+                                // THIS IS UP-TO-DATE 1/3/22
                                 newSubPartnerRegistered({
                                     user,
                                     referredByPartner,
@@ -195,8 +200,8 @@ async function createUser(req, res, next) {
             })
     }
 }
-
 async function createApplication(req, res) {
+    // THIS IS UP-TO-DATE 1/3/22
     const {
         brand,
         accountId,
@@ -229,23 +234,26 @@ async function createApplication(req, res) {
                     .select('belongsTo')
                     .lean()
             ).belongsTo // get the _id of the user that activeuser belongsTo because usernotificatyions are atatched to User not ActiveUser
-            if (_id) createUserNotification(hasApplied({ newApp, _id, locale }))
-            // await sendEmail({
-            //     // send email ( doesn't matter if belongsTo or not because it is just submitting );
-            //     templateId: 1,
-            //     smtpParams: {
-            //         BRAND: brand,
-            //         ACCOUNTID: accountId,
-            //         EMAIL: email,
-            //         STATUS: newApp.status,
-            //     },
-            //     tags: ['Application'],
-            //     email: email,
-            // })
+            if (_id)
+                createUserNotification(
+                    hasApplied({ accountId: newApp.accountId, _id, locale })
+                )
+            await sendEmail(
+                // THIS IS UP-TO-DATE 1/3/22
+                sibPersonalApplicationSubmit({
+                    locale,
+                    smtpParams: {
+                        BRAND: brand,
+                        ACCOUNTID: accountId,
+                        EMAIL: email,
+                        STATUS: newApp.status,
+                    },
+                    email: email,
+                })
+            )
         }
-
         return res.status(201).send(
-            success1({
+            msgRegistered({
                 token: 'jwt ' + token,
                 user: {
                     activeUser,
@@ -257,28 +265,14 @@ async function createApplication(req, res) {
                 },
                 locale,
             })
-        ) // send user or something as well
+        )
     } catch (error) {
         console.log(error)
         return res.status(500).send(serverErr({ locale }))
     }
 }
-// /common/auth/validate-account-Id
-// router.post('/validate-account-Id', validateAccountId)
-// async function validateAccountId(req, res) {
-//     const { accountId } = req.body
-//     let existsOne = await Application.countDocuments({ accountId })
-//         .select('accountId')
-//         .lean() // check if application exists
-//     let existsTwo = await AffApplication.countDocuments({ accountId })
-//         .select('accountId')
-//         .lean() // check if affapplication exists
-//     if (existsOne > 0 || existsTwo > 0) {
-//         return res.status(400).send(err7({ accountId, locale }))
-//     } else return res.status(200)
-// }
 
-// /common/auth/user-login
+// /common/auth/user-login - THIS IS UP-TO-DATE 2/3/22
 router.post('/user-login', (req, res) => {
     User.findOne({ email: req.body.email })
         .select('password')
@@ -311,16 +305,20 @@ router.post('/user-login', (req, res) => {
         )
 })
 
-// /common/auth/forgot-password
+// /common/auth/forgot-password - THIS IS UP-TO-DATE 2/3/22
 router.post('/forgot-password', (req, res) => {
+    // THIS IS UP-TO-DATE 1/3/22
     User.findOne({ email: req.body.email })
         .lean()
         .select('_id')
         .then((user) => {
             if (!user)
-                return res.status(401).send({
-                    msg: `No account exists with email address ${req.body.email}`,
-                })
+                return res.status(401).send(
+                    errNoAccountExists({
+                        locale: req.body.locale,
+                        email: req.body.email,
+                    })
+                )
             return Promise.all([user, crypto.randomBytes(20)]).then(
                 ([user, buffer]) => {
                     const token = buffer.toString('hex')
@@ -337,25 +335,26 @@ router.post('/forgot-password', (req, res) => {
                     ])
                         .then(([token, user]) => {
                             // send email /reset-password?token=' + token;
-                            sendEmail({
-                                // send email ( doesn't matter if belongsTo or not because it is just submitting );
-                                templateId: 12,
-                                smtpParams: {
-                                    TOKEN: `${token}`,
-                                },
-                                tags: ['Auth'],
-                                email: user.email,
-                            })
-                            return res.status(201).send({
-                                msg: 'Kindly check your email for further instructions',
-                                _id: user._id,
-                                token,
-                            }) // sending _id for testing purposes
+                            sendEmail(
+                                sibForgotPassword({
+                                    locale: user.locale,
+                                    smtpParams: {
+                                        TOKEN: `${token}`,
+                                    },
+                                    email: user.email,
+                                })
+                            )
+                            return res.status(201).send(
+                                msgForgotPassword({
+                                    locale: user.locale,
+                                    token,
+                                })
+                            )
                         })
                         .catch((err) =>
-                            res.status(500).send({
-                                msg: 'Server error: Please contact support',
-                            })
+                            res
+                                .status(500)
+                                .send(serverErr({ locale: user.locale }))
                         )
                 }
             )
@@ -367,7 +366,7 @@ router.post('/forgot-password', (req, res) => {
         )
 })
 
-// /common/auth/reset-password
+// /common/auth/reset-password - THIS IS UP-TO-DATE 2/3/22
 router.post('/reset-password', (req, res) => {
     User.findOne({
         resetPasswordToken: req.body.token,
@@ -379,9 +378,9 @@ router.post('/reset-password', (req, res) => {
         .select('_id')
         .then((user) => {
             if (!user)
-                return res.status(401).send({
-                    msg: 'Password reset token is invalid or has expired',
-                })
+                return res
+                    .status(401)
+                    .send(errInvalidToken({ locale: req.body.locale }))
             return bcrypt
                 .hash(req.body.password, 10)
                 .then((hash) => {
@@ -395,71 +394,24 @@ router.post('/reset-password', (req, res) => {
                         { new: true }
                     )
                         .then((user) =>
-                            res.status(201).send({
-                                msg: 'Password successfully reset. Please login',
-                                user,
-                            })
+                            res.status(201).send(
+                                msgPasswordReset({
+                                    locale: req.body.locale,
+                                    user,
+                                })
+                            )
                         )
                         .catch((err) =>
-                            res.status(500).send({
-                                msg: 'Server error: Please contact support',
-                            })
+                            res
+                                .status(500)
+                                .send(serverErr({ locale: req.body.locale }))
                         )
                 })
                 .catch((err) =>
-                    res
-                        .status(500)
-                        .send({ msg: 'Server error: Please contact support' })
+                    res.status(500).send(serverErr({ locale: req.body.locale }))
                 )
         })
 })
-
-// const resetPassword = async () => {
-//     console.log('called');
-//     return bcrypt.hash('abcdef', 10)
-//     .then(hash => {
-//         User.findOneAndUpdate({ email: 'lucybandy1993@gmail.com' }, { password: hash }, { new: true })
-//         .then(user => {
-//             console.log('updatedUser: ', user);
-//         })
-//     })
-// };
-
-// resetPassword();
-
-// /common/auth/google-login - test using ngrok by cd /usr/local/bin > ./ngrok http 3000 > get url > enter in google developers console
-router
-    .route('/google-login') // Login to google using support@ewalletbooster.com and go to https://console.developers.google.com/apis/credentials?folder=&organizationId=&project=ewalletbooster-login
-    .post(
-        passport.authenticate('google-token', {
-            session: false,
-        }),
-        async (req, res, next) => {
-            if (!req.user) return res.send(401, 'User not authenticated')
-            req.auth = { id: req.user.id }
-            await createUserNotification(welcomeSocial(req.user))
-            next()
-        },
-        generateToken,
-        sendToken
-    )
-
-// /common/auth/facebook-login
-router
-    .route('/facebook-login') // Go to https://developers.facebook.com/apps/298620334131060/fb-login/settings/ and remember to check callback URI's - /common/auth or /oauth ?
-    .post(
-        passport.authenticate('facebook-token', {
-            session: false,
-        }),
-        async (req, res, next) => {
-            if (!req.user) return res.send(401, 'User not authenticated')
-            req.auth = { id: req.user.id }
-            await createUserNotification(welcomeSocial(req.user))
-            next()
-        },
-        generateToken,
-        sendToken
-    )
 
 // /common/auth/client-ids
 router.get('/client-ids', (req, res) => {
@@ -527,5 +479,20 @@ router.post('/player-registration-postback', (req, res) => {
                 )
         })
 })
+
+// /common/auth/validate-account-Id
+// router.post('/validate-account-Id', validateAccountId)
+// async function validateAccountId(req, res) {
+//     const { accountId } = req.body
+//     let existsOne = await Application.countDocuments({ accountId })
+//         .select('accountId')
+//         .lean() // check if application exists
+//     let existsTwo = await AffApplication.countDocuments({ accountId })
+//         .select('accountId')
+//         .lean() // check if affapplication exists
+//     if (existsOne > 0 || existsTwo > 0) {
+//         return res.status(400).send(err7({ accountId, locale }))
+//     } else return res.status(200)
+// }
 
 module.exports = router

@@ -1,3 +1,4 @@
+const dayjs = require('dayjs')
 const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '../.env') })
 
@@ -59,10 +60,9 @@ function updateAttribute(attributeName) {
 }
 
 // // 3. Contact functions
-
 // create new contact by passing email, name, userId, country and regDate
 const createNewContact = async ({
-    user: { email, name, userId, country, regDate, locale },
+    user: { email, name, userId, country, locale },
 }) => {
     const apiInstance = new SibApiV3Sdk.ContactsApi()
     let createContact = new SibApiV3Sdk.CreateContact()
@@ -71,17 +71,26 @@ const createNewContact = async ({
         FIRSTNAME: name,
         USERID: userId,
         COUNTRY: country,
-        REG_DATE: regDate,
     }
+
     switch (locale) {
-        case 'es':
-            listIds = [22]
-            break
         case 'de':
-            listIds = [22]
+            listIds = [27]
+            break
+        case 'es':
+            listIds = [28]
+            break
+        case 'it':
+            listIds = [33]
+            break
+        case 'pl':
+            listIds = [30]
+            break
+        case 'pt':
+            listIds = [31]
             break
         default:
-            listIds = [24]
+            listIds = [32]
     }
 
     createContact.listIds = listIds
@@ -89,7 +98,8 @@ const createNewContact = async ({
         const res = await apiInstance.createContact(createContact)
         Promise.resolve(res)
     } catch (error) {
-        Promise.reject(error)
+        // return error so it dowan't send error to front end in .catch of auth.router createUser
+        return error
     }
 }
 
@@ -115,7 +125,7 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => {
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi()
     let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
     let sender = {
-        name: 'eWalletBooster',
+        name: 'Volume Kings Support',
         email: 'support@ewalletbooster.com',
     }
     sendSmtpEmail = {
@@ -135,6 +145,51 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => {
     }
 }
 
+const getContactInfo = ({ email }) => {
+    const apiInstance = new SibApiV3Sdk.ContactsApi()
+    try {
+        const res = apiInstance.getContactInfo(email)
+        console.log
+    } catch (error) {
+        console.error()
+    }
+}
+
+// 5. Adding a 'light' subscriber to list by locale - THIS IS UP-TO-DATE 1/3/22
+const createNewSubscriber = async ({ email, locale }) => {
+    // add newsletter subscriber to locale
+    const apiInstance = new SibApiV3Sdk.ContactsApi()
+    let createContact = new SibApiV3Sdk.CreateContact()
+    createContact.email = email
+    switch (locale) {
+        case 'de':
+            listIds = [24]
+            break
+        case 'es':
+            listIds = [22]
+            break
+        case 'it':
+            listIds = [25]
+            break
+        case 'pl':
+            listIds = [26]
+            break
+        case 'pt':
+            listIds = [23]
+            break
+        default:
+            listIds = [19]
+    }
+
+    createContact.listIds = listIds
+    try {
+        const res = await apiInstance.createContact(createContact)
+        return res
+    } catch (error) {
+        throw new Error(error.response.res.text)
+    }
+}
+
 module.exports = {
     addContactToList,
     removeContactFromList,
@@ -143,4 +198,5 @@ module.exports = {
     updateContact,
     sendEmail,
     createNewContact,
+    createNewSubscriber,
 }
