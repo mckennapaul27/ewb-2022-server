@@ -42,7 +42,6 @@ var corsOptions = {
 module.exports = {
   DB_URL: DB_URL,
   LOCAL_DB_URL: LOCAL_DB_URL,
-  TEST_DATA_TRANSFER_URL: TEST_DATA_TRANSFER_URL,
   SECRET: SECRET,
   PORT: PORT,
   options: options,
