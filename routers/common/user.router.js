@@ -6,7 +6,7 @@ const { getToken } = require('../../utils/token.utils')
 const { User, UserNotification } = require('../../models/common/index')
 const { serverErr, errSibContactExists } = require('../../utils/error-messages')
 const { createNewSubscriber } = require('../../utils/sib-helpers')
-const { msgRegistered, msgSubscribed } = require('../../utils/success-messages')
+const { msgSubscribed } = require('../../utils/success-messages')
 
 // /common/user/get-user
 router.get(

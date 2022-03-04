@@ -61,26 +61,32 @@ const defaultAffStats = {
     balance: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' },
+        { amount: 0, currency: 'GBP' },
     ],
     commission: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' },
+        { amount: 0, currency: 'GBP' },
     ],
     cashback: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' },
+        { amount: 0, currency: 'GBP' },
     ],
     payments: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' },
+        { amount: 0, currency: 'GBP' },
     ],
     requested: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' },
+        { amount: 0, currency: 'GBP' },
     ],
     subCommission: [
         { amount: 0, currency: 'EUR' },
         { amount: 0, currency: 'USD' },
+        { amount: 0, currency: 'GBP' },
     ],
 }
 
@@ -144,10 +150,10 @@ const affiliateDealOne = (brand) => {
     return {
         brand: brand,
         rates: [
-            { level: 1, minVol: 0, maxVol: 100000, cashback: 0.004 },
-            { level: 2, minVol: 100001, maxVol: 500000, cashback: 0.0045 },
-            { level: 3, minVol: 500001, maxVol: 1000000, cashback: 0.005 },
-            { level: 4, minVol: 1000001, maxVol: 10000000, cashback: 0.0055 },
+            { level: 1, minVol: 0, maxVol: 100000, cashback: 0.003 },
+            { level: 2, minVol: 100001, maxVol: 500000, cashback: 0.00375 },
+            { level: 3, minVol: 500001, maxVol: 1000000, cashback: 0.00425 },
+            { level: 4, minVol: 1000001, maxVol: 10000000, cashback: 0.0045 },
         ],
     }
 }
@@ -156,10 +162,10 @@ const affiliateDealTwo = (brand) => {
     return {
         brand: brand,
         rates: [
-            { level: 1, minVol: 0, maxVol: 100000, cashback: 0.005 },
-            { level: 2, minVol: 100001, maxVol: 500000, cashback: 0.0055 },
-            { level: 3, minVol: 500001, maxVol: 1000000, cashback: 0.006 },
-            { level: 4, minVol: 1000001, maxVol: 10000000, cashback: 0.0065 },
+            { level: 1, minVol: 0, maxVol: 100000, cashback: 0.004 },
+            { level: 2, minVol: 100001, maxVol: 500000, cashback: 0.0045 },
+            { level: 3, minVol: 500001, maxVol: 1000000, cashback: 0.005 },
+            { level: 4, minVol: 1000001, maxVol: 10000000, cashback: 0.0055 },
         ],
     }
 }

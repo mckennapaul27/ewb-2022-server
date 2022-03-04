@@ -7,9 +7,8 @@ const session = require('express-session')
 const cors = require('cors')
 const helmet = require('helmet')
 const compression = require('compression')
-
 const mongoose = require('mongoose')
-// mongoose.set('debug', true);
+mongoose.set('debug', true)
 mongoose.Promise = global.Promise
 const MongoStore = require('connect-mongo')(session)
 
@@ -17,7 +16,6 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const passport = require('passport')
 const fileUpload = require('express-fileupload')
-const { faker } = require('@faker-js/faker')
 
 const routes = require('./router')
 
@@ -29,15 +27,10 @@ const {
     options,
     corsOptions,
 } = require('./config/config')
-const {
-    setPersonalQuarterData,
-    setAffQuarterData,
-} = require('./utils/quarter-helpers')
-const { changeIsPermitted } = require('./utils/change-data')
-const { updatePartnerStats } = require('./queries/map-aff-dashboard-data')
-const { fetchAccountReport } = require('./queries/paysafe-account-report')
-const { Report, Account } = require('./models/personal')
+// const { UserCounter } = require('./models/common')
+// const { AffCounter } = require('./models/affiliate')
 const DB = process.env.NODE_ENV === 'dev' ? LOCAL_DB_URL : DB_URL
+// const DB = DB_URL
 
 app.use(compression())
 app.use(fileUpload())
@@ -67,18 +60,8 @@ if (process.env.NODE_ENV !== 'dev') {
     )
 }
 
-// changeIsPermitted() test
-// fetchAccountReport({
-//     brand: 'Neteller',
-//     month: 'October 2021',
-//     date: 1633042800000,
-//     url: 'https://affiliates.neteller.com/api/affreporting.asp?key=1a76f23b338c47f7834c9063e6f2d141&reportname=AccountReport&reportformat=xml&reportmerchantid=0&reportstartdate=2021/10/1&reportenddate=2021/10/18',
-// })
-
-// updatePartnerStats('Neteller', 'July 2021', 1625094000000)
-
-// setPersonalQuarterData({ month: 'May 2021', accountId: '107423543', brand: 'Skrill' });
-// setAffQuarterData({ month: 'May 2021', accountId: '552526513171', brand: 'Neteller', _id: '5ec92bf37a156f00049926e5' })
+// const newCounter = UserCounter.create({ _id: 'userid', seq: 212150 })
+// AffCounter.create({ _id: 'partnerid', seq: 138945 })
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;
 // Connect to the database before starting the application server.

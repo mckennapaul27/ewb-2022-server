@@ -33,6 +33,8 @@ const whiteList = () => {
         'https://www.ewalletbroker.com',
         'https://ewalletbroker.com',
         'https://ewalletbroker.com',
+        'https://www.volumekings.com',
+        'https:/volumekings.com',
     ]
     if (process.env.NODE_ENV === 'dev') {
         allowed.push('http://localhost:3000')
