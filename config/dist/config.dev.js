@@ -6,13 +6,10 @@ require('dotenv').config({
   path: path.join(__dirname, '/.env')
 });
 
-var MONGO_PROD_URI = process.env.MONGO_PROD_URI;
-var TEST_DATA_TRANSFER_URL = process.env.TEST_DATA_TRANSFER_URL;
 var LOCAL_DB_URL = process.env.MONGO_DEV_URI;
+var DB_URL = process.env.MONGO_PROD_URI;
 var SECRET = process.env.SECRET_KEY;
-var PORT = process.env.PORT || 4000; // const DB_URL = process.env.NODE_ENV !== 'dev' ? MONGODB_ATLAS_URI : TEST_DATA_TRANSFER_URL;
-
-var DB_URL = MONGO_PROD_URI;
+var PORT = process.env.PORT || 4000;
 var options = {
   useNewUrlParser: true,
   useFindAndModify: false,

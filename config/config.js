@@ -1,14 +1,10 @@
 const path = require('path')
 require('dotenv').config({ path: path.join(__dirname, '/.env') })
 
-const MONGO_PROD_URI = process.env.MONGO_PROD_URI
-const TEST_DATA_TRANSFER_URL = process.env.TEST_DATA_TRANSFER_URL
 const LOCAL_DB_URL = process.env.MONGO_DEV_URI
+const DB_URL = process.env.MONGO_PROD_URI
 const SECRET = process.env.SECRET_KEY
 const PORT = process.env.PORT || 4000
-
-// const DB_URL = process.env.NODE_ENV !== 'dev' ? MONGODB_ATLAS_URI : TEST_DATA_TRANSFER_URL;
-const DB_URL = MONGO_PROD_URI
 
 const options = {
     useNewUrlParser: true,
