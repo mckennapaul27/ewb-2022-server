@@ -9,7 +9,6 @@ const router = express.Router()
 
 const passport = require('passport')
 require('../../auth/passport')(passport)
-require('../../auth/oauth-passport')()
 
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
