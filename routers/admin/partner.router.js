@@ -224,24 +224,24 @@ router.post(
                 )
                 const brands = await AffApplication.distinct('brand')
                 const statuses = await AffApplication.distinct('status')
-                const upgrades = (
-                    await AffApplication.aggregate([
-                        {
-                            $group: {
-                                _id: null,
-                                values: {
-                                    $addToSet: '$availableUpgrade.status',
-                                },
-                            },
-                        },
-                    ])
-                )[0].values
+                // const upgrades = ( // haven't got Upgrade data and DON'T NEED upgrade data
+                //     await AffApplication.aggregate([
+                //         {
+                //             $group: {
+                //                 _id: null,
+                //                 values: {
+                //                     $addToSet: '$availableUpgrade.status',
+                //                 },
+                //             },
+                //         },
+                //     ])
+                // )[0].values
                 return res.status(200).send({
                     applications,
                     pageCount,
                     brands,
                     statuses,
-                    upgrades,
+                    upgrades: [],
                 })
             } catch (err) {
                 console.log(err)

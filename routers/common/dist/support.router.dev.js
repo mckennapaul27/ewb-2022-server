@@ -70,6 +70,20 @@ router.post('/submit-ticket', function _callee(req, res) {
       }
     }
   }, null, null, [[1, 9]]);
+}); // /common/support/player-registration-postback
+
+router.post('/player-registration-postback', function (req, res) {
+  try {
+    console.log(req.body);
+    console.log(req.params);
+    res.status(200).send({
+      msg: 'Successfully posted data'
+    });
+  } catch (error) {
+    res.status(500).send({
+      msg: 'Error: Please contact support'
+    });
+  }
 }); // /common/auth/validate-account-Id
 // router.post('/validate-account-Id', validateAccountId)
 // async function validateAccountId(req, res) {

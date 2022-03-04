@@ -61,24 +61,29 @@ const checkData = async (res, brand, month, date, url) => {
 
 const mapRawData = async (data, brand, month, date) => {
     const results = data.reduce((acc, item) => {
-        acc.push({
-            currency: setCurrency(brand),
-            memberId: item.memberid[0],
-            siteId: item.siteid[0],
-            playerId: item.playerid[0],
-            accountId: item.Merchplayername[0],
-            epi: null,
-            country: item.playercountry[0] === '' ? '' : item.playercountry[0],
-            commission: 0,
-            cashback: 0,
-            transValue: 0,
-            deposits: 0,
-            subAffCommission: 0,
-            earnedFee: 0,
-            cashbackRate: 0,
-            commissionRate: 0,
-            profit: 0,
-        })
+        // all VK accounts must have vk-
+        const isValidSiteId = item.affcustomid[0].includes('vk-')
+        if (isValidSiteId) {
+            acc.push({
+                currency: setCurrency(brand),
+                memberId: item.memberid[0],
+                siteId: item.siteid[0],
+                playerId: item.playerid[0],
+                accountId: item.Merchplayername[0],
+                epi: null,
+                country:
+                    item.playercountry[0] === '' ? '' : item.playercountry[0],
+                commission: 0,
+                cashback: 0,
+                transValue: 0,
+                deposits: 0,
+                subAffCommission: 0,
+                earnedFee: 0,
+                cashbackRate: 0,
+                commissionRate: 0,
+                profit: 0,
+            })
+        }
         return acc
     }, [])
     return mapPlayerRegistrations(results, brand, month, date) // just follows same entry path as paysafe-account-report

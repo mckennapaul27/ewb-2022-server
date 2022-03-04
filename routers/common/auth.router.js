@@ -432,53 +432,6 @@ router.post('/verify-recaptcha', (req, res) => {
         })
 })
 
-// /common/auth/player-registration-postback
-router.post('/player-registration-postback', (req, res) => {
-    User.findOne({
-        resetPasswordToken: req.body.token,
-        resetPasswordExpires: {
-            $gt: Date.now(),
-        },
-    })
-        .lean()
-        .select('_id')
-        .then((user) => {
-            if (!user)
-                return res.status(401).send({
-                    msg: 'Password reset token is invalid or has expired',
-                })
-            return bcrypt
-                .hash(req.body.password, 10)
-                .then((hash) => {
-                    User.findByIdAndUpdate(
-                        user._id,
-                        {
-                            password: hash,
-                            resetPasswordExpires: null,
-                            resetPasswordToken: null,
-                        },
-                        { new: true }
-                    )
-                        .then((user) =>
-                            res.status(201).send({
-                                msg: 'Password successfully reset. Please login',
-                                user,
-                            })
-                        )
-                        .catch((err) =>
-                            res.status(500).send({
-                                msg: 'Server error: Please contact support',
-                            })
-                        )
-                })
-                .catch((err) =>
-                    res
-                        .status(500)
-                        .send({ msg: 'Server error: Please contact support' })
-                )
-        })
-})
-
 // /common/auth/validate-account-Id
 // router.post('/validate-account-Id', validateAccountId)
 // async function validateAccountId(req, res) {

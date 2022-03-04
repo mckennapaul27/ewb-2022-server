@@ -18,9 +18,9 @@ var helmet = require('helmet');
 
 var compression = require('compression');
 
-var mongoose = require('mongoose');
+var mongoose = require('mongoose'); // mongoose.set('debug', true)
 
-mongoose.set('debug', true);
+
 mongoose.Promise = global.Promise;
 
 var MongoStore = require('connect-mongo')(session);
@@ -41,7 +41,9 @@ var _require = require('./config/config'),
     SECRET = _require.SECRET,
     PORT = _require.PORT,
     options = _require.options,
-    corsOptions = _require.corsOptions; // const { UserCounter } = require('./models/common')
+    corsOptions = _require.corsOptions;
+
+var Admin = require('./models/admin/Admin'); // const { UserCounter } = require('./models/common')
 // const { AffCounter } = require('./models/affiliate')
 
 
@@ -74,7 +76,13 @@ if (process.env.NODE_ENV !== 'dev') {
 
     })
   }));
-} // const newCounter = UserCounter.create({ _id: 'userid', seq: 212150 })
+} // Admin.create({ // still need to set this up in production
+//     name: 'Paul McKenna',
+//     username: 'superadmin',
+//     email: 'mckennapaul27@gmail.com',
+//     password: 'n5_YG`)>TdY&,up',
+// })
+// const newCounter = UserCounter.create({ _id: 'userid', seq: 212150 })
 // AffCounter.create({ _id: 'partnerid', seq: 138945 })
 // You can create a database variable outside of the database connection callback to reuse the connection pool in your app.
 // let db;

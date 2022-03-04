@@ -61,25 +61,37 @@ const checkData = async (res, brand, month, date, url) => {
 }
 
 const mapRawData = async (data, brand, month, date) => {
+    const siteIDs = [
+        '109890', // Neteller Dashboard Form,
+        '109887', // Neteller Landing Page Form,
+        '109889', // Skrill Dashboard Form,
+        '109888', // Skrill Landing Page Form,
+    ]
     const results = data.reduce((acc, item) => {
-        acc.push({
-            memberId: item.memberid[0],
-            siteId: item.siteid[0],
-            playerId: item.playerid[0],
-            accountId: item.merchplayername[0],
-            epi:
-                item.affcustomid[0] === '' || item.affcustomid[0] === 'null'
-                    ? null
-                    : formatEpi(item.affcustomid[0]),
-            country: item.playercountry[0] === '' ? '' : item.playercountry[0],
-            commission: Number(item.Commission[0]), //
-            transValue:
-                Number(item.Commission[0]) === 0
-                    ? 0
-                    : Number(item.trans_value[0]),
-            deposits: Number(item.Deposits[0]),
-            earnedFee: Number(item.Nettrans_to_fee[0]),
-        })
+        // all VK accounts must have vk-
+        const isValidSiteId = item.affcustomid[0].includes('vk-')
+        if (isValidSiteId) {
+            acc.push({
+                memberId: item.memberid[0],
+                siteId: item.siteid[0],
+                playerId: item.playerid[0],
+                accountId: item.merchplayername[0],
+                epi: parseInt(
+                    item.affcustomid[0].slice(
+                        item.affcustomid[0].lastIndexOf('-') + 1
+                    )
+                ),
+                country:
+                    item.playercountry[0] === '' ? '' : item.playercountry[0],
+                commission: Number(item.Commission[0]), //
+                transValue:
+                    Number(item.Commission[0]) === 0
+                        ? 0
+                        : Number(item.trans_value[0]),
+                deposits: Number(item.Deposits[0]),
+                earnedFee: Number(item.Nettrans_to_fee[0]),
+            })
+        }
         return acc
     }, [])
     //

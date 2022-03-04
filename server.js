@@ -8,7 +8,7 @@ const cors = require('cors')
 const helmet = require('helmet')
 const compression = require('compression')
 const mongoose = require('mongoose')
-mongoose.set('debug', true)
+// mongoose.set('debug', true)
 mongoose.Promise = global.Promise
 const MongoStore = require('connect-mongo')(session)
 
@@ -27,6 +27,7 @@ const {
     options,
     corsOptions,
 } = require('./config/config')
+const Admin = require('./models/admin/Admin')
 // const { UserCounter } = require('./models/common')
 // const { AffCounter } = require('./models/affiliate')
 const DB = process.env.NODE_ENV === 'dev' ? LOCAL_DB_URL : DB_URL
@@ -59,6 +60,13 @@ if (process.env.NODE_ENV !== 'dev') {
         })
     )
 }
+
+// Admin.create({ // still need to set this up in production
+//     name: 'Paul McKenna',
+//     username: 'superadmin',
+//     email: 'mckennapaul27@gmail.com',
+//     password: 'n5_YG`)>TdY&,up',
+// })
 
 // const newCounter = UserCounter.create({ _id: 'userid', seq: 212150 })
 // AffCounter.create({ _id: 'partnerid', seq: 138945 })

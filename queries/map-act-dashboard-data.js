@@ -50,7 +50,7 @@ const updateActUserStats = async (brand, month, date) => {
             let processStatsThree = arr.reduce(
                 async (previousPartner, nextPartner) => {
                     await previousPartner
-                    return setBalance(nextPartner) // update balance
+                    return setBalance(nextPartner, brand) // update balance
                 },
                 Promise.resolve()
             )
@@ -304,11 +304,11 @@ const createUpdateSubReport = ({ _id }, brand, month, date) => {
     })
 }
 
-const setBalance = ({ _id }) => {
+const setBalance = ({ _id }, brand) => {
     return new Promise((resolve) => {
         resolve(
             (async () => {
-                await updatePersonalBalance({ _id })
+                await updatePersonalBalance({ _id, brand })
             })()
         )
     })

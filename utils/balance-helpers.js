@@ -8,6 +8,7 @@ const {
 const mongoose = require('mongoose')
 
 const updatePersonalBalance = ({ _id, brand }) => {
+    // THIS IS UPDATED MARCH '22 FOR NEW BALANCE SCHEMA
     return new Promise((resolve) => {
         resolve(
             (async () => {
@@ -113,6 +114,7 @@ const updatePersonalBalance = ({ _id, brand }) => {
                     let current = cashback + rafCommission - (paid + requested)
 
                     await ActiveUser.findOneAndUpdate(
+                        // THIS IS UPDATED MARCH '22 FOR NEW BALANCE SCHEMA
                         { _id },
                         {
                             'balances.$[el].current': current,

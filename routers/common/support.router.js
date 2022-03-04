@@ -44,6 +44,19 @@ router.post('/submit-ticket', async (req, res) => {
     }
 })
 
+// /common/support/player-registration-postback
+router.post('/player-registration-postback', (req, res) => {
+    try {
+        console.log(req.body)
+        console.log(req.params)
+        res.status(200).send({
+            msg: 'Successfully posted data',
+        })
+    } catch (error) {
+        res.status(500).send({ msg: 'Error: Please contact support' })
+    }
+})
+
 // /common/auth/validate-account-Id
 // router.post('/validate-account-Id', validateAccountId)
 // async function validateAccountId(req, res) {
