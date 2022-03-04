@@ -46,7 +46,11 @@ const {
 const { uploadAffReports } = require('../../queries/ecopayz-account-report')
 const { sendEmail } = require('../../utils/sib-helpers')
 const { Brand, Allow } = require('../../models/common')
-
+const {
+    sibApplicationYY,
+    sibApplicationYN,
+    sibApplicationNN,
+} = require('../../utils/sib-transactional-templates')
 // POST /admin/api/call-daily-functions
 router.post(
     '/call-daily-functions',
@@ -314,8 +318,7 @@ router.post(
                                     const ab =
                                         await Application.findByIdAndUpdate(
                                             existingDashApplication._id,
-                                            update,
-                                            { new: true }
+                                            update
                                         )
                                     const {
                                         brand,
@@ -323,10 +326,15 @@ router.post(
                                         accountId,
                                         email,
                                         currency,
+                                        availableUpgrade,
                                     } = ab // deconstruct updated application
                                     const activeUser =
                                         await ActiveUser.findById(belongsTo)
                                             .select('belongsTo')
+                                            .populate({
+                                                path: 'belongsTo',
+                                                select: 'locale',
+                                            })
                                             .lean() // get the _id of the user that activeuser belongsTo
                                     if (activeUser && activeUser.belongsTo) {
                                         if (action === 'YY') {
@@ -336,24 +344,23 @@ router.post(
                                                     accountId,
                                                     belongsTo:
                                                         activeUser.belongsTo,
+                                                    locale: activeUser.belongsTo
+                                                        .locale,
                                                 })
                                             )
-                                            const { initialUpgrade } =
-                                                await Brand.findOne({ brand })
-                                                    .select('initialUpgrade')
-                                                    .lean()
-                                            await sendEmail({
-                                                templateId: 65,
-                                                smtpParams: {
-                                                    BRAND: brand,
-                                                    ACCOUNTID: accountId,
-                                                    EMAIL: email,
-                                                    CURRENCY: currency,
-                                                    OFFER: initialUpgrade,
-                                                },
-                                                tags: ['Application'],
-                                                email: email,
-                                            })
+                                            await sendEmail(
+                                                sibApplicationYY({
+                                                    locale: activeUser.belongsTo
+                                                        .locale,
+                                                    smtpParams: {
+                                                        BRAND: brand,
+                                                        ACCOUNTID: accountId,
+                                                        EMAIL: email,
+                                                        OFFER: availableUpgrade.status,
+                                                    },
+                                                    email: activeUser.email,
+                                                })
+                                            )
                                         } else if (action === 'YN') {
                                             createUserNotification(
                                                 applicationYN({
@@ -361,19 +368,23 @@ router.post(
                                                     accountId,
                                                     belongsTo:
                                                         activeUser.belongsTo,
+                                                    locale: activeUser.belongsTo
+                                                        .locale,
                                                 })
                                             )
-                                            await sendEmail({
-                                                templateId: 2,
-                                                smtpParams: {
-                                                    BRAND: brand,
-                                                    ACCOUNTID: accountId,
-                                                    EMAIL: email,
-                                                    CURRENCY: currency,
-                                                },
-                                                tags: ['Application'],
-                                                email: email,
-                                            })
+                                            await sendEmail(
+                                                sibApplicationYN({
+                                                    locale: aciveUser.belongsTo
+                                                        .locale,
+                                                    smtpParams: {
+                                                        BRAND: brand,
+                                                        ACCOUNTID: accountId,
+                                                        EMAIL: email,
+                                                        OFFER: availableUpgrade.status,
+                                                    },
+                                                    email: activeUser.email,
+                                                })
+                                            )
                                         } else if (action === 'NN') {
                                             createUserNotification(
                                                 applicationNN({
@@ -381,54 +392,29 @@ router.post(
                                                     accountId,
                                                     belongsTo:
                                                         activeUser.belongsTo,
+                                                    locale: activeUser.belongsTo
+                                                        .locale,
                                                 })
                                             ) // Do not send email as covering NN below
                                         } else null
                                     }
 
                                     // email if application is "light" application - only sent if YY or YN
-                                    if (
-                                        !belongsTo &&
-                                        (action === 'YY' || action === 'YN')
-                                    ) {
-                                        const buffer = await crypto.randomBytes(
-                                            20
-                                        )
-                                        const token = buffer.toString('hex')
-                                        await Application.findByIdAndUpdate(
-                                            existingDashApplication._id,
-                                            {
-                                                applicationToken: token,
-                                                applicationExpires:
-                                                    Date.now() + 86400000,
-                                            },
-                                            { new: true }
-                                        )
-                                        await sendEmail({
-                                            templateId: 4,
-                                            smtpParams: {
-                                                BRAND: brand,
-                                                ACCOUNTID: accountId,
-                                                ID: token,
-                                                EMAIL: email,
-                                                CURRENCY: currency,
-                                            },
-                                            tags: ['Application'],
-                                            email: email,
-                                        })
-                                    }
 
                                     if (action === 'NN')
-                                        await sendEmail({
-                                            templateId: 3,
-                                            smtpParams: {
-                                                BRAND: brand,
-                                                ACCOUNTID: accountId,
-                                                EMAIL: email,
-                                            },
-                                            tags: ['Application'],
-                                            email: email,
-                                        })
+                                        await sendEmail(
+                                            sibApplicationNN({
+                                                locale: aciveUser.belongsTo
+                                                    .locale,
+                                                smtpParams: {
+                                                    BRAND: brand,
+                                                    ACCOUNTID: accountId,
+                                                    EMAIL: email,
+                                                    OFFER: availableUpgrade.status,
+                                                },
+                                                email: activeUser.email,
+                                            })
+                                        )
 
                                     // if YY or YN call this function which will only create account and report if doesn't already exist
                                     if (

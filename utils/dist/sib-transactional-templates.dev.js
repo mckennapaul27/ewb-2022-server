@@ -228,11 +228,207 @@ var sibPaymentRequest = function sibPaymentRequest(_ref6) {
   };
 };
 
+var sibApplicationYY = function sibApplicationYY(_ref7) {
+  var locale = _ref7.locale,
+      smtpParams = _ref7.smtpParams,
+      email = _ref7.email;
+
+  switch (locale) {
+    case 'de':
+      templateId = 148;
+      break;
+
+    case 'es':
+      templateId = 148;
+      break;
+
+    case 'it':
+      templateId = 148;
+      break;
+
+    case 'pl':
+      templateId = 148;
+      break;
+
+    case 'pt':
+      templateId = 148;
+      break;
+
+    default:
+      templateId = 148;
+  }
+
+  return {
+    templateId: templateId,
+    smtpParams: smtpParams,
+    tags: ['Application'],
+    email: email
+  };
+};
+
+var sibApplicationYN = function sibApplicationYN(_ref8) {
+  var locale = _ref8.locale,
+      smtpParams = _ref8.smtpParams,
+      email = _ref8.email;
+
+  switch (locale) {
+    case 'de':
+      templateId = 149;
+      break;
+
+    case 'es':
+      templateId = 149;
+      break;
+
+    case 'it':
+      templateId = 149;
+      break;
+
+    case 'pl':
+      templateId = 149;
+      break;
+
+    case 'pt':
+      templateId = 149;
+      break;
+
+    default:
+      templateId = 149;
+  }
+
+  return {
+    templateId: templateId,
+    smtpParams: smtpParams,
+    tags: ['Application'],
+    email: email
+  };
+};
+
+var sibApplicationNN = function sibApplicationNN(_ref9) {
+  var locale = _ref9.locale,
+      smtpParams = _ref9.smtpParams,
+      email = _ref9.email;
+
+  switch (locale) {
+    case 'de':
+      templateId = 150;
+      break;
+
+    case 'es':
+      templateId = 150;
+      break;
+
+    case 'it':
+      templateId = 150;
+      break;
+
+    case 'pl':
+      templateId = 150;
+      break;
+
+    case 'pt':
+      templateId = 150;
+      break;
+
+    default:
+      templateId = 150;
+  }
+
+  return {
+    templateId: templateId,
+    smtpParams: smtpParams,
+    tags: ['Application'],
+    email: email
+  };
+};
+
+var sibAccountAdded = function sibAccountAdded(_ref10) {
+  var locale = _ref10.locale,
+      smtpParams = _ref10.smtpParams,
+      email = _ref10.email;
+
+  switch (locale) {
+    case 'de':
+      templateId = 151;
+      break;
+
+    case 'es':
+      templateId = 151;
+      break;
+
+    case 'it':
+      templateId = 151;
+      break;
+
+    case 'pl':
+      templateId = 151;
+      break;
+
+    case 'pt':
+      templateId = 151;
+      break;
+
+    default:
+      templateId = 151;
+  }
+
+  return {
+    templateId: templateId,
+    smtpParams: smtpParams,
+    tags: ['Account'],
+    email: email
+  };
+};
+
+var sibPaymentResult = function sibPaymentResult(_ref11) {
+  var locale = _ref11.locale,
+      smtpParams = _ref11.smtpParams,
+      email = _ref11.email,
+      status = _ref11.status;
+
+  switch (locale) {
+    case 'de':
+      templateId = status === 'Paid' ? 152 : 153;
+      break;
+
+    case 'es':
+      templateId = status === 'Paid' ? 152 : 153;
+      break;
+
+    case 'it':
+      templateId = status === 'Paid' ? 152 : 153;
+      break;
+
+    case 'pl':
+      templateId = status === 'Paid' ? 152 : 153;
+      break;
+
+    case 'pt':
+      templateId = status === 'Paid' ? 152 : 153;
+      break;
+
+    default:
+      templateId = status === 'Paid' ? 152 : 153;
+  }
+
+  return {
+    templateId: templateId,
+    smtpParams: smtpParams,
+    tags: ['Payment'],
+    email: email
+  };
+};
+
 module.exports = {
   sibRequestLinks: sibRequestLinks,
   sibPersonalApplicationSubmit: sibPersonalApplicationSubmit,
   sibForgotPassword: sibForgotPassword,
   sibSupportSubmitted: sibSupportSubmitted,
   sibPaymentDetailsUpdate: sibPaymentDetailsUpdate,
-  sibPaymentRequest: sibPaymentRequest
+  sibPaymentRequest: sibPaymentRequest,
+  sibApplicationYY: sibApplicationYY,
+  sibApplicationYN: sibApplicationYN,
+  sibApplicationNN: sibApplicationNN,
+  sibAccountAdded: sibAccountAdded,
+  sibPaymentResult: sibPaymentResult
 };

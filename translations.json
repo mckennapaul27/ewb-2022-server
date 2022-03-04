@@ -22,5 +22,12 @@
     "hasApplied": "We have received your application for ${newApp.accountId}",
     "newSubPartnerRegistered": "${user.email} has registered as your subpartner",
     "linksRequested": "You have requested additional links for ${brand}",
-    "updateApplication": "Requested ${a.availableUpgrade.status} VIP upgrade for ${a.accountId}"
+    "updateApplication": "Requested ${a.availableUpgrade.status} VIP upgrade for ${a.accountId}",
+    "requestedPayment":"You have requested {{symbol}}{amount}} to be sent to {{brand}} account {{paymentAccount}}",
+    "applicationYY":"${brand} account ${accountId} has been upgraded to VIP",
+    "applicationYN":"${brand} account ${accountId} is eligible for cashback but could not be upgraded - please verify and request again",
+    "applicationNN":"Your application for ${brand} account ${accountId} has been rejected",
+    "accountAdded":"Account ${accountId} has been added to your dashboard and is now eligible",
+    "paymentResult":"Your payout request for ${symbol}${amount.toFixed(2)} has been ${status.toLowerCase()}",
+    ""
 }

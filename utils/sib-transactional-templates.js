@@ -163,6 +163,147 @@ const sibPaymentRequest = ({ locale, smtpParams, email }) => {
         email,
     }
 }
+const sibApplicationYY = ({ locale, smtpParams, email }) => {
+    switch (locale) {
+        case 'de':
+            templateId = 148
+            break
+        case 'es':
+            templateId = 148
+            break
+        case 'it':
+            templateId = 148
+            break
+        case 'pl':
+            templateId = 148
+            break
+        case 'pt':
+            templateId = 148
+            break
+        default:
+            templateId = 148
+    }
+
+    return {
+        templateId,
+        smtpParams,
+        tags: ['Application'],
+        email,
+    }
+}
+const sibApplicationYN = ({ locale, smtpParams, email }) => {
+    switch (locale) {
+        case 'de':
+            templateId = 149
+            break
+        case 'es':
+            templateId = 149
+            break
+        case 'it':
+            templateId = 149
+            break
+        case 'pl':
+            templateId = 149
+            break
+        case 'pt':
+            templateId = 149
+            break
+        default:
+            templateId = 149
+    }
+
+    return {
+        templateId,
+        smtpParams,
+        tags: ['Application'],
+        email,
+    }
+}
+const sibApplicationNN = ({ locale, smtpParams, email }) => {
+    switch (locale) {
+        case 'de':
+            templateId = 150
+            break
+        case 'es':
+            templateId = 150
+            break
+        case 'it':
+            templateId = 150
+            break
+        case 'pl':
+            templateId = 150
+            break
+        case 'pt':
+            templateId = 150
+            break
+        default:
+            templateId = 150
+    }
+
+    return {
+        templateId,
+        smtpParams,
+        tags: ['Application'],
+        email,
+    }
+}
+const sibAccountAdded = ({ locale, smtpParams, email }) => {
+    switch (locale) {
+        case 'de':
+            templateId = 151
+            break
+        case 'es':
+            templateId = 151
+            break
+        case 'it':
+            templateId = 151
+            break
+        case 'pl':
+            templateId = 151
+            break
+        case 'pt':
+            templateId = 151
+            break
+        default:
+            templateId = 151
+    }
+
+    return {
+        templateId,
+        smtpParams,
+        tags: ['Account'],
+        email,
+    }
+}
+
+const sibPaymentResult = ({ locale, smtpParams, email, status }) => {
+    switch (locale) {
+        case 'de':
+            templateId = status === 'Paid' ? 152 : 153
+            break
+        case 'es':
+            templateId = status === 'Paid' ? 152 : 153
+            break
+        case 'it':
+            templateId = status === 'Paid' ? 152 : 153
+            break
+        case 'pl':
+            templateId = status === 'Paid' ? 152 : 153
+            break
+        case 'pt':
+            templateId = status === 'Paid' ? 152 : 153
+            break
+        default:
+            templateId = status === 'Paid' ? 152 : 153
+    }
+
+    return {
+        templateId,
+        smtpParams,
+        tags: ['Payment'],
+        email,
+    }
+}
 module.exports = {
     sibRequestLinks,
     sibPersonalApplicationSubmit,
@@ -170,4 +311,9 @@ module.exports = {
     sibSupportSubmitted,
     sibPaymentDetailsUpdate,
     sibPaymentRequest,
+    sibApplicationYY,
+    sibApplicationYN,
+    sibApplicationNN,
+    sibAccountAdded,
+    sibPaymentResult,
 }
