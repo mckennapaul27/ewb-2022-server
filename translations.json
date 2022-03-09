@@ -7,6 +7,7 @@
     "msgVIPRequestSubmitted": "Requested ${status} for ${accountId}",
     "msgApplicationSubmitted": "`You have successfully submitted an application for ${accountId}`",
     "msgPaymentDetailsUpdate": "Successfully updated payment method",
+    "msgPaymentRequest": "You have requested {{currency}} {{amount}}",
     "err1": "Please enter your name and try again",
     "err2": "Please enter an email address and try again",
     "err3": "Please enter a password and try again",
@@ -23,11 +24,10 @@
     "newSubPartnerRegistered": "${user.email} has registered as your subpartner",
     "linksRequested": "You have requested additional links for ${brand}",
     "updateApplication": "Requested ${a.availableUpgrade.status} VIP upgrade for ${a.accountId}",
-    "requestedPayment":"You have requested {{symbol}}{amount}} to be sent to {{brand}} account {{paymentAccount}}",
-    "applicationYY":"${brand} account ${accountId} has been upgraded to VIP",
-    "applicationYN":"${brand} account ${accountId} is eligible for cashback but could not be upgraded - please verify and request again",
-    "applicationNN":"Your application for ${brand} account ${accountId} has been rejected",
-    "accountAdded":"Account ${accountId} has been added to your dashboard and is now eligible",
-    "paymentResult":"Your payout request for ${symbol}${amount.toFixed(2)} has been ${status.toLowerCase()}",
-    ""
+    "requestedPayment": "You have requested {{symbol}}{amount}} to be sent to {{brand}} account {{paymentAccount}}",
+    "applicationYY": "${brand} account ${accountId} has been upgraded to VIP",
+    "applicationYN": "${brand} account ${accountId} is eligible for cashback but could not be upgraded - please verify and request again",
+    "applicationNN": "Your application for ${brand} account ${accountId} has been rejected",
+    "accountAdded": "Account ${accountId} has been added to your dashboard and is now eligible",
+    "paymentResult": "Your payout request for ${symbol}${amount.toFixed(2)} has been ${status.toLowerCase()}"
 }

@@ -32,7 +32,7 @@ router.post('/submit-ticket', async (req, res) => {
                 MESSAGE: message,
             },
             tags: ['Admin'],
-            email: 'support@ewalletbooster.com', // need to change this as soft bouncing in SIB
+            email: 'support@volumekings.com', // need to change this as soft bouncing in SIB
         })
         return res.status(201).send(
             msgSupportSubmitted({

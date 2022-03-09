@@ -19,7 +19,7 @@ var options = {
 };
 
 var whiteList = function whiteList() {
-  var allowed = ['https://ewalletbooster.com', 'https://ewalletbooster.co.uk', 'https://www.ewalletbooster.com', 'https://www.ewalletbooster.co.uk', 'https://ewalletbooster-admin.herokuapp.com', 'https://ewalletbooster-new-2019.herokuapp.com', 'https://ewalletbooster.eu.ngrok.io', 'https://ewalletbooster.eu.ngrok.io', 'https://ewb-admin-2021.herokuapp.com', 'https://ewb-frontend-2021.herokuapp.com', 'http://www.ewalletbroker.com', 'https://www.ewalletbroker.com', 'https://ewalletbroker.com', 'https://ewalletbroker.com', 'https://www.volumekings.com', 'https:/volumekings.com'];
+  var allowed = ['https://ewalletbooster.com', 'https://ewalletbooster.co.uk', 'https://www.ewalletbooster.com', 'https://www.ewalletbooster.co.uk', 'https://ewalletbooster-admin.herokuapp.com', 'https://ewalletbooster-new-2019.herokuapp.com', 'https://ewalletbooster.eu.ngrok.io', 'https://ewalletbooster.eu.ngrok.io', 'https://ewb-admin-2021.herokuapp.com', 'https://ewb-frontend-2021.herokuapp.com', 'http://www.ewalletbroker.com', 'https://www.ewalletbroker.com', 'https://ewalletbroker.com', 'https://ewalletbroker.com', 'https://www.volumekings.com', 'https:/volumekings.com', 'https://vk-admin-2022.herokuapp.com'];
 
   if (process.env.NODE_ENV === 'dev') {
     allowed.push('http://localhost:3000');

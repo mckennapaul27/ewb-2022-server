@@ -285,27 +285,27 @@ var msgPaymentRequest = function msgPaymentRequest(_ref9) {
 
   switch (locale) {
     case 'de':
-      msg = "You have requested ".concat(currency, " ").concat(amount, " ");
+      msg = "You have requested ".concat(currency, " ").concat(amount);
       break;
 
     case 'es':
-      msg = "You have requested ".concat(currency, " ").concat(amount, " ");
+      msg = "You have requested ".concat(currency, " ").concat(amount);
       break;
 
     case 'it':
-      msg = "You have requested ".concat(currency, " ").concat(amount, " ");
+      msg = "You have requested ".concat(currency, " ").concat(amount);
       break;
 
     case 'pl':
-      msg = "You have requested ".concat(currency, " ").concat(amount, " ");
+      msg = "You have requested ".concat(currency, " ").concat(amount);
       break;
 
     case 'pt':
-      msg = "You have requested ".concat(currency, " ").concat(amount, " ");
+      msg = "You have requested ".concat(currency, " ").concat(amount);
       break;
 
     default:
-      msg = "You have requested ".concat(currency, " ").concat(amount, " ");
+      msg = "You have requested ".concat(currency, " ").concat(amount);
   }
 
   return {

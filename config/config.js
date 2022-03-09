@@ -31,6 +31,7 @@ const whiteList = () => {
         'https://ewalletbroker.com',
         'https://www.volumekings.com',
         'https:/volumekings.com',
+        'https://vk-admin-2022.herokuapp.com',
     ]
     if (process.env.NODE_ENV === 'dev') {
         allowed.push('http://localhost:3000')

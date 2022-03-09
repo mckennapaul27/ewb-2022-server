@@ -1,15 +1,14 @@
+const passport = require('passport')
+require('../../auth/admin-passport')(passport)
 
-const passport = require('passport');
-require('../../auth/admin-passport')(passport);
+const secret = process.env.SECRET_KEY
 
-const secret = process.env.SECRET_KEY;
+const express = require('express')
+const router = express.Router()
 
-const express = require('express');
-const router = express.Router();
-
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
+const bcrypt = require('bcrypt')
 
 const Admin = require('../../models/admin/Admin')
 const { getToken } = require('../../utils/token.utils')
@@ -28,23 +27,25 @@ const { getToken } = require('../../utils/token.utils')
 // POST /admin/auth/login
 router.post('/login', async (req, res, next) => {
     try {
-        const admin = await Admin.findOne({ username: req.body.username }).select('password')
-        if (!admin) return res.status(401).send({ msg: 'Admin not found' });
+        const admin = await Admin.findOne({
+            username: req.body.username,
+        }).select('password')
+        if (!admin) return res.status(401).send({ msg: 'Admin not found' })
         else {
             admin.checkPassword(req.body.password, function (err, isMatch) {
                 if (isMatch && !err) {
-                    const token = jwt.sign(admin.toJSON(), secret);
-                    return res.status(200).send({ admin, token: 'jwt ' + token });              
-                } else return res.status(401).send({ msg: 'Authentication failed. Incorrect password' });
+                    const token = jwt.sign(admin.toJSON(), secret)
+                    return res
+                        .status(200)
+                        .send({ admin, token: 'jwt ' + token })
+                } else return res.status(401).send({ msg: 'Authentication failed. Incorrect password' })
             })
         }
     } catch (err) {
-        return res.status(500).send({ msg: 'Server error: Please contact support' })
+        return res
+            .status(500)
+            .send({ msg: 'Server error: Please contact support' })
     }
-});
+})
 
-
-
-
-
-module.exports = router;
+module.exports = router

@@ -203,22 +203,22 @@ const msgPaymentDetailsUpdate = ({ locale, activeUser }) => {
 const msgPaymentRequest = ({ locale, currency, amount, newPayment }) => {
     switch (locale) {
         case 'de':
-            msg = `You have requested ${currency} ${amount} `
+            msg = `You have requested ${currency} ${amount}`
             break
         case 'es':
-            msg = `You have requested ${currency} ${amount} `
+            msg = `You have requested ${currency} ${amount}`
             break
         case 'it':
-            msg = `You have requested ${currency} ${amount} `
+            msg = `You have requested ${currency} ${amount}`
             break
         case 'pl':
-            msg = `You have requested ${currency} ${amount} `
+            msg = `You have requested ${currency} ${amount}`
             break
         case 'pt':
-            msg = `You have requested ${currency} ${amount} `
+            msg = `You have requested ${currency} ${amount}`
             break
         default:
-            msg = `You have requested ${currency} ${amount} `
+            msg = `You have requested ${currency} ${amount}`
     }
     return {
         msg,
