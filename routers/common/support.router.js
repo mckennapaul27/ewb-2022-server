@@ -47,8 +47,15 @@ router.post('/submit-ticket', async (req, res) => {
 // /common/support/player-registration-postback
 router.post('/player-registration-postback', (req, res) => {
     try {
+        console.log('req.body >>>> ')
         console.log(req.body)
+        console.log('req.body <<<< ')
+        console.log('req.params >>>> ')
         console.log(req.params)
+        console.log('req.params >>>> ')
+        console.log('req.query >>>> ')
+        console.log(req.query)
+        console.log('req.query >>>> ')
         res.status(200).send({
             msg: 'Successfully posted data',
         })
