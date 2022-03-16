@@ -52,14 +52,15 @@ router.post('/player-registration-postback', (req, res) => {
         console.log('req.body <<<< ')
         console.log('req.params >>>> ')
         console.log(req.params)
-        console.log('req.params >>>> ')
+        console.log('req.params <<<< ')
         console.log('req.query >>>> ')
         console.log(req.query)
-        console.log('req.query >>>> ')
+        console.log('req.query <<<< ')
         res.status(200).send({
             msg: 'Successfully posted data',
         })
     } catch (error) {
+        console.log(error)
         res.status(500).send({ msg: 'Error: Please contact support' })
     }
 })

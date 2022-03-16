@@ -103,6 +103,7 @@ router.post(
                     locale,
                 })
             )
+
             await sendEmail(
                 sibPersonalApplicationSubmit({
                     locale,
