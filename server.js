@@ -32,6 +32,14 @@ const Admin = require('./models/admin/Admin')
 // const { AffCounter } = require('./models/affiliate')
 const DB = process.env.NODE_ENV === 'dev' ? LOCAL_DB_URL : DB_URL
 // const DB = DB_URL
+const dayjs = require('dayjs')
+let advancedFormat = require('dayjs/plugin/advancedFormat')
+dayjs.extend(advancedFormat)
+const {
+    AffAccount,
+    AffReport,
+    AffReportDaily,
+} = require('./models/affiliate/index')
 
 app.use(compression())
 app.use(fileUpload())
@@ -61,9 +69,22 @@ if (process.env.NODE_ENV !== 'dev') {
     )
 }
 
+//
+// AffReportDaily.create({
+//     epi: 100721,
+//     date: Number(dayjs().subtract(1, 'days').format('x')),
+//     period: '1-3-22',
+//     clicks: 5,
+//     registrations: 13,
+//     deposits: 0,
+//     transValue: 500,
+//     commission: 100,
+//     brand: 'Neteller',
+//     belongsTo: '6203dbf7a48a5250152b7d5c',
+// })
 // Admin.create({ // still need to set this up in production
 //     name: 'Paul McKenna',
-//     username: 'superadmin',
+//     username: 'superadmin',I f
 //     email: 'mckennapaul27@gmail.com',
 //     password: 'n5_YG`)>TdY&,up',
 // })
@@ -81,3 +102,64 @@ mongoose
     .catch((e) => console.log(e))
 
 module.exports = app
+
+// ;(async () => {
+//     const accs = [
+//         '451312341331',
+//         '451412341432',
+//         '451512341533',
+//         '451612341634',
+//         '451712341735',
+//         '451712341836',
+//     ]
+//     accs.map(async (acc) => {
+//         const affaccount = await AffAccount.create({
+//             brand: 'Neteller',
+//             accountId: acc,
+//             country: 'GB',
+//             belongsTo: '6203dbf7a48a5250152b7d5c',
+//             // reports: [
+//             //     {
+//             //         type: mongoose.Schema.Types.ObjectId,
+//             //         ref: 'affreport',
+//             //     },
+//             // ],
+//         })
+
+//         const months = [('January 2022', 'February 2022')]
+
+//         months.map(async (month) => {
+//             const deposits = Number((Math.random() * 1000).toFixed(2))
+//             const transValue = Number((Math.random() * 100000).toFixed(2))
+//             const commission = transValue * Number(Math.random().toFixed(2))
+//             const cashback = commission * 0.785
+//             const commissionRate = commission / transValue
+//             const cashbackRate = cashback / transValue
+//             const subAffCommission = cashback * 0.1
+//             const earnedFee = commission * 5
+//             const profit = commission - (cashback + subAffCommission)
+//             const a = await AffReport.create({
+//                 date: dayjs().startOf('month').format('x'),
+//                 month,
+//                 brand: 'Neteller',
+//                 account: {
+//                     accountId: affaccount.accountId,
+//                     deposits,
+//                     transValue,
+//                     commission,
+//                     cashback,
+//                     commissionRate, // need to start storing this in data so that we can access in react-table filters
+//                     cashbackRate,
+//                     subAffCommission,
+//                     earnedFee,
+//                     profit, // need to start storing this in data so that we can access in react-table filters
+//                 },
+//                 siteId: 105205,
+//                 country: 'GB',
+//                 epi: 100721,
+//                 belongsTo: affaccount._id,
+//                 belongsToPartner: '6203dbf7a48a5250152b7d5c',
+//             })
+//         })
+//     })
+// })()

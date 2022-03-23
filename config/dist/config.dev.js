@@ -35,11 +35,9 @@ var corsOptions = {
     console.log(_origin);
 
     if (whiteList().indexOf(_origin) !== -1 || !_origin) {
-      console.log('cors success');
       callback(null, true);
     } else {
       callback(new Error("Origin: ".concat(_origin, " Not allowed by CORS")));
-      console.log('cors failure');
     }
   }
 };

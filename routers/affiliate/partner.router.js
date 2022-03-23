@@ -114,9 +114,16 @@ router.post(
                     tags: ['Account'],
                     email: partner.email,
                 })
-                return res.status(200).send(partner)
+                return res.status(200).send({
+                    partner,
+                    msg: `Requested additional links for ${req.body.brand}`,
+                })
             } catch (err) {
-                return res.status(400).send({ success: false })
+                return res.status(400).send({
+                    success: false,
+                    msg: `Request was not successful. Please contact
+                support`,
+                })
             }
         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
     }
@@ -205,6 +212,11 @@ router.post(
                     .skip(skippage)
                     .limit(pageSize)
                     .lean()
+                // make all notifications read
+                // await AffNotification.updateMany(
+                //     { belongsTo: query.belongsTo },
+                //     { read: true }
+                // )
                 const pageCount = await AffNotification.countDocuments(query)
                 const types = await AffNotification.distinct('type')
                 return res.status(200).send({ notifications, pageCount, types })

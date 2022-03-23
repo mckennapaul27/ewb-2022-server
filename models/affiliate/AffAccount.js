@@ -3,12 +3,14 @@ const { sendEmail } = require('../../utils/sib-helpers')
 const Schema = mongoose.Schema
 const AffNotification = require('./AffNotification')
 const AffPartner = require('./AffPartner')
+const dayjs = require('dayjs')
 
 const AffAccount = new Schema({
     brand: String,
     accountId: String,
     country: String,
     dateAdded: { type: Number, default: Date.now },
+    monthAdded: String,
     reports: [
         {
             type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +29,7 @@ AffAccount.pre('save', async function (next) {
     const a = this
     try {
         if (a.isNew) {
+            a.monthAdded = dayjs().format('MMMM YYYY')
             const { email } = await AffPartner.findById(a.belongsTo)
                 .select('email')
                 .lean()

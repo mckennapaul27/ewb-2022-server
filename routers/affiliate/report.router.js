@@ -384,7 +384,7 @@ router.post(
     async (req, res) => {
         const token = getToken(req.headers)
         if (token) {
-            const { _id, month } = req.body
+            const { _id, month, brand } = req.body
             try {
                 const partner = await AffPartner.findById(req.body._id)
                     .select('referredBy deals isSubPartner revShareActive')
@@ -392,34 +392,16 @@ router.post(
                 const { referredBy, deals, isSubPartner, revShareActive } =
                     partner
 
-                const nRate = await getCashbackRate({
+                const rate = await getCashbackRate({
                     _id,
                     referredBy,
                     deals,
                     isSubPartner,
-                    brand: 'Neteller',
-                    month,
-                })
-                const sRate = await getCashbackRate({
-                    _id,
-                    referredBy,
-                    deals,
-                    isSubPartner,
-                    brand: 'Skrill',
-                    month,
-                })
-                const eRate = await getCashbackRate({
-                    _id,
-                    referredBy,
-                    deals,
-                    isSubPartner,
-                    brand: 'ecoPayz',
+                    brand,
                     month,
                 })
 
-                return res
-                    .status(200)
-                    .send({ nRate, sRate, eRate, deals, revShareActive })
+                return res.status(200).send({ rate, deals, revShareActive })
             } catch (error) {
                 return res.status(403).send({ success: false, msg: error })
             }
@@ -604,6 +586,37 @@ const getSubPartnerVolumeByBrand = ({ _id, isSubPartner, brand, month }) => {
     } else return 0
 }
 
+const getSubPartnerVolumeByMonth = ({ _id, isSubPartner, month }) => {
+    // this is used for /affiliate/report/fetch-monthly-statement in router/affiliate/report.router.js
+    if (isSubPartner) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy: _id })
+                    .select('_id')
+                    .lean() // get all partners that have BEEN referredBy this partner
+                    .then((subPartners) => {
+                        return subPartners.reduce(
+                            async (total, nextSubPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextSubPartner._id,
+                                    month,
+                                    'account.transValue': { $gt: 0 },
+                                })
+                                    .select('account.transValue')
+                                    .lean()) {
+                                    acc += report.account.transValue
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+
 const getNetworkShareVolumeByBrand = ({ referredBy, month, brand }) => {
     if (referredBy) {
         return new Promise((resolve) => {
@@ -618,6 +631,36 @@ const getNetworkShareVolumeByBrand = ({ referredBy, month, brand }) => {
                                 for await (const report of AffReport.find({
                                     belongsToPartner: nextPartner._id,
                                     brand,
+                                    month,
+                                    'account.transValue': { $gt: 0 },
+                                })
+                                    .select('account.transValue')
+                                    .lean()) {
+                                    acc += report.account.transValue
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+
+const getNetworkShareVolumeByMonth = ({ referredBy, month }) => {
+    if (referredBy) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy })
+                    .select('_id')
+                    .lean() // get all partners that have the SAME referredBy as this partner
+                    .then((partnersReferredBySameNetwork) => {
+                        return partnersReferredBySameNetwork.reduce(
+                            async (total, nextPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextPartner._id,
                                     month,
                                     'account.transValue': { $gt: 0 },
                                 })
@@ -665,5 +708,303 @@ const getSubPartnerCashbackByBrand = ({ _id, brand, month, isSubPartner }) => {
         })
     } else return 0
 }
+const getSubPartnerCashbackByCurrencyAndMonth = ({
+    _id,
+    currency,
+    month,
+    isSubPartner,
+}) => {
+    if (isSubPartner) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy: _id })
+                    .select('_id')
+                    .lean() // get all partners that have BEEN referredBy this partner
+                    .then((subPartners) => {
+                        return subPartners.reduce(
+                            async (total, nextSubPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextSubPartner._id,
+                                    'account.currency': currency,
+                                    month,
+                                    'account.transValue': { $gt: 0 },
+                                })
+                                    .select('account.subAffCommission')
+                                    .lean()) {
+                                    acc += report.account.subAffCommission
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+
+// NEW ROUTES FOR VOLUMEKINGS
+
+const getCashBackByCurrencyAndMonth = async ({ _id }, currency, month) => {
+    let cashback = 0
+    for await (const report of AffReport.find({
+        belongsToPartner: _id,
+        'account.currency': currency,
+        month,
+        'account.transValue': { $gt: 0 },
+    })
+        .select('account.cashback')
+        .lean()) {
+        cashback += report.account.cashback
+    }
+    return cashback
+}
+
+const getSubPartnerCashbackByMonth = ({ _id, month, isSubPartner }) => {
+    // gets subpartner commission for ALL BRANDS as this is included in commission figure
+    if (isSubPartner) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy: _id })
+                    .select('_id')
+                    .lean() // get all partners that have BEEN referredBy this partner
+                    .then((subPartners) => {
+                        return subPartners.reduce(
+                            async (total, nextSubPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextSubPartner._id,
+                                    month,
+                                    'account.transValue': {
+                                        $gt: 0,
+                                    },
+                                })
+                                    .select('account.subAffCommission')
+                                    .lean()) {
+                                    acc += report.account.subAffCommission
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+const getVolumeByMonth = async ({ _id }, month) => {
+    // get volume for ALL BRANDS for current and previous - this is for VK points
+    let transValue = 0
+    for await (const report of AffReport.find({
+        belongsToPartner: _id,
+        month,
+        'account.transValue': { $gt: 0 },
+    })
+        .select('account.transValue')
+        .lean()) {
+        transValue += report.account.transValue
+    }
+    return transValue
+}
+const getClicksByMonth = async ({ _id, month }) => {
+    const clickData = await AffReportDaily.aggregate([
+        // gets all the clicks from Neteller/Skrill - still need to do for ecoPayz
+        {
+            $match: {
+                $and: [{ belongsTo: mongoose.Types.ObjectId(_id) }, { month }],
+            },
+        },
+        { $project: { clicks: 1 } },
+        {
+            $group: {
+                _id: null,
+                clicks: { $sum: '$clicks' },
+            },
+        },
+    ])
+
+    return clickData.length === 0 ? 0 : clickData[0].clicks
+}
+const getAffAccountsAddedByMonth = async ({ _id, monthAdded }) => {
+    const accountData = await AffAccount.countDocuments({
+        belongsTo: _id,
+        monthAdded,
+    })
+    return accountData
+}
+
+// POST /affiliate/report/fetch-monthly-summary-vk
+router.post(
+    '/fetch-monthly-summary-vk',
+    passport.authenticate('jwt', {
+        session: false,
+    }),
+    async (req, res) => {
+        const token = getToken(req.headers)
+        if (token) {
+            const { _id, curMonth, preMonth } = req.body
+
+            try {
+                const { isSubPartner, referredBy } = await AffPartner.findById(
+                    _id
+                )
+                    .select('referredBy isSubPartner subPartnerRate')
+                    .lean()
+                /* CLICKS  */
+                const curClicks = await getClicksByMonth({
+                    _id,
+                    month: curMonth,
+                })
+                const preClicks = await getClicksByMonth({
+                    _id,
+                    month: preMonth,
+                })
+                const clickChange =
+                    preClicks === 0
+                        ? 0
+                        : ((curClicks - preClicks) / preClicks) * 100
+                /* CONVERSIONS */
+                const preConversions = await getAffAccountsAddedByMonth({
+                    _id,
+                    monthAdded: preMonth,
+                })
+                const curConversions = await getAffAccountsAddedByMonth({
+                    _id,
+                    monthAdded: curMonth,
+                })
+                const convChange =
+                    preConversions === 0
+                        ? 0
+                        : ((curConversions - preConversions) / preConversions) *
+                          100
+
+                /* SUBCASHBACK CALCULATIONS */
+                const preSubCashbackUSD =
+                    await getSubPartnerCashbackByCurrencyAndMonth({
+                        _id,
+                        currency: 'USD',
+                        month: preMonth,
+                        isSubPartner,
+                    })
+                const curSubCashbackUSD =
+                    await getSubPartnerCashbackByCurrencyAndMonth({
+                        _id,
+                        currency: 'USD',
+                        month: curMonth,
+                        isSubPartner,
+                    })
+
+                const preSubCashbackEUR =
+                    await getSubPartnerCashbackByCurrencyAndMonth({
+                        _id,
+                        currency: 'EUR',
+                        month: preMonth,
+                        isSubPartner,
+                    })
+                const curSubCashbackEUR =
+                    await getSubPartnerCashbackByCurrencyAndMonth({
+                        _id,
+                        currency: 'EUR',
+                        month: curMonth,
+                        isSubPartner,
+                    })
+
+                /* CASHBACK CALCULATIONS */
+                const preCashbackUSD = await getCashBackByCurrencyAndMonth(
+                    { _id },
+                    'USD',
+                    preMonth
+                )
+
+                const curCashbackUSD = await getCashBackByCurrencyAndMonth(
+                    { _id },
+                    'USD',
+                    curMonth
+                )
+
+                const preCashbackEUR = await getCashBackByCurrencyAndMonth(
+                    { _id },
+                    'EUR',
+                    preMonth
+                )
+
+                const curCashbackEUR = await getCashBackByCurrencyAndMonth(
+                    { _id },
+                    'EUR',
+                    curMonth
+                )
+
+                /* CASHBACK TOTAL CALCULATIONS */
+                // - USD
+                const preCashbackTotalUSD = preSubCashbackUSD + preCashbackUSD
+                const curCashbackTotalUSD = curSubCashbackUSD + curCashbackUSD
+
+                const cashbackTotalUSDChange =
+                    preCashbackTotalUSD === 0
+                        ? 0
+                        : ((curCashbackTotalUSD - preCashbackTotalUSD) /
+                              preCashbackTotalUSD) *
+                          100
+
+                // - EUR
+                const preCashbackTotalEUR = preSubCashbackEUR + preCashbackEUR
+                const curCashbackTotalEUR = curSubCashbackEUR + curCashbackEUR
+
+                const cashbackTotalEURChange =
+                    preCashbackTotalEUR === 0
+                        ? 0
+                        : ((curCashbackTotalEUR - preCashbackTotalEUR) /
+                              preCashbackTotalEUR) *
+                          100
+
+                /* VK POINTS */
+                const prePersonalVol = await getVolumeByMonth({ _id }, preMonth)
+                const curPersonalVol = await getVolumeByMonth({ _id }, curMonth)
+
+                const preSubVol = await getSubPartnerVolumeByMonth({
+                    _id,
+                    isSubPartner,
+                    month: preMonth,
+                })
+                const curSubVol = await getSubPartnerVolumeByMonth({
+                    _id,
+                    isSubPartner,
+                    month: curMonth,
+                })
+
+                const preNetworkShare = await getNetworkShareVolumeByMonth({
+                    referredBy,
+                    month: preMonth,
+                })
+                const curNetworkShare = await getNetworkShareVolumeByMonth({
+                    referredBy,
+                    month: curMonth,
+                })
+
+                const preVK = prePersonalVol + preSubVol + preNetworkShare
+                const curVK = curPersonalVol + preSubVol + curNetworkShare
+
+                const VKChange =
+                    preVK === 0 ? 0 : ((curVK - preVK) / preVK) * 100
+
+                return res.status(200).send({
+                    curClicks,
+                    clickChange,
+                    curConversions,
+                    convChange,
+                    curCashbackTotalUSD,
+                    cashbackTotalUSDChange,
+                    curCashbackTotalEUR,
+                    cashbackTotalEURChange,
+                    curVK,
+                    VKChange,
+                })
+            } catch (error) {
+                return res.status(403).send({ success: false, msg: error })
+            }
+        } else res.status(403).send({ success: false, msg: 'Unauthorised' })
+    }
+)
 
 module.exports = router
