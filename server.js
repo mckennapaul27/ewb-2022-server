@@ -39,6 +39,7 @@ const {
     AffAccount,
     AffReport,
     AffReportDaily,
+    AffMonthlySummary,
 } = require('./models/affiliate/index')
 
 app.use(compression())
@@ -163,3 +164,16 @@ module.exports = app
 //         })
 //     })
 // })()
+
+// AffMonthlySummary.create({
+//     date: 1646092800000,
+//     month: 'March 2022',
+//     clicks: 654,
+//     conversions: 108,
+//     points: 100289,
+//     commissionEUR: 429.23,
+//     commissionUSD: 5365.98,
+//     subCommissionEUR: 31.38,
+//     subCommissionUSD: 233.96,
+//     belongsTo: '6203dbf7a48a5250152b7d5c',
+// })

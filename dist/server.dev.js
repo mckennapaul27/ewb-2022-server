@@ -58,7 +58,8 @@ dayjs.extend(advancedFormat);
 var _require2 = require('./models/affiliate/index'),
     AffAccount = _require2.AffAccount,
     AffReport = _require2.AffReport,
-    AffReportDaily = _require2.AffReportDaily;
+    AffReportDaily = _require2.AffReportDaily,
+    AffMonthlySummary = _require2.AffMonthlySummary;
 
 app.use(compression());
 app.use(fileUpload());
@@ -178,3 +179,15 @@ module.exports = app; // ;(async () => {
 //         })
 //     })
 // })()
+// AffMonthlySummary.create({
+//     date: 1646092800000,
+//     month: 'March 2022',
+//     clicks: 654,
+//     conversions: 108,
+//     points: 100289,
+//     commissionEUR: 429.23,
+//     commissionUSD: 5365.98,
+//     subCommissionEUR: 31.38,
+//     subCommissionUSD: 233.96,
+//     belongsTo: '6203dbf7a48a5250152b7d5c',
+// })

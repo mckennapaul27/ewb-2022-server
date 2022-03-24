@@ -11,4 +11,5 @@ module.exports = {
     AffSubReport: require('./AffSubReport'),
     AffUpgrade: require('./AffUpgrade'),
     AffApproval: require('./AffApproval'),
+    AffMonthlySummary: require('./AffMonthlySummary'),
 }

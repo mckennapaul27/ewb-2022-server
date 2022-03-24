@@ -13,6 +13,7 @@ const {
     AffPartner,
     AffApplication,
     AffUpgrade,
+    AffMonthlySummary,
 } = require('../../models/affiliate/index')
 const {
     mapRegexQueryFromObj,
@@ -150,12 +151,15 @@ router.post(
     async (req, res) => {
         const token = getToken(req.headers)
         if (token) {
-            const { _id, startDate, endDate } = req.body
+            console.log('called')
+            const { _id, startDate, endDate, brand } = req.body
             try {
                 const reports = await AffReportDaily.find({
+                    brand,
                     belongsTo: _id,
                     date: { $gte: startDate, $lte: endDate },
                 }).sort({ date: 'asc' })
+                console.log(reports)
                 return res.send({ reports })
             } catch (error) {
                 return res.status(403).send({ success: false, msg: error })
@@ -165,27 +169,28 @@ router.post(
 )
 
 // POST /affiliate/report/fetch-daily-reports
-router.post(
-    '/fetch-daily-reports',
-    passport.authenticate('jwt', {
-        session: false,
-    }),
-    async (req, res) => {
-        const token = getToken(req.headers)
-        if (token) {
-            const { _id, startDate, endDate } = req.body
-            try {
-                const reports = await AffReportDaily.find({
-                    belongsTo: _id,
-                    date: { $gte: startDate, $lte: endDate },
-                }).sort({ date: 'asc' })
-                return res.status(200).send({ reports })
-            } catch (error) {
-                return res.status(403).send({ success: false, msg: error })
-            }
-        } else res.status(403).send({ success: false, msg: 'Unauthorised' })
-    }
-)
+// router.post(
+//     '/fetch-daily-reports',
+//     passport.authenticate('jwt', {
+//         session: false,
+//     }),
+//     async (req, res) => {
+//         const token = getToken(req.headers)
+//         if (token) {
+//             const { _id, startDate, endDate, brand } = req.body
+//             try {
+//                 const reports = await AffReportDaily.find({
+//                     brand,
+//                     belongsTo: _id,
+//                     date: { $gte: startDate, $lte: endDate },
+//                 }).sort({ date: 'asc' })
+//                 return res.status(200).send({ reports })
+//             } catch (error) {
+//                 return res.status(403).send({ success: false, msg: error })
+//             }
+//         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
+//     }
+// )
 
 // POST /affiliate/report/fetch-monthly-reports
 router.post(
@@ -744,7 +749,8 @@ const getSubPartnerCashbackByCurrencyAndMonth = ({
     } else return 0
 }
 
-// NEW ROUTES FOR VOLUMEKINGS
+/* NEW ROUTES FOR VOLUMEKINGS */
+/* NEW FOR VOLUMEKINGS */
 
 const getCashBackByCurrencyAndMonth = async ({ _id }, currency, month) => {
     let cashback = 0
@@ -761,38 +767,6 @@ const getCashBackByCurrencyAndMonth = async ({ _id }, currency, month) => {
     return cashback
 }
 
-const getSubPartnerCashbackByMonth = ({ _id, month, isSubPartner }) => {
-    // gets subpartner commission for ALL BRANDS as this is included in commission figure
-    if (isSubPartner) {
-        return new Promise((resolve) => {
-            resolve(
-                AffPartner.find({ referredBy: _id })
-                    .select('_id')
-                    .lean() // get all partners that have BEEN referredBy this partner
-                    .then((subPartners) => {
-                        return subPartners.reduce(
-                            async (total, nextSubPartner) => {
-                                let acc = await total
-                                for await (const report of AffReport.find({
-                                    belongsToPartner: nextSubPartner._id,
-                                    month,
-                                    'account.transValue': {
-                                        $gt: 0,
-                                    },
-                                })
-                                    .select('account.subAffCommission')
-                                    .lean()) {
-                                    acc += report.account.subAffCommission
-                                }
-                                return acc
-                            },
-                            Promise.resolve(0)
-                        )
-                    })
-            )
-        })
-    } else return 0
-}
 const getVolumeByMonth = async ({ _id }, month) => {
     // get volume for ALL BRANDS for current and previous - this is for VK points
     let transValue = 0
@@ -833,6 +807,30 @@ const getAffAccountsAddedByMonth = async ({ _id, monthAdded }) => {
     })
     return accountData
 }
+
+// POST /affiliate/report/fetch-aff-monthly-summaries
+router.post(
+    '/fetch-aff-monthly-summaries',
+    passport.authenticate('jwt', {
+        session: false,
+    }),
+    async (req, res) => {
+        const token = getToken(req.headers)
+        if (token) {
+            const { _id, months } = req.body
+            try {
+                const reports = await AffMonthlySummary.find({
+                    belongsTo: _id,
+                })
+                    .where({ month: { $in: months } })
+                    .sort({ date: 'asc' })
+                return res.status(200).send({ reports })
+            } catch (error) {
+                return res.status(403).send({ success: false, msg: error })
+            }
+        } else res.status(403).send({ success: false, msg: 'Unauthorised' })
+    }
+)
 
 // POST /affiliate/report/fetch-monthly-summary-vk
 router.post(
@@ -1006,5 +1004,41 @@ router.post(
         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
     }
 )
+
+// POST /affiliate/report/fetch-aff-accounts?pageSize=${pageSize}&pageIndex=${pageIndex}
+router.post(
+    '/fetch-aff-accounts',
+    passport.authenticate('jwt', {
+        session: false,
+    }),
+    getAffAcounts
+)
+
+// returns applications
+async function getAffAcounts(req, res) {
+    const token = getToken(req.headers)
+    if (token) {
+        let pageSize = parseInt(req.query.pageSize)
+        let pageIndex = parseInt(req.query.pageIndex)
+        let { sort, query } = req.body
+        let skippage = pageSize * pageIndex // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
+        query = mapRegexQueryFromObj(query)
+        try {
+            const accounts = await AffAccount.find(query)
+                .collation({ locale: 'en', strength: 1 })
+                .sort(sort)
+                .skip(skippage)
+                .limit(pageSize)
+                .lean()
+            const pageCount = await AffAccount.countDocuments(query)
+            const brands = await AffAccount.distinct('brand')
+            const months = await AffAccount.distinct('monthAdded')
+            return res.status(200).send({ accounts, pageCount, brands, months })
+        } catch (err) {
+            console.log(err)
+            return res.status(400).send(err)
+        }
+    } else return res.status(403).send({ msg: 'Unauthorised' })
+}
 
 module.exports = router

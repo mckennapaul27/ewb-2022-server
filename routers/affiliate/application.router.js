@@ -168,11 +168,9 @@ router.post(
                 )
                 .lean()
             await AffUpgrade.deleteOne({ accountId, quarter, level })
-            return res
-                .status(200)
-                .send({
-                    msg: `We have received your ${level} VIP request for ${accountId}`,
-                })
+            return res.status(200).send({
+                msg: `We have received your ${level} VIP request for ${accountId}`,
+            })
         } else return res.status(403).send({ msg: 'Unauthorised' })
     }
 )
