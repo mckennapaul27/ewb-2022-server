@@ -33,7 +33,14 @@ var _require3 = require('../../utils/helper-functions'),
 var _require4 = require('../../queries/map-aff-dashboard-data'),
     getCashbackRate = _require4.getCashbackRate,
     getVolumeByBrand = _require4.getVolumeByBrand,
-    getCashBackByBrand = _require4.getCashBackByBrand;
+    getCashBackByBrand = _require4.getCashBackByBrand,
+    getClicksByMonth = _require4.getClicksByMonth,
+    getAffAccountsAddedByMonth = _require4.getAffAccountsAddedByMonth,
+    getCashBackByCurrencyAndMonth = _require4.getCashBackByCurrencyAndMonth,
+    getSubPartnerCashbackByCurrencyAndMonth = _require4.getSubPartnerCashbackByCurrencyAndMonth,
+    getVolumeByMonth = _require4.getVolumeByMonth,
+    getSubPartnerVolumeByMonth = _require4.getSubPartnerVolumeByMonth,
+    getNetworkShareVolumeByMonth = _require4.getNetworkShareVolumeByMonth;
 
 var _require5 = require('../../models/common'),
     Quarter = _require5.Quarter; // POST /affiliate/application/create
@@ -1157,19 +1164,18 @@ var getSubPartnerVolumeByBrand = function getSubPartnerVolumeByBrand(_ref2) {
   } else return 0;
 };
 
-var getSubPartnerVolumeByMonth = function getSubPartnerVolumeByMonth(_ref3) {
-  var _id = _ref3._id,
-      isSubPartner = _ref3.isSubPartner,
-      month = _ref3.month;
+var getNetworkShareVolumeByBrand = function getNetworkShareVolumeByBrand(_ref3) {
+  var referredBy = _ref3.referredBy,
+      month = _ref3.month,
+      brand = _ref3.brand;
 
-  // this is used for /affiliate/report/fetch-monthly-statement in router/affiliate/report.router.js
-  if (isSubPartner) {
+  if (referredBy) {
     return new Promise(function (resolve) {
       resolve(AffPartner.find({
-        referredBy: _id
-      }).select('_id').lean() // get all partners that have BEEN referredBy this partner
-      .then(function (subPartners) {
-        return subPartners.reduce(function _callee13(total, nextSubPartner) {
+        referredBy: referredBy
+      }).select('_id').lean() // get all partners that have the SAME referredBy as this partner
+      .then(function (partnersReferredBySameNetwork) {
+        return partnersReferredBySameNetwork.reduce(function _callee13(total, nextPartner) {
           var acc, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, _value2, report;
 
           return regeneratorRuntime.async(function _callee13$(_context13) {
@@ -1185,7 +1191,8 @@ var getSubPartnerVolumeByMonth = function getSubPartnerVolumeByMonth(_ref3) {
                   _didIteratorError2 = false;
                   _context13.prev = 5;
                   _iterator2 = _asyncIterator(AffReport.find({
-                    belongsToPartner: nextSubPartner._id,
+                    belongsToPartner: nextPartner._id,
+                    brand: brand,
                     month: month,
                     'account.transValue': {
                       $gt: 0
@@ -1271,18 +1278,19 @@ var getSubPartnerVolumeByMonth = function getSubPartnerVolumeByMonth(_ref3) {
   } else return 0;
 };
 
-var getNetworkShareVolumeByBrand = function getNetworkShareVolumeByBrand(_ref4) {
-  var referredBy = _ref4.referredBy,
+var getSubPartnerCashbackByBrand = function getSubPartnerCashbackByBrand(_ref4) {
+  var _id = _ref4._id,
+      brand = _ref4.brand,
       month = _ref4.month,
-      brand = _ref4.brand;
+      isSubPartner = _ref4.isSubPartner;
 
-  if (referredBy) {
+  if (isSubPartner) {
     return new Promise(function (resolve) {
       resolve(AffPartner.find({
-        referredBy: referredBy
-      }).select('_id').lean() // get all partners that have the SAME referredBy as this partner
-      .then(function (partnersReferredBySameNetwork) {
-        return partnersReferredBySameNetwork.reduce(function _callee14(total, nextPartner) {
+        referredBy: _id
+      }).select('_id').lean() // get all partners that have BEEN referredBy this partner
+      .then(function (subPartners) {
+        return subPartners.reduce(function _callee14(total, nextSubPartner) {
           var acc, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _value3, report;
 
           return regeneratorRuntime.async(function _callee14$(_context14) {
@@ -1298,13 +1306,13 @@ var getNetworkShareVolumeByBrand = function getNetworkShareVolumeByBrand(_ref4) 
                   _didIteratorError3 = false;
                   _context14.prev = 5;
                   _iterator3 = _asyncIterator(AffReport.find({
-                    belongsToPartner: nextPartner._id,
+                    belongsToPartner: nextSubPartner._id,
                     brand: brand,
                     month: month,
                     'account.transValue': {
                       $gt: 0
                     }
-                  }).select('account.transValue').lean());
+                  }).select('account.subAffCommission').lean());
 
                 case 7:
                   _context14.next = 9;
@@ -1325,7 +1333,7 @@ var getNetworkShareVolumeByBrand = function getNetworkShareVolumeByBrand(_ref4) 
                   }
 
                   report = _value3;
-                  acc += report.account.transValue;
+                  acc += report.account.subAffCommission;
 
                 case 17:
                   _iteratorNormalCompletion3 = true;
@@ -1384,634 +1392,31 @@ var getNetworkShareVolumeByBrand = function getNetworkShareVolumeByBrand(_ref4) 
     });
   } else return 0;
 };
-
-var getNetworkShareVolumeByMonth = function getNetworkShareVolumeByMonth(_ref5) {
-  var referredBy = _ref5.referredBy,
-      month = _ref5.month;
-
-  if (referredBy) {
-    return new Promise(function (resolve) {
-      resolve(AffPartner.find({
-        referredBy: referredBy
-      }).select('_id').lean() // get all partners that have the SAME referredBy as this partner
-      .then(function (partnersReferredBySameNetwork) {
-        return partnersReferredBySameNetwork.reduce(function _callee15(total, nextPartner) {
-          var acc, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _value4, report;
-
-          return regeneratorRuntime.async(function _callee15$(_context15) {
-            while (1) {
-              switch (_context15.prev = _context15.next) {
-                case 0:
-                  _context15.next = 2;
-                  return regeneratorRuntime.awrap(total);
-
-                case 2:
-                  acc = _context15.sent;
-                  _iteratorNormalCompletion4 = true;
-                  _didIteratorError4 = false;
-                  _context15.prev = 5;
-                  _iterator4 = _asyncIterator(AffReport.find({
-                    belongsToPartner: nextPartner._id,
-                    month: month,
-                    'account.transValue': {
-                      $gt: 0
-                    }
-                  }).select('account.transValue').lean());
-
-                case 7:
-                  _context15.next = 9;
-                  return regeneratorRuntime.awrap(_iterator4.next());
-
-                case 9:
-                  _step4 = _context15.sent;
-                  _iteratorNormalCompletion4 = _step4.done;
-                  _context15.next = 13;
-                  return regeneratorRuntime.awrap(_step4.value);
-
-                case 13:
-                  _value4 = _context15.sent;
-
-                  if (_iteratorNormalCompletion4) {
-                    _context15.next = 20;
-                    break;
-                  }
-
-                  report = _value4;
-                  acc += report.account.transValue;
-
-                case 17:
-                  _iteratorNormalCompletion4 = true;
-                  _context15.next = 7;
-                  break;
-
-                case 20:
-                  _context15.next = 26;
-                  break;
-
-                case 22:
-                  _context15.prev = 22;
-                  _context15.t0 = _context15["catch"](5);
-                  _didIteratorError4 = true;
-                  _iteratorError4 = _context15.t0;
-
-                case 26:
-                  _context15.prev = 26;
-                  _context15.prev = 27;
-
-                  if (!(!_iteratorNormalCompletion4 && _iterator4["return"] != null)) {
-                    _context15.next = 31;
-                    break;
-                  }
-
-                  _context15.next = 31;
-                  return regeneratorRuntime.awrap(_iterator4["return"]());
-
-                case 31:
-                  _context15.prev = 31;
-
-                  if (!_didIteratorError4) {
-                    _context15.next = 34;
-                    break;
-                  }
-
-                  throw _iteratorError4;
-
-                case 34:
-                  return _context15.finish(31);
-
-                case 35:
-                  return _context15.finish(26);
-
-                case 36:
-                  return _context15.abrupt("return", acc);
-
-                case 37:
-                case "end":
-                  return _context15.stop();
-              }
-            }
-          }, null, null, [[5, 22, 26, 36], [27,, 31, 35]]);
-        }, Promise.resolve(0));
-      }));
-    });
-  } else return 0;
-};
-
-var getSubPartnerCashbackByBrand = function getSubPartnerCashbackByBrand(_ref6) {
-  var _id = _ref6._id,
-      brand = _ref6.brand,
-      month = _ref6.month,
-      isSubPartner = _ref6.isSubPartner;
-
-  if (isSubPartner) {
-    return new Promise(function (resolve) {
-      resolve(AffPartner.find({
-        referredBy: _id
-      }).select('_id').lean() // get all partners that have BEEN referredBy this partner
-      .then(function (subPartners) {
-        return subPartners.reduce(function _callee16(total, nextSubPartner) {
-          var acc, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, _value5, report;
-
-          return regeneratorRuntime.async(function _callee16$(_context16) {
-            while (1) {
-              switch (_context16.prev = _context16.next) {
-                case 0:
-                  _context16.next = 2;
-                  return regeneratorRuntime.awrap(total);
-
-                case 2:
-                  acc = _context16.sent;
-                  _iteratorNormalCompletion5 = true;
-                  _didIteratorError5 = false;
-                  _context16.prev = 5;
-                  _iterator5 = _asyncIterator(AffReport.find({
-                    belongsToPartner: nextSubPartner._id,
-                    brand: brand,
-                    month: month,
-                    'account.transValue': {
-                      $gt: 0
-                    }
-                  }).select('account.subAffCommission').lean());
-
-                case 7:
-                  _context16.next = 9;
-                  return regeneratorRuntime.awrap(_iterator5.next());
-
-                case 9:
-                  _step5 = _context16.sent;
-                  _iteratorNormalCompletion5 = _step5.done;
-                  _context16.next = 13;
-                  return regeneratorRuntime.awrap(_step5.value);
-
-                case 13:
-                  _value5 = _context16.sent;
-
-                  if (_iteratorNormalCompletion5) {
-                    _context16.next = 20;
-                    break;
-                  }
-
-                  report = _value5;
-                  acc += report.account.subAffCommission;
-
-                case 17:
-                  _iteratorNormalCompletion5 = true;
-                  _context16.next = 7;
-                  break;
-
-                case 20:
-                  _context16.next = 26;
-                  break;
-
-                case 22:
-                  _context16.prev = 22;
-                  _context16.t0 = _context16["catch"](5);
-                  _didIteratorError5 = true;
-                  _iteratorError5 = _context16.t0;
-
-                case 26:
-                  _context16.prev = 26;
-                  _context16.prev = 27;
-
-                  if (!(!_iteratorNormalCompletion5 && _iterator5["return"] != null)) {
-                    _context16.next = 31;
-                    break;
-                  }
-
-                  _context16.next = 31;
-                  return regeneratorRuntime.awrap(_iterator5["return"]());
-
-                case 31:
-                  _context16.prev = 31;
-
-                  if (!_didIteratorError5) {
-                    _context16.next = 34;
-                    break;
-                  }
-
-                  throw _iteratorError5;
-
-                case 34:
-                  return _context16.finish(31);
-
-                case 35:
-                  return _context16.finish(26);
-
-                case 36:
-                  return _context16.abrupt("return", acc);
-
-                case 37:
-                case "end":
-                  return _context16.stop();
-              }
-            }
-          }, null, null, [[5, 22, 26, 36], [27,, 31, 35]]);
-        }, Promise.resolve(0));
-      }));
-    });
-  } else return 0;
-};
-
-var getSubPartnerCashbackByCurrencyAndMonth = function getSubPartnerCashbackByCurrencyAndMonth(_ref7) {
-  var _id = _ref7._id,
-      currency = _ref7.currency,
-      month = _ref7.month,
-      isSubPartner = _ref7.isSubPartner;
-
-  if (isSubPartner) {
-    return new Promise(function (resolve) {
-      resolve(AffPartner.find({
-        referredBy: _id
-      }).select('_id').lean() // get all partners that have BEEN referredBy this partner
-      .then(function (subPartners) {
-        return subPartners.reduce(function _callee17(total, nextSubPartner) {
-          var acc, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _value6, report;
-
-          return regeneratorRuntime.async(function _callee17$(_context17) {
-            while (1) {
-              switch (_context17.prev = _context17.next) {
-                case 0:
-                  _context17.next = 2;
-                  return regeneratorRuntime.awrap(total);
-
-                case 2:
-                  acc = _context17.sent;
-                  _iteratorNormalCompletion6 = true;
-                  _didIteratorError6 = false;
-                  _context17.prev = 5;
-                  _iterator6 = _asyncIterator(AffReport.find({
-                    belongsToPartner: nextSubPartner._id,
-                    'account.currency': currency,
-                    month: month,
-                    'account.transValue': {
-                      $gt: 0
-                    }
-                  }).select('account.subAffCommission').lean());
-
-                case 7:
-                  _context17.next = 9;
-                  return regeneratorRuntime.awrap(_iterator6.next());
-
-                case 9:
-                  _step6 = _context17.sent;
-                  _iteratorNormalCompletion6 = _step6.done;
-                  _context17.next = 13;
-                  return regeneratorRuntime.awrap(_step6.value);
-
-                case 13:
-                  _value6 = _context17.sent;
-
-                  if (_iteratorNormalCompletion6) {
-                    _context17.next = 20;
-                    break;
-                  }
-
-                  report = _value6;
-                  acc += report.account.subAffCommission;
-
-                case 17:
-                  _iteratorNormalCompletion6 = true;
-                  _context17.next = 7;
-                  break;
-
-                case 20:
-                  _context17.next = 26;
-                  break;
-
-                case 22:
-                  _context17.prev = 22;
-                  _context17.t0 = _context17["catch"](5);
-                  _didIteratorError6 = true;
-                  _iteratorError6 = _context17.t0;
-
-                case 26:
-                  _context17.prev = 26;
-                  _context17.prev = 27;
-
-                  if (!(!_iteratorNormalCompletion6 && _iterator6["return"] != null)) {
-                    _context17.next = 31;
-                    break;
-                  }
-
-                  _context17.next = 31;
-                  return regeneratorRuntime.awrap(_iterator6["return"]());
-
-                case 31:
-                  _context17.prev = 31;
-
-                  if (!_didIteratorError6) {
-                    _context17.next = 34;
-                    break;
-                  }
-
-                  throw _iteratorError6;
-
-                case 34:
-                  return _context17.finish(31);
-
-                case 35:
-                  return _context17.finish(26);
-
-                case 36:
-                  return _context17.abrupt("return", acc);
-
-                case 37:
-                case "end":
-                  return _context17.stop();
-              }
-            }
-          }, null, null, [[5, 22, 26, 36], [27,, 31, 35]]);
-        }, Promise.resolve(0));
-      }));
-    });
-  } else return 0;
-};
 /* NEW ROUTES FOR VOLUMEKINGS */
 
 /* NEW FOR VOLUMEKINGS */
-
-
-var getCashBackByCurrencyAndMonth = function getCashBackByCurrencyAndMonth(_ref8, currency, month) {
-  var _id, cashback, _iteratorNormalCompletion7, _didIteratorError7, _iteratorError7, _iterator7, _step7, _value7, report;
-
-  return regeneratorRuntime.async(function getCashBackByCurrencyAndMonth$(_context18) {
-    while (1) {
-      switch (_context18.prev = _context18.next) {
-        case 0:
-          _id = _ref8._id;
-          cashback = 0;
-          _iteratorNormalCompletion7 = true;
-          _didIteratorError7 = false;
-          _context18.prev = 4;
-          _iterator7 = _asyncIterator(AffReport.find({
-            belongsToPartner: _id,
-            'account.currency': currency,
-            month: month,
-            'account.transValue': {
-              $gt: 0
-            }
-          }).select('account.cashback').lean());
-
-        case 6:
-          _context18.next = 8;
-          return regeneratorRuntime.awrap(_iterator7.next());
-
-        case 8:
-          _step7 = _context18.sent;
-          _iteratorNormalCompletion7 = _step7.done;
-          _context18.next = 12;
-          return regeneratorRuntime.awrap(_step7.value);
-
-        case 12:
-          _value7 = _context18.sent;
-
-          if (_iteratorNormalCompletion7) {
-            _context18.next = 19;
-            break;
-          }
-
-          report = _value7;
-          cashback += report.account.cashback;
-
-        case 16:
-          _iteratorNormalCompletion7 = true;
-          _context18.next = 6;
-          break;
-
-        case 19:
-          _context18.next = 25;
-          break;
-
-        case 21:
-          _context18.prev = 21;
-          _context18.t0 = _context18["catch"](4);
-          _didIteratorError7 = true;
-          _iteratorError7 = _context18.t0;
-
-        case 25:
-          _context18.prev = 25;
-          _context18.prev = 26;
-
-          if (!(!_iteratorNormalCompletion7 && _iterator7["return"] != null)) {
-            _context18.next = 30;
-            break;
-          }
-
-          _context18.next = 30;
-          return regeneratorRuntime.awrap(_iterator7["return"]());
-
-        case 30:
-          _context18.prev = 30;
-
-          if (!_didIteratorError7) {
-            _context18.next = 33;
-            break;
-          }
-
-          throw _iteratorError7;
-
-        case 33:
-          return _context18.finish(30);
-
-        case 34:
-          return _context18.finish(25);
-
-        case 35:
-          return _context18.abrupt("return", cashback);
-
-        case 36:
-        case "end":
-          return _context18.stop();
-      }
-    }
-  }, null, null, [[4, 21, 25, 35], [26,, 30, 34]]);
-};
-
-var getVolumeByMonth = function getVolumeByMonth(_ref9, month) {
-  var _id, transValue, _iteratorNormalCompletion8, _didIteratorError8, _iteratorError8, _iterator8, _step8, _value8, report;
-
-  return regeneratorRuntime.async(function getVolumeByMonth$(_context19) {
-    while (1) {
-      switch (_context19.prev = _context19.next) {
-        case 0:
-          _id = _ref9._id;
-          // get volume for ALL BRANDS for current and previous - this is for VK points
-          transValue = 0;
-          _iteratorNormalCompletion8 = true;
-          _didIteratorError8 = false;
-          _context19.prev = 4;
-          _iterator8 = _asyncIterator(AffReport.find({
-            belongsToPartner: _id,
-            month: month,
-            'account.transValue': {
-              $gt: 0
-            }
-          }).select('account.transValue').lean());
-
-        case 6:
-          _context19.next = 8;
-          return regeneratorRuntime.awrap(_iterator8.next());
-
-        case 8:
-          _step8 = _context19.sent;
-          _iteratorNormalCompletion8 = _step8.done;
-          _context19.next = 12;
-          return regeneratorRuntime.awrap(_step8.value);
-
-        case 12:
-          _value8 = _context19.sent;
-
-          if (_iteratorNormalCompletion8) {
-            _context19.next = 19;
-            break;
-          }
-
-          report = _value8;
-          transValue += report.account.transValue;
-
-        case 16:
-          _iteratorNormalCompletion8 = true;
-          _context19.next = 6;
-          break;
-
-        case 19:
-          _context19.next = 25;
-          break;
-
-        case 21:
-          _context19.prev = 21;
-          _context19.t0 = _context19["catch"](4);
-          _didIteratorError8 = true;
-          _iteratorError8 = _context19.t0;
-
-        case 25:
-          _context19.prev = 25;
-          _context19.prev = 26;
-
-          if (!(!_iteratorNormalCompletion8 && _iterator8["return"] != null)) {
-            _context19.next = 30;
-            break;
-          }
-
-          _context19.next = 30;
-          return regeneratorRuntime.awrap(_iterator8["return"]());
-
-        case 30:
-          _context19.prev = 30;
-
-          if (!_didIteratorError8) {
-            _context19.next = 33;
-            break;
-          }
-
-          throw _iteratorError8;
-
-        case 33:
-          return _context19.finish(30);
-
-        case 34:
-          return _context19.finish(25);
-
-        case 35:
-          return _context19.abrupt("return", transValue);
-
-        case 36:
-        case "end":
-          return _context19.stop();
-      }
-    }
-  }, null, null, [[4, 21, 25, 35], [26,, 30, 34]]);
-};
-
-var getClicksByMonth = function getClicksByMonth(_ref10) {
-  var _id, month, clickData;
-
-  return regeneratorRuntime.async(function getClicksByMonth$(_context20) {
-    while (1) {
-      switch (_context20.prev = _context20.next) {
-        case 0:
-          _id = _ref10._id, month = _ref10.month;
-          _context20.next = 3;
-          return regeneratorRuntime.awrap(AffReportDaily.aggregate([// gets all the clicks from Neteller/Skrill - still need to do for ecoPayz
-          {
-            $match: {
-              $and: [{
-                belongsTo: mongoose.Types.ObjectId(_id)
-              }, {
-                month: month
-              }]
-            }
-          }, {
-            $project: {
-              clicks: 1
-            }
-          }, {
-            $group: {
-              _id: null,
-              clicks: {
-                $sum: '$clicks'
-              }
-            }
-          }]));
-
-        case 3:
-          clickData = _context20.sent;
-          return _context20.abrupt("return", clickData.length === 0 ? 0 : clickData[0].clicks);
-
-        case 5:
-        case "end":
-          return _context20.stop();
-      }
-    }
-  });
-};
-
-var getAffAccountsAddedByMonth = function getAffAccountsAddedByMonth(_ref11) {
-  var _id, monthAdded, accountData;
-
-  return regeneratorRuntime.async(function getAffAccountsAddedByMonth$(_context21) {
-    while (1) {
-      switch (_context21.prev = _context21.next) {
-        case 0:
-          _id = _ref11._id, monthAdded = _ref11.monthAdded;
-          _context21.next = 3;
-          return regeneratorRuntime.awrap(AffAccount.countDocuments({
-            belongsTo: _id,
-            monthAdded: monthAdded
-          }));
-
-        case 3:
-          accountData = _context21.sent;
-          return _context21.abrupt("return", accountData);
-
-        case 5:
-        case "end":
-          return _context21.stop();
-      }
-    }
-  });
-}; // POST /affiliate/report/fetch-aff-monthly-summaries
+// POST /affiliate/report/fetch-aff-monthly-summaries
 
 
 router.post('/fetch-aff-monthly-summaries', passport.authenticate('jwt', {
   session: false
-}), function _callee18(req, res) {
+}), function _callee15(req, res) {
   var token, _req$body11, _id, months, reports;
 
-  return regeneratorRuntime.async(function _callee18$(_context22) {
+  return regeneratorRuntime.async(function _callee15$(_context15) {
     while (1) {
-      switch (_context22.prev = _context22.next) {
+      switch (_context15.prev = _context15.next) {
         case 0:
           token = getToken(req.headers);
 
           if (!token) {
-            _context22.next = 15;
+            _context15.next = 16;
             break;
           }
 
           _req$body11 = req.body, _id = _req$body11._id, months = _req$body11.months;
-          _context22.prev = 3;
-          _context22.next = 6;
+          _context15.prev = 3;
+          _context15.next = 6;
           return regeneratorRuntime.awrap(AffMonthlySummary.find({
             belongsTo: _id
           }).where({
@@ -2023,232 +1428,120 @@ router.post('/fetch-aff-monthly-summaries', passport.authenticate('jwt', {
           }));
 
         case 6:
-          reports = _context22.sent;
-          return _context22.abrupt("return", res.status(200).send({
+          reports = _context15.sent;
+          console.log(reports);
+          return _context15.abrupt("return", res.status(200).send({
             reports: reports
           }));
 
-        case 10:
-          _context22.prev = 10;
-          _context22.t0 = _context22["catch"](3);
-          return _context22.abrupt("return", res.status(403).send({
+        case 11:
+          _context15.prev = 11;
+          _context15.t0 = _context15["catch"](3);
+          return _context15.abrupt("return", res.status(403).send({
             success: false,
-            msg: _context22.t0
+            msg: _context15.t0
           }));
 
-        case 13:
-          _context22.next = 16;
+        case 14:
+          _context15.next = 17;
           break;
 
-        case 15:
+        case 16:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 16:
+        case 17:
         case "end":
-          return _context22.stop();
+          return _context15.stop();
       }
     }
-  }, null, null, [[3, 10]]);
+  }, null, null, [[3, 11]]);
 }); // POST /affiliate/report/fetch-monthly-summary-vk
 
 router.post('/fetch-monthly-summary-vk', passport.authenticate('jwt', {
   session: false
-}), function _callee19(req, res) {
-  var token, _req$body12, _id, curMonth, preMonth, _ref12, isSubPartner, referredBy, curClicks, preClicks, clickChange, preConversions, curConversions, convChange, preSubCashbackUSD, curSubCashbackUSD, preSubCashbackEUR, curSubCashbackEUR, preCashbackUSD, curCashbackUSD, preCashbackEUR, curCashbackEUR, preCashbackTotalUSD, curCashbackTotalUSD, cashbackTotalUSDChange, preCashbackTotalEUR, curCashbackTotalEUR, cashbackTotalEURChange, prePersonalVol, curPersonalVol, preSubVol, curSubVol, preNetworkShare, curNetworkShare, preVK, curVK, VKChange;
+}), function _callee16(req, res) {
+  var token, _req$body12, _id, curMonth, preMonth, preMonthSummary, curMonthSummary, curClicks, preClicks, clickChange, curConversions, preConversions, convChange, preSubCashbackUSD, curSubCashbackUSD, preSubCashbackEUR, curSubCashbackEUR, preCashbackUSD, curCashbackUSD, preCashbackEUR, curCashbackEUR, preCashbackTotalUSD, curCashbackTotalUSD, cashbackTotalUSDChange, preCashbackTotalEUR, curCashbackTotalEUR, cashbackTotalEURChange, preVK, curVK, VKChange;
 
-  return regeneratorRuntime.async(function _callee19$(_context23) {
+  return regeneratorRuntime.async(function _callee16$(_context16) {
     while (1) {
-      switch (_context23.prev = _context23.next) {
+      switch (_context16.prev = _context16.next) {
         case 0:
           token = getToken(req.headers);
 
           if (!token) {
-            _context23.next = 82;
+            _context16.next = 43;
             break;
           }
 
           _req$body12 = req.body, _id = _req$body12._id, curMonth = _req$body12.curMonth, preMonth = _req$body12.preMonth;
-          _context23.prev = 3;
-          _context23.next = 6;
-          return regeneratorRuntime.awrap(AffPartner.findById(_id).select('referredBy isSubPartner subPartnerRate').lean());
-
-        case 6:
-          _ref12 = _context23.sent;
-          isSubPartner = _ref12.isSubPartner;
-          referredBy = _ref12.referredBy;
-          _context23.next = 11;
-          return regeneratorRuntime.awrap(getClicksByMonth({
-            _id: _id,
-            month: curMonth
-          }));
-
-        case 11:
-          curClicks = _context23.sent;
-          _context23.next = 14;
-          return regeneratorRuntime.awrap(getClicksByMonth({
-            _id: _id,
+          _context16.prev = 3;
+          _context16.next = 6;
+          return regeneratorRuntime.awrap(AffMonthlySummary.findOne({
+            belongsTo: _id,
             month: preMonth
           }));
 
-        case 14:
-          preClicks = _context23.sent;
+        case 6:
+          preMonthSummary = _context16.sent;
+          _context16.next = 9;
+          return regeneratorRuntime.awrap(AffMonthlySummary.findOne({
+            belongsTo: _id,
+            month: curMonth
+          }));
+
+        case 9:
+          curMonthSummary = _context16.sent;
+          if (!preMonthSummary) preMonthSummary = {
+            clicks: 0,
+            conversions: 0,
+            points: 0,
+            commissionEUR: 0,
+            commissionUSD: 0,
+            subCommissionEUR: 0,
+            subCommissionUSD: 0
+          };
+          if (!curMonthSummary) curMonthSummary = {
+            clicks: 0,
+            conversions: 0,
+            points: 0,
+            commissionEUR: 0,
+            commissionUSD: 0,
+            subCommissionEUR: 0,
+            subCommissionUSD: 0
+          };
+          curClicks = curMonthSummary.clicks;
+          preClicks = preMonthSummary.clicks;
           clickChange = preClicks === 0 ? 0 : (curClicks - preClicks) / preClicks * 100;
-          /* CONVERSIONS */
-
-          _context23.next = 18;
-          return regeneratorRuntime.awrap(getAffAccountsAddedByMonth({
-            _id: _id,
-            monthAdded: preMonth
-          }));
-
-        case 18:
-          preConversions = _context23.sent;
-          _context23.next = 21;
-          return regeneratorRuntime.awrap(getAffAccountsAddedByMonth({
-            _id: _id,
-            monthAdded: curMonth
-          }));
-
-        case 21:
-          curConversions = _context23.sent;
+          curConversions = curMonthSummary.conversions;
+          preConversions = preMonthSummary.conversions;
           convChange = preConversions === 0 ? 0 : (curConversions - preConversions) / preConversions * 100;
           /* SUBCASHBACK CALCULATIONS */
 
-          _context23.next = 25;
-          return regeneratorRuntime.awrap(getSubPartnerCashbackByCurrencyAndMonth({
-            _id: _id,
-            currency: 'USD',
-            month: preMonth,
-            isSubPartner: isSubPartner
-          }));
+          preSubCashbackUSD = preMonthSummary.subCommissionUSD;
+          curSubCashbackUSD = curMonthSummary.subCommissionUSD;
+          preSubCashbackEUR = preMonthSummary.subCommissionEUR;
+          curSubCashbackEUR = curMonthSummary.subCommissionEUR;
+          preCashbackUSD = preMonthSummary.commissionUSD;
+          curCashbackUSD = curMonthSummary.commissionUSD;
+          preCashbackEUR = preMonthSummary.commissionEUR;
+          curCashbackEUR = curMonthSummary.commissionEUR; // /* CASHBACK TOTAL CALCULATIONS */
+          // // - USD
 
-        case 25:
-          preSubCashbackUSD = _context23.sent;
-          _context23.next = 28;
-          return regeneratorRuntime.awrap(getSubPartnerCashbackByCurrencyAndMonth({
-            _id: _id,
-            currency: 'USD',
-            month: curMonth,
-            isSubPartner: isSubPartner
-          }));
-
-        case 28:
-          curSubCashbackUSD = _context23.sent;
-          _context23.next = 31;
-          return regeneratorRuntime.awrap(getSubPartnerCashbackByCurrencyAndMonth({
-            _id: _id,
-            currency: 'EUR',
-            month: preMonth,
-            isSubPartner: isSubPartner
-          }));
-
-        case 31:
-          preSubCashbackEUR = _context23.sent;
-          _context23.next = 34;
-          return regeneratorRuntime.awrap(getSubPartnerCashbackByCurrencyAndMonth({
-            _id: _id,
-            currency: 'EUR',
-            month: curMonth,
-            isSubPartner: isSubPartner
-          }));
-
-        case 34:
-          curSubCashbackEUR = _context23.sent;
-          _context23.next = 37;
-          return regeneratorRuntime.awrap(getCashBackByCurrencyAndMonth({
-            _id: _id
-          }, 'USD', preMonth));
-
-        case 37:
-          preCashbackUSD = _context23.sent;
-          _context23.next = 40;
-          return regeneratorRuntime.awrap(getCashBackByCurrencyAndMonth({
-            _id: _id
-          }, 'USD', curMonth));
-
-        case 40:
-          curCashbackUSD = _context23.sent;
-          _context23.next = 43;
-          return regeneratorRuntime.awrap(getCashBackByCurrencyAndMonth({
-            _id: _id
-          }, 'EUR', preMonth));
-
-        case 43:
-          preCashbackEUR = _context23.sent;
-          _context23.next = 46;
-          return regeneratorRuntime.awrap(getCashBackByCurrencyAndMonth({
-            _id: _id
-          }, 'EUR', curMonth));
-
-        case 46:
-          curCashbackEUR = _context23.sent;
-
-          /* CASHBACK TOTAL CALCULATIONS */
-          // - USD
           preCashbackTotalUSD = preSubCashbackUSD + preCashbackUSD;
           curCashbackTotalUSD = curSubCashbackUSD + curCashbackUSD;
-          cashbackTotalUSDChange = preCashbackTotalUSD === 0 ? 0 : (curCashbackTotalUSD - preCashbackTotalUSD) / preCashbackTotalUSD * 100; // - EUR
+          cashbackTotalUSDChange = preCashbackTotalUSD === 0 ? 0 : (curCashbackTotalUSD - preCashbackTotalUSD) / preCashbackTotalUSD * 100; // // - EUR
 
           preCashbackTotalEUR = preSubCashbackEUR + preCashbackEUR;
           curCashbackTotalEUR = curSubCashbackEUR + curCashbackEUR;
-          cashbackTotalEURChange = preCashbackTotalEUR === 0 ? 0 : (curCashbackTotalEUR - preCashbackTotalEUR) / preCashbackTotalEUR * 100;
-          /* VK POINTS */
+          cashbackTotalEURChange = preCashbackTotalEUR === 0 ? 0 : (curCashbackTotalEUR - preCashbackTotalEUR) / preCashbackTotalEUR * 100; // /* VK POINTS */
 
-          _context23.next = 55;
-          return regeneratorRuntime.awrap(getVolumeByMonth({
-            _id: _id
-          }, preMonth));
-
-        case 55:
-          prePersonalVol = _context23.sent;
-          _context23.next = 58;
-          return regeneratorRuntime.awrap(getVolumeByMonth({
-            _id: _id
-          }, curMonth));
-
-        case 58:
-          curPersonalVol = _context23.sent;
-          _context23.next = 61;
-          return regeneratorRuntime.awrap(getSubPartnerVolumeByMonth({
-            _id: _id,
-            isSubPartner: isSubPartner,
-            month: preMonth
-          }));
-
-        case 61:
-          preSubVol = _context23.sent;
-          _context23.next = 64;
-          return regeneratorRuntime.awrap(getSubPartnerVolumeByMonth({
-            _id: _id,
-            isSubPartner: isSubPartner,
-            month: curMonth
-          }));
-
-        case 64:
-          curSubVol = _context23.sent;
-          _context23.next = 67;
-          return regeneratorRuntime.awrap(getNetworkShareVolumeByMonth({
-            referredBy: referredBy,
-            month: preMonth
-          }));
-
-        case 67:
-          preNetworkShare = _context23.sent;
-          _context23.next = 70;
-          return regeneratorRuntime.awrap(getNetworkShareVolumeByMonth({
-            referredBy: referredBy,
-            month: curMonth
-          }));
-
-        case 70:
-          curNetworkShare = _context23.sent;
-          preVK = prePersonalVol + preSubVol + preNetworkShare;
-          curVK = curPersonalVol + curSubVol + curNetworkShare;
+          preVK = preMonthSummary.points;
+          curVK = curMonthSummary.points;
           VKChange = preVK === 0 ? 0 : (curVK - preVK) / preVK * 100;
-          return _context23.abrupt("return", res.status(200).send({
+          return _context16.abrupt("return", res.status(200).send({
             curClicks: curClicks,
             clickChange: clickChange,
             curConversions: curConversions,
@@ -2261,30 +1554,30 @@ router.post('/fetch-monthly-summary-vk', passport.authenticate('jwt', {
             VKChange: VKChange
           }));
 
-        case 77:
-          _context23.prev = 77;
-          _context23.t0 = _context23["catch"](3);
-          return _context23.abrupt("return", res.status(403).send({
+        case 38:
+          _context16.prev = 38;
+          _context16.t0 = _context16["catch"](3);
+          return _context16.abrupt("return", res.status(403).send({
             success: false,
-            msg: _context23.t0
+            msg: _context16.t0
           }));
 
-        case 80:
-          _context23.next = 83;
+        case 41:
+          _context16.next = 44;
           break;
 
-        case 82:
+        case 43:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 83:
+        case 44:
         case "end":
-          return _context23.stop();
+          return _context16.stop();
       }
     }
-  }, null, null, [[3, 77]]);
+  }, null, null, [[3, 38]]);
 }); // POST /affiliate/report/fetch-aff-accounts?pageSize=${pageSize}&pageIndex=${pageIndex}
 
 router.post('/fetch-aff-accounts', passport.authenticate('jwt', {
@@ -2294,14 +1587,14 @@ router.post('/fetch-aff-accounts', passport.authenticate('jwt', {
 function getAffAcounts(req, res) {
   var token, pageSize, pageIndex, _req$body13, sort, query, skippage, accounts, pageCount, brands, months;
 
-  return regeneratorRuntime.async(function getAffAcounts$(_context24) {
+  return regeneratorRuntime.async(function getAffAcounts$(_context17) {
     while (1) {
-      switch (_context24.prev = _context24.next) {
+      switch (_context17.prev = _context17.next) {
         case 0:
           token = getToken(req.headers);
 
           if (!token) {
-            _context24.next = 29;
+            _context17.next = 29;
             break;
           }
 
@@ -2311,31 +1604,31 @@ function getAffAcounts(req, res) {
           skippage = pageSize * pageIndex; // with increments of one = 10 * 0 = 0 |  10 * 1 = 10 | 10 * 2 = 20; // skippage tells how many to skip over before starting - start / limit tells us how many to stoo at - end - This is also because pageIndex starts with 0 on table
 
           query = mapRegexQueryFromObj(query);
-          _context24.prev = 7;
-          _context24.next = 10;
+          _context17.prev = 7;
+          _context17.next = 10;
           return regeneratorRuntime.awrap(AffAccount.find(query).collation({
             locale: 'en',
             strength: 1
           }).sort(sort).skip(skippage).limit(pageSize).lean());
 
         case 10:
-          accounts = _context24.sent;
-          _context24.next = 13;
+          accounts = _context17.sent;
+          _context17.next = 13;
           return regeneratorRuntime.awrap(AffAccount.countDocuments(query));
 
         case 13:
-          pageCount = _context24.sent;
-          _context24.next = 16;
+          pageCount = _context17.sent;
+          _context17.next = 16;
           return regeneratorRuntime.awrap(AffAccount.distinct('brand'));
 
         case 16:
-          brands = _context24.sent;
-          _context24.next = 19;
+          brands = _context17.sent;
+          _context17.next = 19;
           return regeneratorRuntime.awrap(AffAccount.distinct('monthAdded'));
 
         case 19:
-          months = _context24.sent;
-          return _context24.abrupt("return", res.status(200).send({
+          months = _context17.sent;
+          return _context17.abrupt("return", res.status(200).send({
             accounts: accounts,
             pageCount: pageCount,
             brands: brands,
@@ -2343,23 +1636,23 @@ function getAffAcounts(req, res) {
           }));
 
         case 23:
-          _context24.prev = 23;
-          _context24.t0 = _context24["catch"](7);
-          console.log(_context24.t0);
-          return _context24.abrupt("return", res.status(400).send(_context24.t0));
+          _context17.prev = 23;
+          _context17.t0 = _context17["catch"](7);
+          console.log(_context17.t0);
+          return _context17.abrupt("return", res.status(400).send(_context17.t0));
 
         case 27:
-          _context24.next = 30;
+          _context17.next = 30;
           break;
 
         case 29:
-          return _context24.abrupt("return", res.status(403).send({
+          return _context17.abrupt("return", res.status(403).send({
             msg: 'Unauthorised'
           }));
 
         case 30:
         case "end":
-          return _context24.stop();
+          return _context17.stop();
       }
     }
   }, null, null, [[7, 23]]);

@@ -47,7 +47,7 @@ const checkData = async (res, brand, month, date, url) => {
         const data =
             reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0]
                 .row
-        console.log(data)
+
         return mapRawData(data, brand, month, date)
     } catch (err) {
         if (err.message === 'Permission denied')

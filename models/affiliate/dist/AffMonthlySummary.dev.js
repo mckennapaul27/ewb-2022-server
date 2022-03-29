@@ -13,10 +13,12 @@ var AffMonthlySummary = new Schema({
   clicks: Number,
   conversions: Number,
   points: Number,
+  epi: Number,
   commissionEUR: Number,
   commissionUSD: Number,
   subCommissionEUR: Number,
   subCommissionUSD: Number,
+  lastUpdate: Date,
   belongsTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'affpartner',

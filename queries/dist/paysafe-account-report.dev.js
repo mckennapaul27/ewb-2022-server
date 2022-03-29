@@ -101,11 +101,10 @@ var checkData = function checkData(res, brand, month, date, url) {
 
         case 10:
           data = reports['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].reportresponse[0].row;
-          console.log(data);
           return _context3.abrupt("return", mapRawData(data, brand, month, date));
 
-        case 15:
-          _context3.prev = 15;
+        case 14:
+          _context3.prev = 14;
           _context3.t0 = _context3["catch"](0);
           if (_context3.t0.message === 'Permission denied') setTimeout(function () {
             console.log(_context3.t0);
@@ -119,12 +118,12 @@ var checkData = function checkData(res, brand, month, date, url) {
             }); // need to add fetchData parameters
           }, 500);
 
-        case 18:
+        case 17:
         case "end":
           return _context3.stop();
       }
     }
-  }, null, null, [[0, 15]]);
+  }, null, null, [[0, 14]]);
 };
 
 var mapRawData = function mapRawData(data, brand, month, date) {

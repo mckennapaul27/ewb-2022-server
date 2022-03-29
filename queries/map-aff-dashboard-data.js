@@ -13,6 +13,9 @@ const {
     AffReport,
     AffReportMonthly,
     AffSubReport,
+    AffMonthlySummary,
+    AffAccount,
+    AffReportDaily,
 } = require('../models/affiliate/index')
 
 const lucyNetwork = [
@@ -25,15 +28,15 @@ const { createAdminJob } = require('../utils/admin-job-functions')
 const { updateAffiliateBalance } = require('../utils/balance-helpers')
 const { setAffQuarterData } = require('../utils/quarter-helpers')
 const { getQuarterData } = require('../utils/quarter-data')
-const { Allow } = require('../models/common/index')
 
 const updatePartnerStats = async (brand, month, date) => {
-    let allowed = (await Allow.findById('1')).status
+    console.log('called here')
     let arr = await AffPartner.find({
         $or: [
             // only find() partners that have at least 1 account in the accounts array or have referred subpartners
             { isSubPartner: true },
             { 'accounts.0': { $exists: true } },
+            { _id: '62431271a645744b68016ab7' },
 
             // testing
             // { epi: 566 },
@@ -45,7 +48,7 @@ const updatePartnerStats = async (brand, month, date) => {
 
     let processStatsOne = arr.reduce(async (previousPartner, nextPartner) => {
         await previousPartner
-        return setCashback(nextPartner, brand, month, allowed).then(() => {
+        return setCashback(nextPartner, brand, month).then(() => {
             return partnerStatusCheck(nextPartner)
         })
     }, Promise.resolve())
@@ -83,21 +86,35 @@ const updatePartnerStats = async (brand, month, date) => {
                 )
                 console.log('Processing partner stats [4] ...')
                 processStatsFour.then(() => {
-                    createAffNotification({
-                        // once complete - add notification
-                        message: `${brand} data was fetched on ${dayjs().format(
-                            'LLLL'
-                        )}`,
-                        type: 'Report',
-                        isGeneral: true,
+                    let processStatsFive = arr.reduce(
+                        async (previousPartner, nextPartner) => {
+                            await previousPartner
+                            return createUpdateAffMonthlySummary(
+                                nextPartner,
+                                month,
+                                date
+                            ) // create AffMonthlySummary report
+                        },
+                        Promise.resolve()
+                    )
+                    console.log('Processing partner stats [5] ...')
+                    processStatsFive.then(() => {
+                        // createAffNotification({
+                        //     message: `${brand} data was fetched on ${dayjs().format(
+                        //         'LLLL'
+                        //     )}`,
+                        //     type: 'Report',
+                        //     isGeneral: true,
+                        // })
+                        // createAdminJob({
+                        //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`,
+                        //     completed: true,
+                        //     status: 'Completed',
+                        //     type: 'Reports'
+                        // });
+
+                        console.log('Completed partner data ... ')
                     })
-                    // createAdminJob({
-                    //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`,
-                    //     completed: true,
-                    //     status: 'Completed',
-                    //     type: 'Reports'
-                    // });
-                    console.log('Completed partner data ... ')
                 })
             })
         })
@@ -125,8 +142,7 @@ const setCashback = (
         isPermitted,
     },
     brand,
-    month,
-    allowed
+    month
 ) => {
     return new Promise((resolve) => {
         resolve(
@@ -596,7 +612,13 @@ const setAffPartnerBalance = ({ _id }) => {
     })
 }
 
-const partnerStatusCheck = ({ _id, isSubPartner, isOfficialPartner, epi }) => {
+const partnerStatusCheck = ({
+    _id,
+    isSubPartner,
+    isOfficialPartner,
+    referredBy,
+    epi,
+}) => {
     return new Promise((resolve) => {
         resolve(
             (async () => {
@@ -665,6 +687,254 @@ const partnerStatusCheck = ({ _id, isSubPartner, isOfficialPartner, epi }) => {
     })
 }
 
+// createUpdateAffMonthlySummary(nextPartner, month, date)
+const createUpdateAffMonthlySummary = (
+    { _id, isSubPartner, isOfficialPartner, epi, referredBy },
+    month,
+    date
+) => {
+    return new Promise((resolve) => {
+        resolve(
+            (async () => {
+                const existingReport = await AffMonthlySummary.findOne({
+                    belongsTo: _id,
+                    month,
+                })
+                    .select('_id')
+                    .lean()
+                const clicks = await getClicksByMonth({
+                    _id,
+                    month,
+                })
+                const conversions = await getAffAccountsAddedByMonth({
+                    _id,
+                    monthAdded: month,
+                })
+                const commissionUSD = await getCashBackByCurrencyAndMonth(
+                    { _id },
+                    'USD',
+                    month
+                )
+                const commissionEUR = await getCashBackByCurrencyAndMonth(
+                    { _id },
+                    'EUR',
+                    month
+                )
+                const subCommissionUSD =
+                    await getSubPartnerCashbackByCurrencyAndMonth({
+                        _id,
+                        currency: 'USD',
+                        month,
+                        isSubPartner,
+                    })
+                const subCommissionEUR =
+                    await getSubPartnerCashbackByCurrencyAndMonth({
+                        _id,
+                        currency: 'EUR',
+                        month,
+                        isSubPartner,
+                    })
+                const personalVol = await getVolumeByMonth({ _id }, month)
+                const subVol = await getSubPartnerVolumeByMonth({
+                    _id,
+                    isSubPartner,
+                    month,
+                })
+                const networkShare = await getNetworkShareVolumeByMonth({
+                    referredBy,
+                    month,
+                })
+                const points = personalVol + subVol + networkShare
+
+                if (existingReport) {
+                    await AffMonthlySummary.findByIdAndUpdate(
+                        existingReport._id,
+                        {
+                            lastUpdate: Date.now(),
+                            clicks,
+                            conversions,
+                            points,
+                            epi,
+                            commissionEUR,
+                            commissionUSD,
+                            subCommissionEUR,
+                            subCommissionUSD,
+                        },
+                        { new: true }
+                    )
+                } else {
+                    await AffMonthlySummary.create({
+                        date,
+                        month,
+                        lastUpdate: Date.now(),
+                        clicks,
+                        conversions,
+                        points,
+                        epi,
+                        commissionEUR,
+                        commissionUSD,
+                        subCommissionEUR,
+                        subCommissionUSD,
+                        belongsTo: _id,
+                    })
+                }
+            })()
+        )
+    })
+}
+
+const getClicksByMonth = async ({ _id, month }) => {
+    const clickData = await AffReportDaily.aggregate([
+        // gets all the clicks from Neteller/Skrill - still need to do for ecoPayz
+        {
+            $match: {
+                $and: [{ belongsTo: mongoose.Types.ObjectId(_id) }, { month }],
+            },
+        },
+        { $project: { clicks: 1 } },
+        {
+            $group: {
+                _id: null,
+                clicks: { $sum: '$clicks' },
+            },
+        },
+    ])
+
+    return clickData.length === 0 ? 0 : clickData[0].clicks
+}
+const getAffAccountsAddedByMonth = async ({ _id, monthAdded }) => {
+    const accountData = await AffAccount.countDocuments({
+        belongsTo: _id,
+        monthAdded,
+    })
+    return accountData
+}
+
+const getCashBackByCurrencyAndMonth = async ({ _id }, currency, month) => {
+    let cashback = 0
+    for await (const report of AffReport.find({
+        belongsToPartner: _id,
+        'account.currency': currency,
+        month,
+        'account.transValue': { $gt: 0 },
+    })
+        .select('account.cashback')
+        .lean()) {
+        cashback += report.account.cashback
+    }
+    return cashback
+}
+
+const getSubPartnerCashbackByCurrencyAndMonth = ({
+    _id,
+    currency,
+    month,
+    isSubPartner,
+}) => {
+    if (isSubPartner) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy: _id })
+                    .select('_id')
+                    .lean() // get all partners that have BEEN referredBy this partner
+                    .then((subPartners) => {
+                        return subPartners.reduce(
+                            async (total, nextSubPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextSubPartner._id,
+                                    'account.currency': currency,
+                                    month,
+                                    'account.transValue': { $gt: 0 },
+                                })
+                                    .select('account.subAffCommission')
+                                    .lean()) {
+                                    acc += report.account.subAffCommission
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+
+const getVolumeByMonth = async ({ _id }, month) => {
+    // get volume for ALL BRANDS for current and previous - this is for VK points
+    let transValue = 0
+    for await (const report of AffReport.find({
+        belongsToPartner: _id,
+        month,
+        'account.transValue': { $gt: 0 },
+    })
+        .select('account.transValue')
+        .lean()) {
+        transValue += report.account.transValue
+    }
+    return transValue
+}
+const getSubPartnerVolumeByMonth = ({ _id, isSubPartner, month }) => {
+    // this is used for /affiliate/report/fetch-monthly-statement in router/affiliate/report.router.js
+    if (isSubPartner) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy: _id })
+                    .select('_id')
+                    .lean() // get all partners that have BEEN referredBy this partner
+                    .then((subPartners) => {
+                        return subPartners.reduce(
+                            async (total, nextSubPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextSubPartner._id,
+                                    month,
+                                    'account.transValue': { $gt: 0 },
+                                })
+                                    .select('account.transValue')
+                                    .lean()) {
+                                    acc += report.account.transValue
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+const getNetworkShareVolumeByMonth = ({ referredBy, month }) => {
+    if (referredBy) {
+        return new Promise((resolve) => {
+            resolve(
+                AffPartner.find({ referredBy })
+                    .select('_id')
+                    .lean() // get all partners that have the SAME referredBy as this partner
+                    .then((partnersReferredBySameNetwork) => {
+                        return partnersReferredBySameNetwork.reduce(
+                            async (total, nextPartner) => {
+                                let acc = await total
+                                for await (const report of AffReport.find({
+                                    belongsToPartner: nextPartner._id,
+                                    month,
+                                    'account.transValue': { $gt: 0 },
+                                })
+                                    .select('account.transValue')
+                                    .lean()) {
+                                    acc += report.account.transValue
+                                }
+                                return acc
+                            },
+                            Promise.resolve(0)
+                        )
+                    })
+            )
+        })
+    } else return 0
+}
+
 module.exports = {
     updatePartnerStats,
     getCashbackRate,
@@ -672,4 +942,11 @@ module.exports = {
     getVolumeByBrand,
     getCashBackByBrand,
     getSubAffCommissionByBrand,
+    getClicksByMonth,
+    getAffAccountsAddedByMonth,
+    getCashBackByCurrencyAndMonth,
+    getSubPartnerCashbackByCurrencyAndMonth,
+    getVolumeByMonth,
+    getSubPartnerVolumeByMonth,
+    getNetworkShareVolumeByMonth,
 }
