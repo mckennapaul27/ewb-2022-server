@@ -981,7 +981,7 @@ router.post(
                 })
 
                 const preVK = prePersonalVol + preSubVol + preNetworkShare
-                const curVK = curPersonalVol + preSubVol + curNetworkShare
+                const curVK = curPersonalVol + curSubVol + curNetworkShare
 
                 const VKChange =
                     preVK === 0 ? 0 : ((curVK - preVK) / preVK) * 100

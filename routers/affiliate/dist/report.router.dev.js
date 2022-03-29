@@ -2246,7 +2246,7 @@ router.post('/fetch-monthly-summary-vk', passport.authenticate('jwt', {
         case 70:
           curNetworkShare = _context23.sent;
           preVK = prePersonalVol + preSubVol + preNetworkShare;
-          curVK = curPersonalVol + preSubVol + curNetworkShare;
+          curVK = curPersonalVol + curSubVol + curNetworkShare;
           VKChange = preVK === 0 ? 0 : (curVK - preVK) / preVK * 100;
           return _context23.abrupt("return", res.status(200).send({
             curClicks: curClicks,
