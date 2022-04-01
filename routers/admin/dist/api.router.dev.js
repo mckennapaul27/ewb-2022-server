@@ -56,33 +56,36 @@ var _require6 = require('../../models/personal/index'),
     Application = _require6.Application,
     ActiveUser = _require6.ActiveUser;
 
-var _require7 = require('../../utils/account-functions'),
-    createAccountReport = _require7.createAccountReport,
-    createAffAccAffReport = _require7.createAffAccAffReport;
+var _require7 = require('../../models/common/index'),
+    User = _require7.User;
 
-var _require8 = require('../../utils/notifications-list'),
-    applicationYY = _require8.applicationYY,
-    applicationYN = _require8.applicationYN,
-    applicationNN = _require8.applicationNN;
+var _require8 = require('../../utils/account-functions'),
+    createAccountReport = _require8.createAccountReport,
+    createAffAccAffReport = _require8.createAffAccAffReport;
 
-var _require9 = require('../../utils/notifications-functions'),
-    createUserNotification = _require9.createUserNotification,
-    createAffNotification = _require9.createAffNotification;
+var _require9 = require('../../utils/notifications-list'),
+    applicationYY = _require9.applicationYY,
+    applicationYN = _require9.applicationYN,
+    applicationNN = _require9.applicationNN;
 
-var _require10 = require('../../queries/ecopayz-account-report'),
-    uploadAffReports = _require10.uploadAffReports;
+var _require10 = require('../../utils/notifications-functions'),
+    createUserNotification = _require10.createUserNotification,
+    createAffNotification = _require10.createAffNotification;
 
-var _require11 = require('../../utils/sib-helpers'),
-    sendEmail = _require11.sendEmail;
+var _require11 = require('../../queries/ecopayz-account-report'),
+    uploadAffReports = _require11.uploadAffReports;
 
-var _require12 = require('../../models/common'),
-    Brand = _require12.Brand,
-    Allow = _require12.Allow;
+var _require12 = require('../../utils/sib-helpers'),
+    sendEmail = _require12.sendEmail;
 
-var _require13 = require('../../utils/sib-transactional-templates'),
-    sibApplicationYY = _require13.sibApplicationYY,
-    sibApplicationYN = _require13.sibApplicationYN,
-    sibApplicationNN = _require13.sibApplicationNN; // POST /admin/api/call-daily-functions
+var _require13 = require('../../models/common'),
+    Brand = _require13.Brand,
+    Allow = _require13.Allow;
+
+var _require14 = require('../../utils/sib-transactional-templates'),
+    sibApplicationYY = _require14.sibApplicationYY,
+    sibApplicationYN = _require14.sibApplicationYN,
+    sibApplicationNN = _require14.sibApplicationNN; // POST /admin/api/call-daily-functions
 
 
 router.post('/call-daily-functions', passport.authenticate('admin', {
@@ -296,7 +299,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
               }, []); // remove duplicates - have to put second return of acc inside brackets (acc.push(item), acc) otherwise it will not return acc
 
               applicationData.map(function _callee4(app) {
-                var today, update, workOutAction, action, existingAffApplication, existingDashApplication, aa, brand, belongsTo, accountId, partner, _ref, initialUpgrade, ab, _brand, _belongsTo, _accountId, email, currency, availableUpgrade, activeUser;
+                var today, update, workOutAction, action, existingAffApplication, existingDashApplication, aa, brand, belongsTo, accountId, partner, _ref, locale, _ref2, initialUpgrade, ab, _brand, _belongsTo, _accountId, email, currency, availableUpgrade, activeUser;
 
                 return regeneratorRuntime.async(function _callee4$(_context4) {
                   while (1) {
@@ -332,7 +335,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         existingDashApplication = _context4.sent;
 
                         if (!existingAffApplication) {
-                          _context4.next = 47;
+                          _context4.next = 51;
                           break;
                         }
 
@@ -350,13 +353,19 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         brand = aa.brand, belongsTo = aa.belongsTo, accountId = aa.accountId; // deconstruct updated application
 
                         _context4.next = 20;
-                        return regeneratorRuntime.awrap(AffPartner.findById(belongsTo).select('email').lean());
+                        return regeneratorRuntime.awrap(AffPartner.findById(belongsTo).select('email belongsTo').lean());
 
                       case 20:
                         partner = _context4.sent;
+                        _context4.next = 23;
+                        return regeneratorRuntime.awrap(User.findById(partner.belongsTo).select('locale').lean());
+
+                      case 23:
+                        _ref = _context4.sent;
+                        locale = _ref.locale;
 
                         if (!(action === 'YY')) {
-                          _context4.next = 31;
+                          _context4.next = 35;
                           break;
                         }
 
@@ -364,17 +373,18 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         createAffNotification(applicationYY({
                           brand: brand,
                           accountId: accountId,
-                          belongsTo: belongsTo
+                          belongsTo: belongsTo,
+                          locale: locale
                         }));
-                        _context4.next = 25;
+                        _context4.next = 29;
                         return regeneratorRuntime.awrap(Brand.findOne({
                           brand: brand
                         }).select('initialUpgrade').lean());
 
-                      case 25:
-                        _ref = _context4.sent;
-                        initialUpgrade = _ref.initialUpgrade;
-                        _context4.next = 29;
+                      case 29:
+                        _ref2 = _context4.sent;
+                        initialUpgrade = _ref2.initialUpgrade;
+                        _context4.next = 33;
                         return regeneratorRuntime.awrap(sendEmail({
                           templateId: 65,
                           smtpParams: {
@@ -388,22 +398,23 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           email: partner.email
                         }));
 
-                      case 29:
-                        _context4.next = 44;
+                      case 33:
+                        _context4.next = 48;
                         break;
 
-                      case 31:
+                      case 35:
                         if (!(action === 'YN')) {
-                          _context4.next = 37;
+                          _context4.next = 41;
                           break;
                         }
 
                         createAffNotification(applicationYN({
                           brand: brand,
                           accountId: accountId,
-                          belongsTo: belongsTo
+                          belongsTo: belongsTo,
+                          locale: locale
                         }));
-                        _context4.next = 35;
+                        _context4.next = 39;
                         return regeneratorRuntime.awrap(sendEmail({
                           templateId: 2,
                           smtpParams: {
@@ -416,23 +427,24 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           email: partner.email
                         }));
 
-                      case 35:
-                        _context4.next = 44;
+                      case 39:
+                        _context4.next = 48;
                         break;
 
-                      case 37:
+                      case 41:
                         if (!(action === 'NN')) {
-                          _context4.next = 43;
+                          _context4.next = 47;
                           break;
                         }
 
                         createAffNotification(applicationNN({
                           brand: brand,
                           accountId: accountId,
-                          belongsTo: belongsTo
+                          belongsTo: belongsTo,
+                          locale: locale
                         })); // Do not send email as covering NN below
 
-                        _context4.next = 41;
+                        _context4.next = 45;
                         return regeneratorRuntime.awrap(sendEmail({
                           templateId: 3,
                           smtpParams: {
@@ -444,29 +456,29 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           email: partner.email
                         }));
 
-                      case 41:
-                        _context4.next = 44;
+                      case 45:
+                        _context4.next = 48;
                         break;
 
-                      case 43:
+                      case 47:
                         null;
 
-                      case 44:
+                      case 48:
                         if (!(action === 'YY' || action === 'YN')) {
-                          _context4.next = 47;
+                          _context4.next = 51;
                           break;
                         }
 
-                        _context4.next = 47;
+                        _context4.next = 51;
                         return regeneratorRuntime.awrap(createAffAccAffReport({
                           accountId: accountId,
                           brand: brand,
                           belongsTo: belongsTo
                         }));
 
-                      case 47:
+                      case 51:
                         if (!existingDashApplication) {
-                          _context4.next = 76;
+                          _context4.next = 80;
                           break;
                         }
 
@@ -474,29 +486,29 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                         // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE - UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
                         if (existingDashApplication.brand === 'Skrill') update['upgradeStatus'] = "Confirmed ".concat(today); // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE- UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
 
-                        _context4.next = 51;
+                        _context4.next = 55;
                         return regeneratorRuntime.awrap(Application.findByIdAndUpdate(existingDashApplication._id, update));
 
-                      case 51:
+                      case 55:
                         ab = _context4.sent;
                         _brand = ab.brand, _belongsTo = ab.belongsTo, _accountId = ab.accountId, email = ab.email, currency = ab.currency, availableUpgrade = ab.availableUpgrade; // deconstruct updated application
 
-                        _context4.next = 55;
+                        _context4.next = 59;
                         return regeneratorRuntime.awrap(ActiveUser.findById(_belongsTo).select('belongsTo').populate({
                           path: 'belongsTo',
                           select: 'locale'
                         }).lean());
 
-                      case 55:
+                      case 59:
                         activeUser = _context4.sent;
 
                         if (!(activeUser && activeUser.belongsTo)) {
-                          _context4.next = 70;
+                          _context4.next = 74;
                           break;
                         }
 
                         if (!(action === 'YY')) {
-                          _context4.next = 63;
+                          _context4.next = 67;
                           break;
                         }
 
@@ -506,7 +518,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           belongsTo: activeUser.belongsTo,
                           locale: activeUser.belongsTo.locale
                         }));
-                        _context4.next = 61;
+                        _context4.next = 65;
                         return regeneratorRuntime.awrap(sendEmail(sibApplicationYY({
                           locale: activeUser.belongsTo.locale,
                           smtpParams: {
@@ -518,13 +530,13 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           email: activeUser.email
                         })));
 
-                      case 61:
-                        _context4.next = 70;
+                      case 65:
+                        _context4.next = 74;
                         break;
 
-                      case 63:
+                      case 67:
                         if (!(action === 'YN')) {
-                          _context4.next = 69;
+                          _context4.next = 73;
                           break;
                         }
 
@@ -534,7 +546,7 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           belongsTo: activeUser.belongsTo,
                           locale: activeUser.belongsTo.locale
                         }));
-                        _context4.next = 67;
+                        _context4.next = 71;
                         return regeneratorRuntime.awrap(sendEmail(sibApplicationYN({
                           locale: aciveUser.belongsTo.locale,
                           smtpParams: {
@@ -546,11 +558,11 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           email: activeUser.email
                         })));
 
-                      case 67:
-                        _context4.next = 70;
+                      case 71:
+                        _context4.next = 74;
                         break;
 
-                      case 69:
+                      case 73:
                         if (action === 'NN') {
                           createUserNotification(applicationNN({
                             brand: _brand,
@@ -560,13 +572,13 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           })); // Do not send email as covering NN below
                         } else null;
 
-                      case 70:
+                      case 74:
                         if (!(action === 'NN')) {
-                          _context4.next = 73;
+                          _context4.next = 77;
                           break;
                         }
 
-                        _context4.next = 73;
+                        _context4.next = 77;
                         return regeneratorRuntime.awrap(sendEmail(sibApplicationNN({
                           locale: aciveUser.belongsTo.locale,
                           smtpParams: {
@@ -578,35 +590,35 @@ router.post('/upload-application-results', passport.authenticate('admin', {
                           email: activeUser.email
                         })));
 
-                      case 73:
+                      case 77:
                         if (!((action === 'YY' || action === 'YN') && _belongsTo)) {
-                          _context4.next = 76;
+                          _context4.next = 80;
                           break;
                         }
 
-                        _context4.next = 76;
+                        _context4.next = 80;
                         return regeneratorRuntime.awrap(createAccountReport({
                           accountId: _accountId,
                           brand: _brand,
                           belongsTo: _belongsTo
                         }));
 
-                      case 76:
-                        _context4.next = 82;
+                      case 80:
+                        _context4.next = 86;
                         break;
 
-                      case 78:
-                        _context4.prev = 78;
+                      case 82:
+                        _context4.prev = 82;
                         _context4.t0 = _context4["catch"](5);
                         console.log(_context4.t0);
                         return _context4.abrupt("return", _context4.t0);
 
-                      case 82:
+                      case 86:
                       case "end":
                         return _context4.stop();
                     }
                   }
-                }, null, null, [[5, 78]]);
+                }, null, null, [[5, 82]]);
               });
               return res.status(201).send({
                 msg: 'Successfully updated applications'

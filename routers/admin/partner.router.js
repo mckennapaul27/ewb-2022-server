@@ -36,10 +36,12 @@ const {
     applicationYY,
     applicationYN,
     applicationNN,
+    paymentResult,
 } = require('../../utils/notifications-list')
 const { createAffAccAffReport } = require('../../utils/account-functions')
 const { updateAffiliateBalance } = require('../../utils/balance-helpers')
-const { Brand, Quarter } = require('../../models/common')
+const { Brand, Quarter, User } = require('../../models/common')
+const { initialUpgrade } = require('../../config/deals')
 const { sendEmail } = require('../../utils/sib-helpers')
 
 // POST /admin/partner/get-partner
@@ -289,18 +291,19 @@ router.post(
                 const { brand, belongsTo, accountId } = aa // deconstruct updated application
 
                 const partner = await AffPartner.findById(belongsTo)
-                    .select('email')
+                    .select('email belongsTo')
                     .lean()
+                const { locale } = await User.findById(partner.belongsTo)
+                    .select('locale')
+                    .lean()
+
                 // emails and notifications >>>>>
                 if (action === 'YY') {
                     // template 65 needs params.OFFER
                     createAffNotification(
-                        applicationYY({ brand, accountId, belongsTo })
+                        applicationYY({ brand, accountId, belongsTo, locale })
                     )
-                    const { initialUpgrade } = await Brand.findOne({ brand })
-                        .select('initialUpgrade')
-                        .lean()
-                    ;-(await sendEmail({
+                    await sendEmail({
                         templateId: 65,
                         smtpParams: {
                             BRAND: brand,
@@ -311,10 +314,10 @@ router.post(
                         },
                         tags: ['Application'],
                         email: partner.email,
-                    }))
+                    })
                 } else if (action === 'YN') {
                     createAffNotification(
-                        applicationYN({ brand, accountId, belongsTo })
+                        applicationYN({ brand, accountId, belongsTo, locale })
                     )
                     await sendEmail({
                         templateId: 2,
@@ -329,7 +332,7 @@ router.post(
                     })
                 } else if (action === 'NN') {
                     createAffNotification(
-                        applicationNN({ brand, accountId, belongsTo })
+                        applicationNN({ brand, accountId, belongsTo, locale })
                     ) // Do not send email as covering NN below
                     await sendEmail({
                         templateId: 3,
@@ -348,6 +351,7 @@ router.post(
 
                 return res.status(201).send(aa)
             } catch (error) {
+                console.log(error)
                 return res
                     .status(400)
                     .send({ msg: 'Error whilst updating application' })
@@ -565,15 +569,21 @@ router.post(
                 const { currency, amount, belongsTo, brand, paymentAccount } =
                     updatedPayment
                 const partner = await AffPartner.findById(belongsTo).select(
-                    'email'
+                    'email belongsTo'
                 )
-                createAffNotification({
-                    message: `Your payout request for ${
-                        currency === 'USD' ? '$' : '€'
-                    }${amount.toFixed(2)} has been ${status.toLowerCase()}`,
-                    type: 'Payment',
-                    belongsTo,
-                })
+                const { locale } = await User.findById(partner.belongsTo)
+                    .select('locale')
+                    .lean()
+
+                createAffNotification(
+                    paymentResult({
+                        symbol: currency === 'USD' ? '$' : '€',
+                        amount,
+                        status,
+                        belongsTo,
+                        locale: 'es',
+                    })
+                )
                 if (status === 'Paid')
                     sendEmail({
                         templateId: 68,

@@ -23,7 +23,6 @@ const lucyNetwork = [
     805,
 ]
 
-const { createAffNotification } = require('../utils/notifications-functions')
 const { createAdminJob } = require('../utils/admin-job-functions')
 const { updateAffiliateBalance } = require('../utils/balance-helpers')
 const { setAffQuarterData } = require('../utils/quarter-helpers')
@@ -99,20 +98,6 @@ const updatePartnerStats = async (brand, month, date) => {
                     )
                     console.log('Processing partner stats [5] ...')
                     processStatsFive.then(() => {
-                        // createAffNotification({
-                        //     message: `${brand} data was fetched on ${dayjs().format(
-                        //         'LLLL'
-                        //     )}`,
-                        //     type: 'Report',
-                        //     isGeneral: true,
-                        // })
-                        // createAdminJob({
-                        //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`,
-                        //     completed: true,
-                        //     status: 'Completed',
-                        //     type: 'Reports'
-                        // });
-
                         console.log('Completed partner data ... ')
                     })
                 })

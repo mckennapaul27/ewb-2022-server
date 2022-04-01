@@ -33,7 +33,7 @@ const hasApplied = ({ accountId, _id, locale }) => {
             message = `We have received your application for ${accountId}`
             break
         case 'es':
-            message = `We have received your application for ${accountId}`
+            message = `Hemos recibido su solicitud para la cuenta ${accountId}`
             break
         case 'it':
             message = `We have received your application for ${accountId}`
@@ -94,9 +94,7 @@ const requestedPayment = ({
             )} to be sent to ${brand} account ${paymentAccount}`
             break
         case 'es':
-            message = `You have requested ${symbol}${amount.toFixed(
-                2
-            )} to be sent to ${brand} account ${paymentAccount}`
+            message = `Ha solicitado que se envíen $145,22 a ${brand} a la cuenta ${paymentAccount}`
             break
         case 'it':
             message = `You have requested ${symbol}${amount.toFixed(
@@ -231,36 +229,53 @@ const accountAdded = ({ accountId, belongsTo, locale }) => {
 }
 
 const paymentResult = ({ symbol, amount, status, belongsTo, locale }) => {
+    const paid = {
+        en: 'paid',
+        de: 'paid',
+        es: 'pagado',
+        it: 'pagado',
+        pl: 'pagado',
+        pt: 'pagado',
+    }
+    const rejected = {
+        en: 'rejected',
+        de: 'paid',
+        es: 'rechazado',
+        it: 'pagado',
+        pl: 'pagado',
+        pt: 'pagado',
+    }
+    const statusLocale = status === 'Paid' ? paid[locale] : rejected[locale]
     switch (locale) {
         case 'de':
             message = `Your payout request for ${symbol}${amount.toFixed(
                 2
-            )} has been ${status.toLowerCase()}`
+            )} has been ${statusLocale}`
             break
         case 'es':
-            message = `You have requested ${symbol}${amount.toFixed(
+            message = `Su solicitud de pago de ${symbol}${amount.toFixed(
                 2
-            )} to be sent to ${brand} account ${paymentAccount}`
+            )} ha sido ${statusLocale}`
             break
         case 'it':
-            message = `You have requested ${symbol}${amount.toFixed(
+            message = `Your payout request for ${symbol}${amount.toFixed(
                 2
-            )} to be sent to ${brand} account ${paymentAccount}`
+            )} has been ${statusLocale}`
             break
         case 'pl':
-            message = `You have requested ${symbol}${amount.toFixed(
+            message = `Your payout request for ${symbol}${amount.toFixed(
                 2
-            )} to be sent to ${brand} account ${paymentAccount}`
+            )} has been ${statusLocale}`
             break
         case 'pt':
-            message = `You have requested ${symbol}${amount.toFixed(
+            message = `Your payout request for ${symbol}${amount.toFixed(
                 2
-            )} to be sent to ${brand} account ${paymentAccount}`
+            )} has been ${statusLocale}`
             break
         default:
-            message = `You have requested ${symbol}${amount.toFixed(
+            message = `Your payout request for ${symbol}${amount.toFixed(
                 2
-            )} to be sent to ${brand} account ${paymentAccount}`
+            )} has been ${statusLocale}`
     }
     return {
         message,
@@ -325,6 +340,123 @@ const linksRequested = ({ locale, brand, belongsTo }) => {
     }
 }
 
+const affAccountAdded = ({ locale, accountId, belongsTo }) => {
+    // remember this is also called from auth router
+    switch (locale) {
+        case 'de':
+            message = `Account ${accountId} has been added to your dashboard`
+            break
+        case 'es':
+            message = `Se ha agregado la cuenta ${accountId} a su panel de control`
+            break
+        case 'it':
+            message = `Account ${accountId} has been added to your dashboard`
+            break
+        case 'pl':
+            message = `Account ${accountId} has been added to your dashboard`
+            break
+        case 'pt':
+            message = `Account ${accountId} has been added to your dashboard`
+            break
+        default:
+            message = `Account ${accountId} has been added to your dashboard`
+    }
+    return {
+        message,
+        type: 'Account',
+        belongsTo,
+    }
+}
+const affUpgradeEligible = ({
+    locale,
+    accountId,
+    level,
+    quarter,
+    belongsTo,
+}) => {
+    // remember this is also called from auth router
+    switch (locale) {
+        case 'de':
+            message = `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`
+            break
+        case 'es':
+            message = `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`
+            break
+        case 'it':
+            message = `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`
+            break
+        case 'pl':
+            message = `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`
+            break
+        case 'pt':
+            message = `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`
+            break
+        default:
+            message = `Account ${accountId} is eligible for a ${level} VIP upgrade for ${quarter}`
+    }
+    return {
+        message,
+        type: 'Account',
+        belongsTo,
+    }
+}
+
+const reportsHaveUpdated = () => {
+    // remember this is also called from auth router
+    switch (locale) {
+        case 'de':
+            message = `${brand} data was fetched on ${dayjs().format('LLLL')}`
+            break
+        case 'es':
+            message = `${brand} data was fetched on ${dayjs().format('LLLL')}`
+            break
+        case 'it':
+            message = `${brand} data was fetched on ${dayjs().format('LLLL')}`
+            break
+        case 'pl':
+            message = `${brand} data was fetched on ${dayjs().format('LLLL')}`
+            break
+        case 'pt':
+            message = `${brand} data was fetched on ${dayjs().format('LLLL')}`
+            break
+        default:
+            message = `${brand} data was fetched on ${dayjs().format('LLLL')}`
+    }
+    return {
+        message,
+        type: 'Report',
+        isGeneral: true,
+    }
+}
+
+const updatedPaymentDetails = ({ locale, brand, belongsTo }) => {
+    // remember this is also called from auth router
+    switch (locale) {
+        case 'de':
+            message = `You have updated your ${brand} payment details`
+            break
+        case 'es':
+            message = `You have updated your ${brand} payment details`
+            break
+        case 'it':
+            message = `You have updated your ${brand} payment details`
+            break
+        case 'pl':
+            message = `You have updated your ${brand} payment details`
+            break
+        case 'pt':
+            message = `You have updated your ${brand} payment details`
+            break
+        default:
+            message = `You have updated your ${brand} payment details`
+    }
+    return {
+        message,
+        type: 'Account',
+        belongsTo,
+    }
+}
+
 module.exports = {
     welcome,
     hasApplied,
@@ -337,4 +469,7 @@ module.exports = {
     linksRequested,
     requestedPayment,
     paymentResult,
+    affAccountAdded,
+    affUpgradeEligible,
+    updatedPaymentDetails,
 }

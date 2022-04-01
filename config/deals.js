@@ -177,6 +177,11 @@ const quarterFour = ['October', 'November', 'December']
 
 const quarterMonths = [{ month: 'January', quarter: 1, expires: quarterOne[2] }]
 
+const initialUpgrade = {
+    Neteller: 'Fast Silver',
+    Skrill: 'Fast Silver',
+    ecoPayz: 'Gold',
+}
 module.exports = {
     defaultDealOne,
     defaultDealTwo,
@@ -189,4 +194,5 @@ module.exports = {
     nextUpgrades,
     defaultSiteId,
     defaultBalances,
+    initialUpgrade,
 }

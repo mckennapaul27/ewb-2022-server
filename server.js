@@ -69,6 +69,20 @@ if (process.env.NODE_ENV !== 'dev') {
         })
     )
 }
+// ;(async () => {
+//     const affaccount = await AffAccount.create({
+//         brand: 'Neteller',
+//         accountId: '123456789',
+//         country: 'GB',
+//         belongsTo: '6203dbf7a48a5250152b7d5c',
+//         // reports: [
+//         //     {
+//         //         type: mongoose.Schema.Types.ObjectId,
+//         //         ref: 'affreport',
+//         //     },
+//         // ],
+//     })
+// })()
 
 //
 // AffReportDaily.create({

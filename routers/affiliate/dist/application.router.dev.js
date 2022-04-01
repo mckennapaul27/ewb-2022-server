@@ -31,13 +31,18 @@ var _require6 = require('../../utils/sib-helpers'),
     sendEmail = _require6.sendEmail;
 
 var _require7 = require('../../models/common'),
-    Quarter = _require7.Quarter; // POST /affiliate/application/create
+    Quarter = _require7.Quarter,
+    User = _require7.User;
+
+var _require8 = require('../../utils/notifications-list'),
+    hasApplied = _require8.hasApplied; // POST /affiliate/application/create
 
 
 router.post('/create', passport.authenticate('jwt', {
   session: false
 }), function _callee(req, res) {
-  var token, applications, partner;
+  var token, applications, partner, _ref, locale, _partner;
+
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
@@ -45,7 +50,7 @@ router.post('/create', passport.authenticate('jwt', {
           token = getToken(req.headers);
 
           if (!token) {
-            _context.next = 23;
+            _context.next = 30;
             break;
           }
 
@@ -56,62 +61,73 @@ router.post('/create', passport.authenticate('jwt', {
         case 5:
           applications = _context.sent;
           _context.next = 8;
-          return regeneratorRuntime.awrap(applications.map(function (a) {
-            return createAffNotification({
-              message: "Submitted application for ".concat(a.brand, " account ").concat(a.accountId),
-              type: 'Application',
-              belongsTo: a.belongsTo
-            });
-          }));
+          return regeneratorRuntime.awrap(AffPartner.findById(applications[0].belongsTo).select('belongsTo').lean());
 
         case 8:
+          partner = _context.sent;
+          _context.next = 11;
+          return regeneratorRuntime.awrap(User.findById(partner.belongsTo).select('locale').lean());
+
+        case 11:
+          _ref = _context.sent;
+          locale = _ref.locale;
+          _context.next = 15;
+          return regeneratorRuntime.awrap(applications.map(function (a) {
+            createAffNotification(hasApplied({
+              accountId: a.accountId,
+              _id: a.belongsTo,
+              locale: locale
+            }));
+          }));
+
+        case 15:
           if (!(applications.length > 1)) {
-            _context.next = 14;
+            _context.next = 21;
             break;
           }
 
-          _context.next = 11;
+          _context.next = 18;
           return regeneratorRuntime.awrap(AffPartner.findById(applications[0].belongsTo).select('email'));
 
-        case 11:
-          partner = _context.sent;
-          _context.next = 14;
+        case 18:
+          _partner = _context.sent;
+          _context.next = 21;
           return regeneratorRuntime.awrap(sendEmail({
             templateId: 67,
             smtpParams: {
               COUNT: applications.length
             },
             tags: ['Application'],
-            email: partner.email
+            email: _partner.email
           }));
 
-        case 14:
+        case 21:
           return _context.abrupt("return", res.status(201).send(applications));
 
-        case 17:
-          _context.prev = 17;
+        case 24:
+          _context.prev = 24;
           _context.t0 = _context["catch"](2);
           console.log(_context.t0);
           return _context.abrupt("return", res.status(400).send({
             success: false
           }));
 
-        case 21:
-          _context.next = 24;
+        case 28:
+          _context.next = 31;
           break;
 
-        case 23:
+        case 30:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 24:
+        case 31:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[2, 17]]);
+  }, null, null, [[2, 24]]);
 }); // GET /affiliate/application/request-upgrade/:_id`
 
 router.get('/request-upgrade/:_id', passport.authenticate('jwt', {

@@ -2,8 +2,13 @@
 
 var mongoose = require('mongoose');
 
-var _require = require('../../utils/sib-helpers'),
-    sendEmail = _require.sendEmail;
+var _require = require('../../utils/notifications-list'),
+    affUpgradeEligible = _require.affUpgradeEligible;
+
+var _require2 = require('../../utils/sib-helpers'),
+    sendEmail = _require2.sendEmail;
+
+var AffApplication = require('./AffApplication');
 
 var Schema = mongoose.Schema;
 
@@ -11,35 +16,21 @@ var AffNotification = require('./AffNotification');
 
 var AffPartner = require('./AffPartner');
 
-var _require2 = require('../common/index'),
-    User = _require2.User;
-
-var dayjs = require('dayjs');
-
-var _require3 = require('../../utils/notifications-list'),
-    affAccountAdded = _require3.affAccountAdded;
-
-var AffAccount = new Schema({
-  brand: String,
+var AffUpgrade = new Schema({
+  level: String,
+  quarter: String,
   accountId: String,
-  country: String,
-  dateAdded: {
-    type: Number,
-    "default": Date.now
-  },
-  monthAdded: String,
-  reports: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'affreport'
-  }],
+  brand: String,
+  startDate: Number,
+  endDate: Number,
   belongsTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'affpartner',
+    ref: 'affapplication',
     required: false
   }
 });
-AffAccount.pre('save', function _callee(next) {
-  var a, partner, _ref, locale;
+AffUpgrade.pre('save', function _callee(next) {
+  var a, isNew, accountId, quarter, brand, level, partner, _ref, locale;
 
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
@@ -47,14 +38,14 @@ AffAccount.pre('save', function _callee(next) {
         case 0:
           // https://medium.com/@justinmanalad/pre-save-hooks-in-mongoose-js-cf1c0959dba2
           a = this;
-          _context.prev = 1;
+          isNew = a.isNew, accountId = a.accountId, quarter = a.quarter, brand = a.brand, level = a.level;
+          _context.prev = 2;
 
-          if (!a.isNew) {
+          if (!isNew) {
             _context.next = 14;
             break;
           }
 
-          a.monthAdded = dayjs().format('MMMM YYYY');
           _context.next = 6;
           return regeneratorRuntime.awrap(AffPartner.findById(a.belongsTo).select('email belongsTo').lean());
 
@@ -67,21 +58,24 @@ AffAccount.pre('save', function _callee(next) {
           _ref = _context.sent;
           locale = _ref.locale;
           _context.next = 13;
-          return regeneratorRuntime.awrap(createAffNotification( // updated 1st April
-          affAccountAdded({
+          return regeneratorRuntime.awrap(createAffNotification(affUpgradeEligible({
             locale: locale,
-            belongsTo: a.belongsTo,
-            accountId: a.accountId
+            accountId: accountId,
+            level: level,
+            quarter: quarter,
+            belongsTo: a.belongsTo
           })));
 
         case 13:
           // await sendEmail({
-          //     templateId: 22,
+          //     templateId: 73,
           //     smtpParams: {
-          //         BRAND: a.brand,
-          //         ACCOUNTID: a.accountId,
+          //         BRAND: brand,
+          //         ACCOUNTID: accountId,
+          //         QUARTER: quarter,
+          //         LEVEL: level,
           //     },
-          //     tags: ['Account'],
+          //     tags: ['Application'],
           //     email,
           // })
           next();
@@ -92,7 +86,7 @@ AffAccount.pre('save', function _callee(next) {
 
         case 16:
           _context.prev = 16;
-          _context.t0 = _context["catch"](1);
+          _context.t0 = _context["catch"](2);
           next();
 
         case 19:
@@ -100,7 +94,7 @@ AffAccount.pre('save', function _callee(next) {
           return _context.stop();
       }
     }
-  }, null, this, [[1, 16]]);
+  }, null, this, [[2, 16]]);
 });
 
 function createAffNotification(_ref2) {
@@ -124,4 +118,4 @@ function createAffNotification(_ref2) {
   });
 }
 
-module.exports = mongoose.model('affaccount', AffAccount);
+module.exports = mongoose.model('affupgrade', AffUpgrade);

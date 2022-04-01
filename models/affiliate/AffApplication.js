@@ -3,7 +3,6 @@ const Schema = mongoose.Schema
 
 const { defaultSiteId } = require('../../config/deals')
 const dayjs = require('dayjs')
-const Brand = require('../common/Brand')
 
 const AffApplication = new Schema({
     brand: String,
@@ -45,14 +44,5 @@ const initialUpgrade = {
     Skrill: 'Fast Silver',
     ecoPayz: 'Gold',
 }
-
-// async function createAffNotification ({ message, type, belongsTo }) {
-//     await AffNotification.create({ message, type, belongsTo });
-// };
-
-// AffApplication.pre('findOneAndUpdate', async function () { // https://stackoverflow.com/questions/44614734/modifying-mongoose-document-on-pre-hook-of-findoneandupdate
-//     const docToUpdate = await this.model.findOne(this.getFilter());
-//     console.log('docToUpdate: ', docToUpdate);
-// });
 
 module.exports = mongoose.model('affapplication', AffApplication)

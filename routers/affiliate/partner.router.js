@@ -9,10 +9,16 @@ const {
     AffNotification,
     AffApproval,
 } = require('../../models/affiliate/index')
+const { User } = require('../../models/common')
+
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions')
 const { createAffNotification } = require('../../utils/notifications-functions')
 const { createAdminJob } = require('../../utils/admin-job-functions')
 const { sendEmail } = require('../../utils/sib-helpers')
+const {
+    updatedPaymentDetails,
+    linksRequested,
+} = require('../../utils/notifications-list')
 
 // POST /affiliate/partner/fetch-details/:_id
 router.post(
@@ -49,20 +55,17 @@ router.post(
                 const partner = await AffPartner.findByIdAndUpdate(
                     req.params._id,
                     { paymentDetails: req.body.paymentDetails },
-                    { new: true, select: 'paymentDetails email' }
+                    { new: true, select: 'paymentDetails email belongsTo' }
                 )
-                createAffNotification({
-                    message: `You have updated your ${req.body.brand} payment details`,
-                    type: 'Partner',
-                    belongsTo: req.params._id,
-                })
-                // createAdminJob({
-                //     message: `Partner has updated their payment details`,
-                //     completed: true,
-                //     status: 'Completed',
-                //     partner: req.params._id,
-                //     type: 'Details'
-                // });
+                const { locale } = await User.findById(partner.belongsTo)
+                createAffNotification(
+                    updatedPaymentDetails({
+                        locale,
+                        brand: req.body.brand,
+                        belongsTo: req.params._id,
+                    })
+                )
+
                 sendEmail({
                     // send email ( doesn't matter if belongsTo or not because it is just submitting );
                     templateId: 19,
@@ -93,13 +96,16 @@ router.post(
                 const partner = await AffPartner.findByIdAndUpdate(
                     req.params._id,
                     { brandAssets: req.body.brandAssets },
-                    { new: true, select: 'brandAssets email epi' }
+                    { new: true, select: 'brandAssets email epi belongsTo' }
                 )
-                createAffNotification({
-                    message: `You have requested additional links for ${req.body.brand}`,
-                    type: 'Partner',
-                    belongsTo: req.params._id,
-                })
+                const { locale } = await User.findById(partner.belongsTo)
+                createAffNotification(
+                    linksRequested({
+                        brand: req.body.brand,
+                        locale,
+                        belongsTo: req.params._id,
+                    })
+                )
                 createAdminJob({
                     message: `Partner ${partner.email} / ${partner.epi} has requested additional links for ${req.body.brand}`,
                     status: 'Pending',
@@ -150,11 +156,6 @@ router.post(
                     accountId,
                     name,
                     belongsTo: _id,
-                })
-                createAffNotification({
-                    message: `You have requested approval to refer Bangladeshi and Indian clients`,
-                    type: 'Partner',
-                    belongsTo: req.params._id,
                 })
                 createAdminJob({
                     message: `Partner ${partner.email} / ${partner.epi} requested approval for BD and IN`,

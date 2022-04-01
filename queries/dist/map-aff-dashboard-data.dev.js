@@ -40,20 +40,17 @@ var _require2 = require('../models/affiliate/index'),
 
 var lucyNetwork = [566, 583, 671, 753, 1099, 3636, 585, 578, 577, 585, 585, 3654, 703, 911, 805];
 
-var _require3 = require('../utils/notifications-functions'),
-    createAffNotification = _require3.createAffNotification;
+var _require3 = require('../utils/admin-job-functions'),
+    createAdminJob = _require3.createAdminJob;
 
-var _require4 = require('../utils/admin-job-functions'),
-    createAdminJob = _require4.createAdminJob;
+var _require4 = require('../utils/balance-helpers'),
+    updateAffiliateBalance = _require4.updateAffiliateBalance;
 
-var _require5 = require('../utils/balance-helpers'),
-    updateAffiliateBalance = _require5.updateAffiliateBalance;
+var _require5 = require('../utils/quarter-helpers'),
+    setAffQuarterData = _require5.setAffQuarterData;
 
-var _require6 = require('../utils/quarter-helpers'),
-    setAffQuarterData = _require6.setAffQuarterData;
-
-var _require7 = require('../utils/quarter-data'),
-    getQuarterData = _require7.getQuarterData;
+var _require6 = require('../utils/quarter-data'),
+    getQuarterData = _require6.getQuarterData;
 
 var updatePartnerStats = function updatePartnerStats(brand, month, date) {
   var arr, processStatsOne;
@@ -183,19 +180,6 @@ var updatePartnerStats = function updatePartnerStats(brand, month, date) {
                   }, Promise.resolve());
                   console.log('Processing partner stats [5] ...');
                   processStatsFive.then(function () {
-                    // createAffNotification({
-                    //     message: `${brand} data was fetched on ${dayjs().format(
-                    //         'LLLL'
-                    //     )}`,
-                    //     type: 'Report',
-                    //     isGeneral: true,
-                    // })
-                    // createAdminJob({
-                    //     message: `${brand} reports and dashboard data was fetched on ${dayjs().format('LLLL')}`,
-                    //     completed: true,
-                    //     status: 'Completed',
-                    //     type: 'Reports'
-                    // });
                     console.log('Completed partner data ... ');
                   });
                 });

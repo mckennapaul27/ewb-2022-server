@@ -294,6 +294,11 @@ var quarterMonths = [{
   quarter: 1,
   expires: quarterOne[2]
 }];
+var initialUpgrade = {
+  Neteller: 'Fast Silver',
+  Skrill: 'Fast Silver',
+  ecoPayz: 'Gold'
+};
 module.exports = {
   defaultDealOne: defaultDealOne,
   defaultDealTwo: defaultDealTwo,
@@ -305,5 +310,6 @@ module.exports = {
   setCurrency: setCurrency,
   nextUpgrades: nextUpgrades,
   defaultSiteId: defaultSiteId,
-  defaultBalances: defaultBalances
+  defaultBalances: defaultBalances,
+  initialUpgrade: initialUpgrade
 };

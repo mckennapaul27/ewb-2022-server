@@ -16,17 +16,24 @@ var _require2 = require('../../models/affiliate/index'),
     AffNotification = _require2.AffNotification,
     AffApproval = _require2.AffApproval;
 
-var _require3 = require('../../utils/helper-functions'),
-    mapRegexQueryFromObj = _require3.mapRegexQueryFromObj;
+var _require3 = require('../../models/common'),
+    User = _require3.User;
 
-var _require4 = require('../../utils/notifications-functions'),
-    createAffNotification = _require4.createAffNotification;
+var _require4 = require('../../utils/helper-functions'),
+    mapRegexQueryFromObj = _require4.mapRegexQueryFromObj;
 
-var _require5 = require('../../utils/admin-job-functions'),
-    createAdminJob = _require5.createAdminJob;
+var _require5 = require('../../utils/notifications-functions'),
+    createAffNotification = _require5.createAffNotification;
 
-var _require6 = require('../../utils/sib-helpers'),
-    sendEmail = _require6.sendEmail; // POST /affiliate/partner/fetch-details/:_id
+var _require6 = require('../../utils/admin-job-functions'),
+    createAdminJob = _require6.createAdminJob;
+
+var _require7 = require('../../utils/sib-helpers'),
+    sendEmail = _require7.sendEmail;
+
+var _require8 = require('../../utils/notifications-list'),
+    updatedPaymentDetails = _require8.updatedPaymentDetails,
+    linksRequested = _require8.linksRequested; // POST /affiliate/partner/fetch-details/:_id
 
 
 router.post('/fetch-details/:_id', passport.authenticate('jwt', {
@@ -81,7 +88,8 @@ router.post('/fetch-details/:_id', passport.authenticate('jwt', {
 router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
   session: false
 }), function _callee2(req, res) {
-  var token, partner;
+  var token, partner, _ref, locale;
+
   return regeneratorRuntime.async(function _callee2$(_context2) {
     while (1) {
       switch (_context2.prev = _context2.next) {
@@ -89,7 +97,7 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
           token = getToken(req.headers);
 
           if (!token) {
-            _context2.next = 16;
+            _context2.next = 20;
             break;
           }
 
@@ -99,23 +107,22 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
             paymentDetails: req.body.paymentDetails
           }, {
             "new": true,
-            select: 'paymentDetails email'
+            select: 'paymentDetails email belongsTo'
           }));
 
         case 5:
           partner = _context2.sent;
-          createAffNotification({
-            message: "You have updated your ".concat(req.body.brand, " payment details"),
-            type: 'Partner',
-            belongsTo: req.params._id
-          }); // createAdminJob({
-          //     message: `Partner has updated their payment details`,
-          //     completed: true,
-          //     status: 'Completed',
-          //     partner: req.params._id,
-          //     type: 'Details'
-          // });
+          _context2.next = 8;
+          return regeneratorRuntime.awrap(User.findById(partner.belongsTo));
 
+        case 8:
+          _ref = _context2.sent;
+          locale = _ref.locale;
+          createAffNotification(updatedPaymentDetails({
+            locale: locale,
+            brand: req.body.brand,
+            belongsTo: req.params._id
+          }));
           sendEmail({
             // send email ( doesn't matter if belongsTo or not because it is just submitting );
             templateId: 19,
@@ -127,35 +134,36 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
           });
           return _context2.abrupt("return", res.status(200).send(partner));
 
-        case 11:
-          _context2.prev = 11;
+        case 15:
+          _context2.prev = 15;
           _context2.t0 = _context2["catch"](2);
           return _context2.abrupt("return", res.status(400).send({
             success: false
           }));
 
-        case 14:
-          _context2.next = 17;
+        case 18:
+          _context2.next = 21;
           break;
 
-        case 16:
+        case 20:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 17:
+        case 21:
         case "end":
           return _context2.stop();
       }
     }
-  }, null, null, [[2, 11]]);
+  }, null, null, [[2, 15]]);
 }); // POST /affiliate/partner/request-links/:_id
 
 router.post('/request-links/:_id', passport.authenticate('jwt', {
   session: false
 }), function _callee3(req, res) {
-  var token, partner;
+  var token, partner, _ref2, locale;
+
   return regeneratorRuntime.async(function _callee3$(_context3) {
     while (1) {
       switch (_context3.prev = _context3.next) {
@@ -163,7 +171,7 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
           token = getToken(req.headers);
 
           if (!token) {
-            _context3.next = 17;
+            _context3.next = 21;
             break;
           }
 
@@ -173,16 +181,22 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
             brandAssets: req.body.brandAssets
           }, {
             "new": true,
-            select: 'brandAssets email epi'
+            select: 'brandAssets email epi belongsTo'
           }));
 
         case 5:
           partner = _context3.sent;
-          createAffNotification({
-            message: "You have requested additional links for ".concat(req.body.brand),
-            type: 'Partner',
+          _context3.next = 8;
+          return regeneratorRuntime.awrap(User.findById(partner.belongsTo));
+
+        case 8:
+          _ref2 = _context3.sent;
+          locale = _ref2.locale;
+          createAffNotification(linksRequested({
+            brand: req.body.brand,
+            locale: locale,
             belongsTo: req.params._id
-          });
+          }));
           createAdminJob({
             message: "Partner ".concat(partner.email, " / ").concat(partner.epi, " has requested additional links for ").concat(req.body.brand),
             status: 'Pending',
@@ -202,30 +216,30 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
             msg: "Requested additional links for ".concat(req.body.brand)
           }));
 
-        case 12:
-          _context3.prev = 12;
+        case 16:
+          _context3.prev = 16;
           _context3.t0 = _context3["catch"](2);
           return _context3.abrupt("return", res.status(400).send({
             success: false,
             msg: "Request was not successful. Please contact\n                support"
           }));
 
-        case 15:
-          _context3.next = 18;
+        case 19:
+          _context3.next = 22;
           break;
 
-        case 17:
+        case 21:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 18:
+        case 22:
         case "end":
           return _context3.stop();
       }
     }
-  }, null, null, [[2, 12]]);
+  }, null, null, [[2, 16]]);
 }); // POST /affiliate/partner/request-approval/:_id
 
 router.post('/request-approval/:_id', passport.authenticate('jwt', {
@@ -240,7 +254,7 @@ router.post('/request-approval/:_id', passport.authenticate('jwt', {
           token = getToken(req.headers);
 
           if (!token) {
-            _context4.next = 20;
+            _context4.next = 19;
             break;
           }
 
@@ -266,11 +280,6 @@ router.post('/request-approval/:_id', passport.authenticate('jwt', {
           }));
 
         case 9:
-          createAffNotification({
-            message: "You have requested approval to refer Bangladeshi and Indian clients",
-            type: 'Partner',
-            belongsTo: req.params._id
-          });
           createAdminJob({
             message: "Partner ".concat(partner.email, " / ").concat(partner.epi, " requested approval for BD and IN"),
             status: 'Pending',
@@ -289,29 +298,29 @@ router.post('/request-approval/:_id', passport.authenticate('jwt', {
           });
           return _context4.abrupt("return", res.status(200).send(partner));
 
-        case 15:
-          _context4.prev = 15;
+        case 14:
+          _context4.prev = 14;
           _context4.t0 = _context4["catch"](2);
           return _context4.abrupt("return", res.status(400).send({
             success: false
           }));
 
-        case 18:
-          _context4.next = 21;
+        case 17:
+          _context4.next = 20;
           break;
 
-        case 20:
+        case 19:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 21:
+        case 20:
         case "end":
           return _context4.stop();
       }
     }
-  }, null, null, [[2, 15]]);
+  }, null, null, [[2, 14]]);
 }); // POST /affiliate/partner/fetch-notifications?pageSize=${pageSize}&pageIndex=${pageIndex}
 
 router.post('/fetch-notifications', passport.authenticate('jwt', {

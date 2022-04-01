@@ -14,7 +14,8 @@ const { mapRegexQueryFromObj } = require('../../utils/helper-functions')
 const dayjs = require('dayjs')
 const { createAffNotification } = require('../../utils/notifications-functions')
 const { sendEmail } = require('../../utils/sib-helpers')
-const { Quarter } = require('../../models/common')
+const { Quarter, User } = require('../../models/common')
+const { hasApplied } = require('../../utils/notifications-list')
 
 // POST /affiliate/application/create
 router.post(
@@ -29,13 +30,24 @@ router.post(
                 const applications = await AffApplication.create(
                     req.body.applications
                 ) // https://mongoosejs.com/docs/api.html#model_Model.create
-                await applications.map((a) =>
-                    createAffNotification({
-                        message: `Submitted application for ${a.brand} account ${a.accountId}`,
-                        type: 'Application',
-                        belongsTo: a.belongsTo,
-                    })
+                const partner = await AffPartner.findById(
+                    applications[0].belongsTo
                 )
+                    .select('belongsTo')
+                    .lean()
+                const { locale } = await User.findById(partner.belongsTo)
+                    .select('locale')
+                    .lean()
+                await applications.map((a) => {
+                    createAffNotification(
+                        hasApplied({
+                            accountId: a.accountId,
+                            _id: a.belongsTo,
+                            locale,
+                        })
+                    )
+                })
+
                 if (applications.length > 1) {
                     // if greater than 1 then it is a bulk submit
                     const partner = await AffPartner.findById(

@@ -3,7 +3,9 @@ const { sendEmail } = require('../../utils/sib-helpers')
 const Schema = mongoose.Schema
 const AffNotification = require('./AffNotification')
 const AffPartner = require('./AffPartner')
+const { User } = require('../common/index')
 const dayjs = require('dayjs')
+const { affAccountAdded } = require('../../utils/notifications-list')
 
 const AffAccount = new Schema({
     brand: String,
@@ -30,14 +32,22 @@ AffAccount.pre('save', async function (next) {
     try {
         if (a.isNew) {
             a.monthAdded = dayjs().format('MMMM YYYY')
-            const { email } = await AffPartner.findById(a.belongsTo)
-                .select('email')
+            const partner = await AffPartner.findById(a.belongsTo)
+                .select('email belongsTo')
                 .lean()
-            // await createAffNotification({
-            //     message: `Account ${a.accountId} has been added to your dashboard`,
-            //     type: 'Account',
-            //     belongsTo: a.belongsTo,
-            // })
+
+            const { locale } = await User.findById(partner.belongsTo)
+                .select('locale')
+                .lean()
+
+            await createAffNotification(
+                // updated 1st April
+                affAccountAdded({
+                    locale,
+                    belongsTo: a.belongsTo,
+                    accountId: a.accountId,
+                })
+            )
             // await sendEmail({
             //     templateId: 22,
             //     smtpParams: {

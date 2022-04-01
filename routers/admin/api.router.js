@@ -30,6 +30,7 @@ const {
     AffNotification,
 } = require('../../models/affiliate/index')
 const { Application, ActiveUser } = require('../../models/personal/index')
+const { User } = require('../../models/common/index')
 const {
     createAccountReport,
     createAffAccAffReport,
@@ -226,7 +227,12 @@ router.post(
                                     const partner = await AffPartner.findById(
                                         belongsTo
                                     )
-                                        .select('email')
+                                        .select('email belongsTo')
+                                        .lean()
+                                    const { locale } = await User.findById(
+                                        partner.belongsTo
+                                    )
+                                        .select('locale')
                                         .lean()
 
                                     // /* emails section */
@@ -237,6 +243,7 @@ router.post(
                                                 brand,
                                                 accountId,
                                                 belongsTo,
+                                                locale,
                                             })
                                         )
                                         const { initialUpgrade } =
@@ -261,6 +268,7 @@ router.post(
                                                 brand,
                                                 accountId,
                                                 belongsTo,
+                                                locale,
                                             })
                                         )
                                         await sendEmail({
@@ -280,6 +288,7 @@ router.post(
                                                 brand,
                                                 accountId,
                                                 belongsTo,
+                                                locale,
                                             })
                                         ) // Do not send email as covering NN below
                                         await sendEmail({
