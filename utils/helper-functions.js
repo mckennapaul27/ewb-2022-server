@@ -1,32 +1,82 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
+const { AffPartner } = require('../models/affiliate')
+const { User } = require('../models/common')
 
-const keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name', 'message', 'upgradeStatus'];
-const keysToConvertToMongooseId = ['belongsTo', 'belongsToPartner', 'belongsToActiveUser'];
-const populatedFieldQueries = ['partner.epi', 'belongsTo.epi', 'belongsToPartner.epi', 'belongsTo.belongsTo.userId'];
+const keysToConvertToRegex = [
+    'accountId',
+    'account.accountId',
+    'brand',
+    'paymentAccount',
+    'email',
+    'name',
+    'message',
+    'upgradeStatus',
+]
+const keysToConvertToMongooseId = [
+    'belongsTo',
+    'belongsToPartner',
+    'belongsToActiveUser',
+]
+const populatedFieldQueries = [
+    'partner.epi',
+    'belongsTo.epi',
+    'belongsToPartner.epi',
+    'belongsTo.belongsTo.userId',
+]
 
-const mapRegexQueryFromObj = (query) => Object.keys(query)
-.filter(key => !populatedFieldQueries.includes(key))
-.reduce((acc, item) => keysToConvertToRegex.includes(item) 
-? (acc[item] = new RegExp(query[item]), acc) 
-: (acc[item] = query[item], acc), {});
+const mapRegexQueryFromObj = (query) =>
+    Object.keys(query)
+        .filter((key) => !populatedFieldQueries.includes(key))
+        .reduce(
+            (acc, item) =>
+                keysToConvertToRegex.includes(item)
+                    ? ((acc[item] = new RegExp(query[item])), acc)
+                    : ((acc[item] = query[item]), acc),
+            {}
+        )
 
-const mapQueryForPopulate = (query) => Object.keys(query)
-.filter(key => populatedFieldQueries.includes(key))
-.reduce((acc, item) => (acc[item.slice(item.lastIndexOf('.') + 1)] = query[item], acc), {});
+const mapQueryForPopulate = (query) =>
+    Object.keys(query)
+        .filter((key) => populatedFieldQueries.includes(key))
+        .reduce(
+            (acc, item) => (
+                (acc[item.slice(item.lastIndexOf('.') + 1)] = query[item]), acc
+            ),
+            {}
+        )
 
 const mapQueryForAggregate = (query) => {
     const aggregateMap = Object.keys(query)
-    .filter(key => !populatedFieldQueries.includes(key))
-    .reduce((acc, item) => keysToConvertToMongooseId.includes(item) 
-    ? (acc[item] = mongoose.Types.ObjectId(query[item]), acc) 
-    : (acc[item] = query[item], acc), {});
+        .filter((key) => !populatedFieldQueries.includes(key))
+        .reduce(
+            (acc, item) =>
+                keysToConvertToMongooseId.includes(item)
+                    ? ((acc[item] = mongoose.Types.ObjectId(query[item])), acc)
+                    : ((acc[item] = query[item]), acc),
+            {}
+        )
     return mapRegexQueryFromObj(aggregateMap)
-};
+}
 
-const isPopulatedValue = (query) => Object.keys(query).some(key => populatedFieldQueries.includes(key));
+const isPopulatedValue = (query) =>
+    Object.keys(query).some((key) => populatedFieldQueries.includes(key))
 
-const formatEpi = (epi) => parseInt(epi.split('').map(b => parseInt(b)).filter(b => b || b === 0).join(''));
+const formatEpi = (epi) =>
+    parseInt(
+        epi
+            .split('')
+            .map((b) => parseInt(b))
+            .filter((b) => b || b === 0)
+            .join('')
+    )
 
+const getLocaleFromPartnerUser = async (_id) => {
+    const partner = await AffPartner.findById(_id).select('belongsTo').lean()
+    const { locale } = await User.findById(partner.belongsTo)
+        .select('locale')
+        .lean()
+    return locale
+}
 
 // const memoryData = process.memoryUsage()
 
@@ -37,28 +87,24 @@ const formatEpi = (epi) => parseInt(epi.split('').map(b => parseInt(b)).filter(b
 //     external: `${formatMemmoryUsage(memoryData.external)} -> V8 external memory`,
 // }
 
-
-
-
 module.exports = {
     mapRegexQueryFromObj,
     mapQueryForAggregate,
     isPopulatedValue,
     mapQueryForPopulate,
-    formatEpi
+    formatEpi,
+    getLocaleFromPartnerUser,
 }
 
-// REGEX ONLY WORKS ON STRINGS - NOT NUMBERS 
+// REGEX ONLY WORKS ON STRINGS - NOT NUMBERS
 // https://stackoverflow.com/questions/30722650/mongoose-find-regexp-for-number-type-field
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
 
-
-
 // const r = await AffReport.bulkWrite([ // This function does not trigger any middleware, neither save(), nor update(). If you need to trigger save() middleware for every document use create() instead.
-//     { 
-//         updateOne: { 
-//             filter: { 'account.accountId': accountId, month }, 
-//             update: { 
+//     {
+//         updateOne: {
+//             filter: { 'account.accountId': accountId, month },
+//             update: {
 //                 $set: {
 //                     date,
 //                     month,
@@ -71,7 +117,7 @@ module.exports = {
 //                     // belongsTo: account._id,
 //                     // belongsToPartner: account.belongsTo,
 //                     account: {
-//                         accountId,  
+//                         accountId,
 //                         deposits,
 //                         transValue,
 //                         commission,

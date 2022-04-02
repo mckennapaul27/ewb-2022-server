@@ -19,7 +19,8 @@ var _require3 = require('../../models/common'),
     User = _require3.User;
 
 var _require4 = require('../../utils/helper-functions'),
-    mapRegexQueryFromObj = _require4.mapRegexQueryFromObj;
+    mapRegexQueryFromObj = _require4.mapRegexQueryFromObj,
+    getLocaleFromPartnerUser = _require4.getLocaleFromPartnerUser;
 
 var _require5 = require('../../utils/notifications-functions'),
     createAffNotification = _require5.createAffNotification;
@@ -34,7 +35,14 @@ var _require8 = require('../../utils/sib-helpers'),
     sendEmail = _require8.sendEmail;
 
 var _require9 = require('../../utils/notifications-list'),
-    requestedPayment = _require9.requestedPayment; // /affiliate/payment/create-payment/:_id
+    requestedPayment = _require9.requestedPayment;
+
+var _require10 = require('../../utils/error-messages'),
+    errInsufficientFunds = _require10.errInsufficientFunds,
+    serverErr = _require10.serverErr;
+
+var _require11 = require('../../utils/success-messages'),
+    msgPaymentRequest = _require11.msgPaymentRequest; // /affiliate/payment/create-payment/:_id
 
 
 router.post('/create-payment/:_id', passport.authenticate('jwt', {
@@ -42,8 +50,7 @@ router.post('/create-payment/:_id', passport.authenticate('jwt', {
 }), createPayment, updateBalances); // returns activeUser
 
 function createPayment(req, res, next) {
-  var token, balance, newPayment, currency, amount, brand, paymentAccount, belongsTo, partner, _ref, locale, email, cryptos;
-
+  var token, balance, locale, newPayment, currency, amount, brand, paymentAccount, belongsTo, email, cryptos;
   return regeneratorRuntime.async(function createPayment$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
@@ -51,7 +58,7 @@ function createPayment(req, res, next) {
           token = getToken(req.headers);
 
           if (!token) {
-            _context.next = 30;
+            _context.next = 27;
             break;
           }
 
@@ -64,18 +71,23 @@ function createPayment(req, res, next) {
           };
 
           balance = _context.sent.stats.balance.find(_context.t0).amount;
+          _context.next = 8;
+          return regeneratorRuntime.awrap(getLocaleFromPartnerUser(req.params._id));
 
-          if (!(balance < req.body.amount)) {
-            _context.next = 8;
+        case 8:
+          locale = _context.sent;
+
+          if (!(balance < req.body.amount || req.body.amount === 0)) {
+            _context.next = 11;
             break;
           }
 
-          return _context.abrupt("return", res.status(403).send({
-            msg: 'You have insufficient funds to request this amount'
-          }));
+          return _context.abrupt("return", res.status(403).send(errInsufficientFunds({
+            locale: locale
+          })));
 
-        case 8:
-          _context.next = 10;
+        case 11:
+          _context.next = 13;
           return regeneratorRuntime.awrap(AffPayment.create({
             amount: req.body.amount,
             currency: req.body.currency,
@@ -84,20 +96,9 @@ function createPayment(req, res, next) {
             belongsTo: req.params._id
           }));
 
-        case 10:
+        case 13:
           newPayment = _context.sent;
           currency = newPayment.currency, amount = newPayment.amount, brand = newPayment.brand, paymentAccount = newPayment.paymentAccount, belongsTo = newPayment.belongsTo;
-          _context.next = 14;
-          return regeneratorRuntime.awrap(AffPartner.findById(belongsTo).select('belongsTo').lean());
-
-        case 14:
-          partner = _context.sent;
-          _context.next = 17;
-          return regeneratorRuntime.awrap(User.findById(partner.belongsTo));
-
-        case 17:
-          _ref = _context.sent;
-          locale = _ref.locale;
           createAffNotification(requestedPayment({
             symbol: currency === 'USD' ? '$' : '€',
             amount: amount,
@@ -106,13 +107,13 @@ function createPayment(req, res, next) {
             belongsTo: belongsTo,
             locale: locale
           }));
-          _context.next = 22;
+          _context.next = 18;
           return regeneratorRuntime.awrap(AffPartner.findById(req.params._id).select('belongsTo').populate({
             path: 'belongsTo',
             select: 'email'
           }));
 
-        case 22:
+        case 18:
           email = _context.sent.belongsTo.email;
           sendEmail({
             // send email ( doesn't matter if belongsTo or not because it is just submitting );
@@ -145,18 +146,19 @@ function createPayment(req, res, next) {
             });
           }
 
+          req.locale = locale;
           req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
 
           next();
-          _context.next = 31;
+          _context.next = 28;
           break;
 
-        case 30:
+        case 27:
           return _context.abrupt("return", res.status(403).send({
             msg: 'Unauthorised'
           }));
 
-        case 31:
+        case 28:
         case "end":
           return _context.stop();
       }
@@ -169,14 +171,16 @@ function updateBalances(req, res) {
   return updateAffiliateBalance({
     _id: req.params._id
   }).then(function () {
-    return res.status(201).send({
-      newPayment: req.newPayment,
-      msg: "You have requested ".concat(req.body.currency, " ").concat(req.body.amount.toFixed(2), " ")
-    });
+    return res.status(201).send(msgPaymentRequest({
+      locale: req.locale,
+      currency: req.body.currency,
+      amount: req.body.amount,
+      newPayment: req.newPayment
+    }));
   })["catch"](function () {
-    return res.status(500).send({
-      msg: 'Server error: Please contact support'
-    });
+    return res.status(500).send(serverErr({
+      locale: req.locale
+    }));
   });
 } // POST /affiliate/payment/fetch-payments
 

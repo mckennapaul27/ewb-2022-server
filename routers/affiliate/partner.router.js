@@ -19,6 +19,8 @@ const {
     updatedPaymentDetails,
     linksRequested,
 } = require('../../utils/notifications-list')
+const { msgRequestedLinks } = require('../../utils/success-messages')
+const { errRequestNotSuccess } = require('../../utils/error-messages')
 
 // POST /affiliate/partner/fetch-details/:_id
 router.post(
@@ -120,16 +122,15 @@ router.post(
                     tags: ['Account'],
                     email: partner.email,
                 })
-                return res.status(200).send({
-                    partner,
-                    msg: `Requested additional links for ${req.body.brand}`,
-                })
+                return res.status(200).send(
+                    msgRequestedLinks({
+                        locale,
+                        brand: req.body.brand,
+                        partner,
+                    })
+                )
             } catch (err) {
-                return res.status(400).send({
-                    success: false,
-                    msg: `Request was not successful. Please contact
-                support`,
-                })
+                return res.status(400).send(errRequestNotSuccess({ locale }))
             }
         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
     }

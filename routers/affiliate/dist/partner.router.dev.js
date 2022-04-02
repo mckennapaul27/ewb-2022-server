@@ -33,7 +33,13 @@ var _require7 = require('../../utils/sib-helpers'),
 
 var _require8 = require('../../utils/notifications-list'),
     updatedPaymentDetails = _require8.updatedPaymentDetails,
-    linksRequested = _require8.linksRequested; // POST /affiliate/partner/fetch-details/:_id
+    linksRequested = _require8.linksRequested;
+
+var _require9 = require('../../utils/success-messages'),
+    msgRequestedLinks = _require9.msgRequestedLinks;
+
+var _require10 = require('../../utils/error-messages'),
+    errRequestNotSuccess = _require10.errRequestNotSuccess; // POST /affiliate/partner/fetch-details/:_id
 
 
 router.post('/fetch-details/:_id', passport.authenticate('jwt', {
@@ -88,7 +94,7 @@ router.post('/fetch-details/:_id', passport.authenticate('jwt', {
 router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
   session: false
 }), function _callee2(req, res) {
-  var token, partner, _ref, locale;
+  var token, partner, _ref, _locale;
 
   return regeneratorRuntime.async(function _callee2$(_context2) {
     while (1) {
@@ -117,9 +123,9 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
 
         case 8:
           _ref = _context2.sent;
-          locale = _ref.locale;
+          _locale = _ref.locale;
           createAffNotification(updatedPaymentDetails({
-            locale: locale,
+            locale: _locale,
             brand: req.body.brand,
             belongsTo: req.params._id
           }));
@@ -162,7 +168,7 @@ router.post('/update-payment-details/:_id', passport.authenticate('jwt', {
 router.post('/request-links/:_id', passport.authenticate('jwt', {
   session: false
 }), function _callee3(req, res) {
-  var token, partner, _ref2, locale;
+  var token, partner, _ref2, _locale2;
 
   return regeneratorRuntime.async(function _callee3$(_context3) {
     while (1) {
@@ -191,10 +197,10 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
 
         case 8:
           _ref2 = _context3.sent;
-          locale = _ref2.locale;
+          _locale2 = _ref2.locale;
           createAffNotification(linksRequested({
             brand: req.body.brand,
-            locale: locale,
+            locale: _locale2,
             belongsTo: req.params._id
           }));
           createAdminJob({
@@ -211,18 +217,18 @@ router.post('/request-links/:_id', passport.authenticate('jwt', {
             tags: ['Account'],
             email: partner.email
           });
-          return _context3.abrupt("return", res.status(200).send({
-            partner: partner,
-            msg: "Requested additional links for ".concat(req.body.brand)
-          }));
+          return _context3.abrupt("return", res.status(200).send(msgRequestedLinks({
+            locale: _locale2,
+            brand: req.body.brand,
+            partner: partner
+          })));
 
         case 16:
           _context3.prev = 16;
           _context3.t0 = _context3["catch"](2);
-          return _context3.abrupt("return", res.status(400).send({
-            success: false,
-            msg: "Request was not successful. Please contact\n                support"
-          }));
+          return _context3.abrupt("return", res.status(400).send(errRequestNotSuccess({
+            locale: locale
+          })));
 
         case 19:
           _context3.next = 22;

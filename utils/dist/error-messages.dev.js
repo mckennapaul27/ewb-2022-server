@@ -1,5 +1,14 @@
 "use strict";
 
+var en = require('../locales/en/translation.json');
+
+var es = require('../locales/es/translation.json');
+
+var locales = {
+  en: en,
+  es: es
+};
+
 var err1 = function err1(_ref) {
   var locale = _ref.locale;
 
@@ -302,31 +311,25 @@ var errNoAccountExists = function errNoAccountExists(_ref9) {
 
 var errSibContactExists = function errSibContactExists(_ref10) {
   var locale = _ref10.locale;
-
-  switch (locale) {
-    case 'de':
-      msg = 'You have already subscribed to our newsletter';
-      break;
-
-    case 'es':
-      msg = 'You have already subscribed to our newsletter';
-      break;
-
-    case 'it':
-      msg = 'You have already subscribed to our newsletter';
-      break;
-
-    case 'pl':
-      msg = 'You have already subscribed to our newsletter';
-      break;
-
-    case 'pt':
-      msg = 'You have already subscribed to our newsletter';
-      break;
-
-    default:
-      msg = 'You have already subscribed to our newsletter';
-  }
+  var msg = locales[locale] ? locales[locale]['errSibContactExists'] : locales[locale]['en']; // switch (locale) {
+  //     case 'de':
+  //         msg = 'You have already subscribed to our newsletter'
+  //         break
+  //     case 'es':
+  //         msg = 'You have already subscribed to our newsletter'
+  //         break
+  //     case 'it':
+  //         msg = 'You have already subscribed to our newsletter'
+  //         break
+  //     case 'pl':
+  //         msg = 'You have already subscribed to our newsletter'
+  //         break
+  //     case 'pt':
+  //         msg = 'You have already subscribed to our newsletter'
+  //         break
+  //     default:
+  //         msg = 'You have already subscribed to our newsletter'
+  // }
 
   return {
     msg: msg
@@ -366,6 +369,106 @@ var errInvalidToken = function errInvalidToken(_ref11) {
   };
 };
 
+var errRequestNotSuccess = function errRequestNotSuccess(_ref12) {
+  var locale = _ref12.locale;
+
+  switch (locale) {
+    case 'de':
+      msg = "Request was not successful. Please contact\n            support";
+      break;
+
+    case 'es':
+      msg = "Request was not successful. Please contact\n            support";
+      break;
+
+    case 'it':
+      msg = "Request was not successful. Please contact\n            support";
+      break;
+
+    case 'pl':
+      msg = "Request was not successful. Please contact\n            support";
+      break;
+
+    case 'pt':
+      msg = "Request was not successful. Please contact\n            support";
+      break;
+
+    default:
+      msg = "Request was not successful. Please contact\n            support";
+  }
+
+  return {
+    success: false,
+    msg: msg
+  };
+};
+
+var errInsufficientFunds = function errInsufficientFunds(_ref13) {
+  var locale = _ref13.locale;
+
+  switch (locale) {
+    case 'de':
+      msg = 'You have insufficient funds to request this amount';
+      break;
+
+    case 'es':
+      msg = 'No tiene fondos suficientes para solicitar esta cantidad';
+      break;
+
+    case 'it':
+      msg = 'You have insufficient funds to request this amount';
+      break;
+
+    case 'pl':
+      msg = 'You have insufficient funds to request this amount';
+      break;
+
+    case 'pt':
+      msg = 'You have insufficient funds to request this amount';
+      break;
+
+    default:
+      msg = 'You have insufficient funds to request this amount';
+  }
+
+  return {
+    msg: msg
+  };
+};
+
+var errIncorrectPassword = function errIncorrectPassword(_ref14) {
+  var locale = _ref14.locale;
+
+  switch (locale) {
+    case 'de':
+      msg = 'Authentication failed. Incorrect password';
+      break;
+
+    case 'es':
+      msg = 'La autenticación falló. Contraseña incorrecta';
+      break;
+
+    case 'it':
+      msg = 'Authentication failed. Incorrect password';
+      break;
+
+    case 'pl':
+      msg = 'Authentication failed. Incorrect password';
+      break;
+
+    case 'pt':
+      msg = 'Authentication failed. Incorrect password';
+      break;
+
+    default:
+      msg = 'Authentication failed. Incorrect password';
+  }
+
+  return {
+    msg: msg
+  };
+};
+
 module.exports = {
   err1: err1,
   err2: err2,
@@ -377,5 +480,8 @@ module.exports = {
   serverErr: serverErr,
   errSibContactExists: errSibContactExists,
   errNoAccountExists: errNoAccountExists,
-  errInvalidToken: errInvalidToken
+  errInvalidToken: errInvalidToken,
+  errRequestNotSuccess: errRequestNotSuccess,
+  errInsufficientFunds: errInsufficientFunds,
+  errIncorrectPassword: errIncorrectPassword
 };

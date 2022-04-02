@@ -5,12 +5,20 @@ require('../../auth/passport')(passport)
 const { getToken } = require('../../utils/token.utils')
 const { AffPayment, AffPartner } = require('../../models/affiliate')
 const { User } = require('../../models/common')
-const { mapRegexQueryFromObj } = require('../../utils/helper-functions')
+const {
+    mapRegexQueryFromObj,
+    getLocaleFromPartnerUser,
+} = require('../../utils/helper-functions')
 const { createAffNotification } = require('../../utils/notifications-functions')
 const { createAdminJob } = require('../../utils/admin-job-functions')
 const { updateAffiliateBalance } = require('../../utils/balance-helpers')
 const { sendEmail } = require('../../utils/sib-helpers')
 const { requestedPayment } = require('../../utils/notifications-list')
+const {
+    errInsufficientFunds,
+    serverErr,
+} = require('../../utils/error-messages')
+const { msgPaymentRequest } = require('../../utils/success-messages')
 
 // /affiliate/payment/create-payment/:_id
 router.post(
@@ -28,10 +36,15 @@ async function createPayment(req, res, next) {
         const balance = (
             await AffPartner.findById(req.params._id).select('stats')
         ).stats.balance.find((a) => a.currency === req.body.currency).amount
-        if (balance < req.body.amount)
-            return res.status(403).send({
-                msg: 'You have insufficient funds to request this amount',
-            })
+        const locale = await getLocaleFromPartnerUser(req.params._id)
+
+        if (balance < req.body.amount || req.body.amount === 0) {
+            return res.status(403).send(
+                errInsufficientFunds({
+                    locale,
+                })
+            )
+        }
 
         const newPayment = await AffPayment.create({
             amount: req.body.amount,
@@ -42,10 +55,7 @@ async function createPayment(req, res, next) {
         })
         const { currency, amount, brand, paymentAccount, belongsTo } =
             newPayment
-        const partner = await AffPartner.findById(belongsTo)
-            .select('belongsTo')
-            .lean()
-        const { locale } = await User.findById(partner.belongsTo)
+
         createAffNotification(
             requestedPayment({
                 symbol: currency === 'USD' ? '$' : '€',
@@ -96,6 +106,7 @@ async function createPayment(req, res, next) {
                 email,
             })
         }
+        req.locale = locale
         req.newPayment = newPayment // creates new payment and then adds it to req object before calling return next()
         next()
     } else return res.status(403).send({ msg: 'Unauthorised' })
@@ -104,18 +115,22 @@ async function createPayment(req, res, next) {
 function updateBalances(req, res) {
     // After next() is called on createPayment() it comes next to updateBalances()
     return updateAffiliateBalance({ _id: req.params._id })
-        .then(() =>
-            res.status(201).send({
-                newPayment: req.newPayment,
-                msg: `You have requested ${
-                    req.body.currency
-                } ${req.body.amount.toFixed(2)} `,
-            })
-        )
+        .then(() => {
+            return res.status(201).send(
+                msgPaymentRequest({
+                    locale: req.locale,
+                    currency: req.body.currency,
+                    amount: req.body.amount,
+                    newPayment: req.newPayment,
+                })
+            )
+        })
         .catch(() =>
-            res
-                .status(500)
-                .send({ msg: 'Server error: Please contact support' })
+            res.status(500).send(
+                serverErr({
+                    locale: req.locale,
+                })
+            )
         )
 }
 

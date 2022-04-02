@@ -289,7 +289,7 @@ var msgPaymentRequest = function msgPaymentRequest(_ref9) {
       break;
 
     case 'es':
-      msg = "You have requested ".concat(currency, " ").concat(amount);
+      msg = "Este es requested ".concat(currency, " ").concat(amount);
       break;
 
     case 'it':
@@ -314,6 +314,42 @@ var msgPaymentRequest = function msgPaymentRequest(_ref9) {
   };
 };
 
+var msgRequestedLinks = function msgRequestedLinks(_ref10) {
+  var locale = _ref10.locale,
+      brand = _ref10.brand,
+      partner = _ref10.partner;
+
+  switch (locale) {
+    case 'de':
+      msg = "Requested additional links for ".concat(brand);
+      break;
+
+    case 'es':
+      msg = "Requested additional links for ".concat(brand);
+      break;
+
+    case 'it':
+      msg = "Requested additional links for ".concat(brand);
+      break;
+
+    case 'pl':
+      msg = "Requested additional links for ".concat(brand);
+      break;
+
+    case 'pt':
+      msg = "Requested additional links for ".concat(brand);
+      break;
+
+    default:
+      msg = "Requested additional links for ".concat(brand);
+  }
+
+  return {
+    partner: partner,
+    msg: msg
+  };
+};
+
 module.exports = {
   msgRegistered: msgRegistered,
   msgSubscribed: msgSubscribed,
@@ -323,5 +359,6 @@ module.exports = {
   msgVIPRequestSubmitted: msgVIPRequestSubmitted,
   msgApplicationSubmitted: msgApplicationSubmitted,
   msgPaymentDetailsUpdate: msgPaymentDetailsUpdate,
-  msgPaymentRequest: msgPaymentRequest
+  msgPaymentRequest: msgPaymentRequest,
+  msgRequestedLinks: msgRequestedLinks
 };

@@ -206,7 +206,7 @@ const msgPaymentRequest = ({ locale, currency, amount, newPayment }) => {
             msg = `You have requested ${currency} ${amount}`
             break
         case 'es':
-            msg = `You have requested ${currency} ${amount}`
+            msg = `Este es requested ${currency} ${amount}`
             break
         case 'it':
             msg = `You have requested ${currency} ${amount}`
@@ -226,6 +226,32 @@ const msgPaymentRequest = ({ locale, currency, amount, newPayment }) => {
     }
 }
 
+const msgRequestedLinks = ({ locale, brand, partner }) => {
+    switch (locale) {
+        case 'de':
+            msg = `Requested additional links for ${brand}`
+            break
+        case 'es':
+            msg = `Requested additional links for ${brand}`
+            break
+        case 'it':
+            msg = `Requested additional links for ${brand}`
+            break
+        case 'pl':
+            msg = `Requested additional links for ${brand}`
+            break
+        case 'pt':
+            msg = `Requested additional links for ${brand}`
+            break
+        default:
+            msg = `Requested additional links for ${brand}`
+    }
+    return {
+        partner,
+        msg,
+    }
+}
+
 module.exports = {
     msgRegistered,
     msgSubscribed,
@@ -236,4 +262,5 @@ module.exports = {
     msgApplicationSubmitted,
     msgPaymentDetailsUpdate,
     msgPaymentRequest,
+    msgRequestedLinks,
 }

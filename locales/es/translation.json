@@ -16,7 +16,7 @@
     "err6": "Email ${email} already exists",
     "err7": "There is an existing application for ${accountId}",
     "serverErr": "Server error: Please contact support",
-    "errSibContactExists": "You have already subscribed to our newsletter",
+    "errSibContactExists": "Ya te has suscrito a nuestra newsletter",
     "errInvalidToken": "Password reset token is invalid or has expired",
     "errNoAccountExists": "No account exists with email address ${email}",
     "welcome": "Thank you for registering and welcome to VolumeKings.com",

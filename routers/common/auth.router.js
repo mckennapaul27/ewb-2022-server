@@ -41,6 +41,7 @@ const {
     err7,
     errNoAccountExists,
     errInvalidToken,
+    errIncorrectPassword,
 } = require('../../utils/error-messages')
 const {
     msgRegistered,
@@ -54,6 +55,7 @@ const {
     sibPersonalApplicationSubmit,
     sibForgotPassword,
 } = require('../../utils/sib-transactional-templates')
+const { getLocaleFromPartnerUser } = require('../../utils/helper-functions')
 
 // /common/auth/create-new-user - THIS IS UP-TO-DATE 1/3/22
 router.post('/create-new-user', createUser, createApplication)
@@ -293,7 +295,13 @@ router.post('/user-login', (req, res) => {
                                     .status(200)
                                     .send({ user, token: 'jwt ' + token })
                             ) // we need to include jwt + token rather than just send token on it's on because passport authenticates by looking for jwt in the middleware)
-                    } else return res.status(401).send({ msg: 'Authentication failed. Incorrect password' })
+                    } else {
+                        return res.status(401).send(
+                            errIncorrectPassword({
+                                locale: req.body.locale,
+                            })
+                        )
+                    }
                 })
             }
         })
