@@ -37,5 +37,5 @@
     "affAccountAdded": "Se ha agregado una nueva ID de cuenta, {{accountId}}, a su panel de control",
     "affUpgradeEligible": "La cuenta {{accountId}} es elegible para una actualización VIP de {{level}} por {{quarter}}",
     "reportsHaveUpdated": "Los datos de {{brand}} se obtuvieron el {{day)}",
-    "updatedPaymentDetails": "You have updated your {{brand}} payment details"
+    "updatedPaymentDetails": "Ha actualizado los datos de pago de {{brand}}"
 }

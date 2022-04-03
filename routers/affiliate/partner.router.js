@@ -48,7 +48,7 @@ router.post(
     }
 )
 
-// POST /affiliate/partner/update-partner-payment-details/:_id
+// POST /affiliate/partner/update-payment-details/:_id
 router.post(
     '/update-payment-details/:_id',
     passport.authenticate('jwt', {
@@ -64,6 +64,7 @@ router.post(
                     { new: true, select: 'paymentDetails email belongsTo' }
                 )
                 const { locale } = await User.findById(partner.belongsTo)
+
                 createAffNotification(
                     updatedPaymentDetails({
                         locale,
@@ -75,7 +76,6 @@ router.post(
                     // checked 3-4-22
                     sibPaymentDetailsUpdate({
                         locale,
-                        smtpParams: {},
                         email: partner.email,
                     })
                 )
