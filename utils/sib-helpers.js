@@ -136,7 +136,7 @@ const sendEmail = async ({ templateId, smtpParams = {}, tags, email }) => {
         templateId,
         tags,
     }
-    if (!isEmpty(smtpParams)) sendSmtpEmail[params] = smtpParams
+    if (!isEmpty(smtpParams)) sendSmtpEmail['params'] = smtpParams
 
     console.log(sendSmtpEmail)
 
