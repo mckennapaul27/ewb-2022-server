@@ -8,6 +8,12 @@ var _require = require('../models/affiliate'),
 var _require2 = require('../models/common'),
     User = _require2.User;
 
+var Mustache = require('mustache');
+
+var en = require('../locales/en/translation.json');
+
+var es = require('../locales/es/translation.json');
+
 var keysToConvertToRegex = ['accountId', 'account.accountId', 'brand', 'paymentAccount', 'email', 'name', 'message', 'upgradeStatus'];
 var keysToConvertToMongooseId = ['belongsTo', 'belongsToPartner', 'belongsToActiveUser'];
 var populatedFieldQueries = ['partner.epi', 'belongsTo.epi', 'belongsToPartner.epi', 'belongsTo.belongsTo.userId'];
@@ -77,7 +83,22 @@ var getLocaleFromPartnerUser = function getLocaleFromPartnerUser(_id) {
       }
     }
   });
-}; // const memoryData = process.memoryUsage()
+};
+/* helpers for translations */
+
+
+var locales = {
+  en: en,
+  es: es
+};
+
+var getMessageByKey = function getMessageByKey(key, locale) {
+  var variables = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var msg = Mustache.render(locales[locale] ? locales[locale][key] : locales['en'][key], variables);
+  return msg;
+};
+/* helpers for translations */
+// const memoryData = process.memoryUsage()
 // const memoryUsage = {
 //     rss: `${formatMemmoryUsage(memoryData.rss)} -> Resident Set Size - total memory allocated for the process execution`,
 //     heapTotal: `${formatMemmoryUsage(memoryData.heapTotal)} -> total size of the allocated heap`,
@@ -92,7 +113,8 @@ module.exports = {
   isPopulatedValue: isPopulatedValue,
   mapQueryForPopulate: mapQueryForPopulate,
   formatEpi: formatEpi,
-  getLocaleFromPartnerUser: getLocaleFromPartnerUser
+  getLocaleFromPartnerUser: getLocaleFromPartnerUser,
+  getMessageByKey: getMessageByKey
 }; // REGEX ONLY WORKS ON STRINGS - NOT NUMBERS
 // https://stackoverflow.com/questions/30722650/mongoose-find-regexp-for-number-type-field
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries

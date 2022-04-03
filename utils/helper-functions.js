@@ -1,6 +1,9 @@
 const mongoose = require('mongoose')
 const { AffPartner } = require('../models/affiliate')
 const { User } = require('../models/common')
+const Mustache = require('mustache')
+const en = require('../locales/en/translation.json')
+const es = require('../locales/es/translation.json')
 
 const keysToConvertToRegex = [
     'accountId',
@@ -78,6 +81,21 @@ const getLocaleFromPartnerUser = async (_id) => {
     return locale
 }
 
+/* helpers for translations */
+
+const locales = {
+    en: en,
+    es: es,
+}
+const getMessageByKey = (key, locale, variables = {}) => {
+    const msg = Mustache.render(
+        locales[locale] ? locales[locale][key] : locales['en'][key],
+        variables
+    )
+    return msg
+}
+/* helpers for translations */
+
 // const memoryData = process.memoryUsage()
 
 // const memoryUsage = {
@@ -94,6 +112,7 @@ module.exports = {
     mapQueryForPopulate,
     formatEpi,
     getLocaleFromPartnerUser,
+    getMessageByKey,
 }
 
 // REGEX ONLY WORKS ON STRINGS - NOT NUMBERS

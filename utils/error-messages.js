@@ -1,357 +1,92 @@
-const en = require('../locales/en/translation.json')
-const es = require('../locales/es/translation.json')
-
-const locales = {
-    en: en,
-    es: es,
-}
+const { getMessageByKey } = require('./helper-functions')
 
 const err1 = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Please enter your name and try again`
-            break
-        case 'es':
-            msg = `Please enter your name and try again`
-            break
-        case 'it':
-            msg = `Please enter your name and try again`
-            break
-        case 'pl':
-            msg = `Please enter your name and try again`
-            break
-        case 'pt':
-            msg = `Please enter your name and try again`
-            break
-        default:
-            msg = `Please enter your name and try again`
-    }
+    const msg = getMessageByKey('err1', locale)
     return {
         msg,
     }
 }
 const err2 = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Please enter an email address and try again`
-            break
-        case 'es':
-            msg = `Please enter an email address and try again`
-            break
-        case 'it':
-            msg = `Please enter an email address and try again`
-            break
-        case 'pl':
-            msg = `Please enter an email address and try again`
-            break
-        case 'pt':
-            msg = `Please enter an email address and try again`
-            break
-        default:
-            msg = `Please enter an email address and try again`
-    }
+    const msg = getMessageByKey('err2', locale)
     return {
         msg,
     }
 }
 const err3 = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Please enter a password and try again`
-            break
-        case 'es':
-            msg = `Please enter a password and try again`
-            break
-        case 'it':
-            msg = `Please enter a password and try again`
-            break
-        case 'pl':
-            msg = `Please enter a password and try again`
-            break
-        case 'pt':
-            msg = `Please enter a password and try again`
-            break
-        default:
-            msg = `Please enter a password and try again`
-    }
+    const msg = getMessageByKey('err3', locale)
     return {
         msg,
     }
 }
 const err4 = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Please select your country and try again`
-            break
-        case 'es':
-            msg = `Please select your country and try again`
-            break
-        case 'it':
-            msg = `Please select your country and try again`
-            break
-        case 'pl':
-            msg = `Please select your country and try again`
-            break
-        case 'pt':
-            msg = `Please select your country and try again`
-            break
-        default:
-            msg = `Please select your country and try again`
-    }
+    const msg = getMessageByKey('err4', locale)
     return {
         msg,
     }
 }
 const err5 = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Please select your preferred language try again`
-            break
-        case 'es':
-            msg = `Please select your preferred language try again`
-            break
-        case 'it':
-            msg = `Please select your preferred language try again`
-            break
-        case 'pl':
-            msg = `Please select your preferred language try again`
-            break
-        case 'pt':
-            msg = `Please select your preferred language try again`
-            break
-        default:
-            msg = `Please select your preferred language try again`
-    }
+    const msg = getMessageByKey('err5', locale)
     return {
         msg,
     }
 }
 const err6 = ({ email, locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `El correo electrónico ${email} ya existe.`
-            break
-        case 'es':
-            msg = `${email} already exists.`
-            break
-        case 'it':
-            msg = `El correo electrónico ${email} ya existe.`
-            break
-        case 'pl':
-            msg = `${email} already exists.`
-            break
-        case 'pt':
-            msg = `${email} already exists.`
-            break
-        default:
-            msg = `Email ${email} already exists.`
-    }
+    const msg = getMessageByKey('err6', locale, {
+        email,
+    })
     return {
         msg,
     }
 }
+
 const err7 = ({ accountId, locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `There is an existing application for ${accountId}`
-            break
-        case 'es':
-            msg = `There is an existing application for ${accountId}`
-            break
-        case 'it':
-            msg = `There is an existing application for ${accountId}`
-            break
-        case 'pl':
-            msg = `There is an existing application for ${accountId}`
-            break
-        case 'pt':
-            msg = `There is an existing application for ${accountId}`
-            break
-        default:
-            msg = `There is an existing application for ${accountId}`
-    }
+    const msg = getMessageByKey('err7', locale, { accountId })
     return {
         msg,
     }
 }
 const serverErr = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = 'Server error: Please contact support'
-            break
-        case 'es':
-            msg = 'Server error: Please contact support'
-            break
-        case 'it':
-            msg = 'Server error: Please contact support'
-            break
-        case 'pl':
-            msg = 'Server error: Please contact support'
-            break
-        case 'pt':
-            msg = 'Server error: Please contact support'
-            break
-        default:
-            msg = 'Server error: Please contact support'
-    }
+    const msg = getMessageByKey('serverErr', locale)
     return {
         msg,
     }
 }
 const errNoAccountExists = ({ locale, email }) => {
-    switch (locale) {
-        case 'de':
-            msg = `No account exists with email address ${email}`
-            break
-        case 'es':
-            msg = `No account exists with email address ${email}`
-            break
-        case 'it':
-            msg = `No account exists with email address ${email}`
-            break
-        case 'pl':
-            msg = `No account exists with email address ${email}`
-            break
-        case 'pt':
-            msg = `No account exists with email address ${email}`
-            break
-        default:
-            msg = `No account exists with email address ${email}`
-    }
+    const msg = getMessageByKey('errNoAccountExists', locale, { email })
     return {
         msg,
     }
 }
 const errSibContactExists = ({ locale }) => {
-    const msg = locales[locale]
-        ? locales[locale]['errSibContactExists']
-        : locales[locale]['en']
-
-    // switch (locale) {
-    //     case 'de':
-    //         msg = 'You have already subscribed to our newsletter'
-    //         break
-    //     case 'es':
-    //         msg = 'You have already subscribed to our newsletter'
-    //         break
-    //     case 'it':
-    //         msg = 'You have already subscribed to our newsletter'
-    //         break
-    //     case 'pl':
-    //         msg = 'You have already subscribed to our newsletter'
-    //         break
-    //     case 'pt':
-    //         msg = 'You have already subscribed to our newsletter'
-    //         break
-    //     default:
-    //         msg = 'You have already subscribed to our newsletter'
-    // }
+    const msg = getMessageByKey('errSibContactExists', locale)
     return {
         msg,
     }
 }
+
 const errInvalidToken = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Password reset token is invalid or has expired`
-            break
-        case 'es':
-            msg = `Password reset token is invalid or has expired`
-            break
-        case 'it':
-            msg = `Password reset token is invalid or has expired`
-            break
-        case 'pl':
-            msg = `Password reset token is invalid or has expired`
-            break
-        case 'pt':
-            msg = `Password reset token is invalid or has expired`
-            break
-        default:
-            msg = `Password reset token is invalid or has expired`
-    }
+    const msg = getMessageByKey('errInvalidToken', locale)
     return {
         msg,
     }
 }
 
 const errRequestNotSuccess = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = `Request was not successful. Please contact
-            support`
-            break
-        case 'es':
-            msg = `Request was not successful. Please contact
-            support`
-            break
-        case 'it':
-            msg = `Request was not successful. Please contact
-            support`
-            break
-        case 'pl':
-            msg = `Request was not successful. Please contact
-            support`
-            break
-        case 'pt':
-            msg = `Request was not successful. Please contact
-            support`
-            break
-        default:
-            msg = `Request was not successful. Please contact
-            support`
-    }
+    const msg = getMessageByKey('errRequestNotSuccess', locale)
     return {
-        success: false,
         msg,
     }
 }
 
 const errInsufficientFunds = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = 'You have insufficient funds to request this amount'
-            break
-        case 'es':
-            msg = 'No tiene fondos suficientes para solicitar esta cantidad'
-            break
-        case 'it':
-            msg = 'You have insufficient funds to request this amount'
-            break
-        case 'pl':
-            msg = 'You have insufficient funds to request this amount'
-            break
-        case 'pt':
-            msg = 'You have insufficient funds to request this amount'
-            break
-        default:
-            msg = 'You have insufficient funds to request this amount'
-    }
+    const msg = getMessageByKey('errInsufficientFunds', locale)
     return {
         msg,
     }
 }
 
 const errIncorrectPassword = ({ locale }) => {
-    switch (locale) {
-        case 'de':
-            msg = 'Authentication failed. Incorrect password'
-            break
-        case 'es':
-            msg = 'La autenticación falló. Contraseña incorrecta'
-            break
-        case 'it':
-            msg = 'Authentication failed. Incorrect password'
-            break
-        case 'pl':
-            msg = 'Authentication failed. Incorrect password'
-            break
-        case 'pt':
-            msg = 'Authentication failed. Incorrect password'
-            break
-        default:
-            msg = 'Authentication failed. Incorrect password'
-    }
+    const msg = getMessageByKey('errInsufficientFunds', locale)
     return {
         msg,
     }

@@ -1,35 +1,31 @@
 "use strict";
 
+var Mustache = require('mustache');
+
+var en = require('../locales/en/translation.json');
+
+var es = require('../locales/es/translation.json');
+/* helpers for translations */
+
+
+var locales = {
+  en: en,
+  es: es
+};
+
+function getMessageByKey(key, locale) {
+  var variables = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var msg = Mustache.render(locales[locale] ? locales[locale][key] : locales['en'][key], variables);
+  return msg;
+}
+/* helpers for translations */
 // USER NOTIFICATIONS (belongs to user)
+
+
 var welcome = function welcome(_ref) {
   var user = _ref.user,
       locale = _ref.locale;
-
-  switch (locale) {
-    case 'de':
-      message = 'Thank you for registering and welcome to VolumeKings.com';
-      break;
-
-    case 'es':
-      message = 'Thank you for registering and welcome to VolumeKings.com';
-      break;
-
-    case 'it':
-      message = 'Thank you for registering and welcome to VolumeKings.com';
-      break;
-
-    case 'pl':
-      message = 'Thank you for registering and welcome to VolumeKings.com';
-      break;
-
-    case 'pt':
-      message = 'Thank you for registering and welcome to VolumeKings.com';
-      break;
-
-    default:
-      message = 'Thank you for registering and welcome to VolumeKings.com';
-  }
-
+  var message = getMessageByKey('welcome', locale);
   return {
     message: message,
     type: 'General',
@@ -41,32 +37,9 @@ var hasApplied = function hasApplied(_ref2) {
   var accountId = _ref2.accountId,
       _id = _ref2._id,
       locale = _ref2.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "We have received your application for ".concat(accountId);
-      break;
-
-    case 'es':
-      message = "Hemos recibido su solicitud para la cuenta ".concat(accountId);
-      break;
-
-    case 'it':
-      message = "We have received your application for ".concat(accountId);
-      break;
-
-    case 'pl':
-      message = "We have received your application for ".concat(accountId);
-      break;
-
-    case 'pt':
-      message = "We have received your application for ".concat(accountId);
-      break;
-
-    default:
-      message = "We have received your application for ".concat(accountId);
-  }
-
+  var message = getMessageByKey('hasApplied', locale, {
+    accountId: accountId
+  });
   return {
     message: message,
     type: 'Application',
@@ -79,32 +52,10 @@ var updateApplication = function updateApplication(_ref3) {
       accountId = _ref3.accountId,
       _id = _ref3._id,
       locale = _ref3.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "Requested ".concat(status, " VIP upgrade for ").concat(accountId);
-      break;
-
-    case 'es':
-      message = "Requested ".concat(status, " VIP upgrade for ").concat(accountId);
-      break;
-
-    case 'it':
-      message = "Requested ".concat(status, " VIP upgrade for ").concat(accountId);
-      break;
-
-    case 'pl':
-      message = "Requested ".concat(status, " VIP upgrade for ").concat(accountId);
-      break;
-
-    case 'pt':
-      message = "Requested ".concat(status, " VIP upgrade for ").concat(accountId);
-      break;
-
-    default:
-      message = "Requested ".concat(status, " VIP upgrade for ").concat(accountId);
-  }
-
+  var message = getMessageByKey('updateApplication', locale, {
+    accountId: accountId,
+    status: status
+  });
   return {
     message: message,
     type: 'Application',
@@ -119,32 +70,12 @@ var requestedPayment = function requestedPayment(_ref4) {
       paymentAccount = _ref4.paymentAccount,
       belongsTo = _ref4.belongsTo,
       locale = _ref4.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "You have requested ".concat(symbol).concat(amount.toFixed(2), " to be sent to ").concat(brand, " account ").concat(paymentAccount);
-      break;
-
-    case 'es':
-      message = "Ha solicitado que se env\xEDen $145,22 a ".concat(brand, " a la cuenta ").concat(paymentAccount);
-      break;
-
-    case 'it':
-      message = "You have requested ".concat(symbol).concat(amount.toFixed(2), " to be sent to ").concat(brand, " account ").concat(paymentAccount);
-      break;
-
-    case 'pl':
-      message = "You have requested ".concat(symbol).concat(amount.toFixed(2), " to be sent to ").concat(brand, " account ").concat(paymentAccount);
-      break;
-
-    case 'pt':
-      message = "You have requested ".concat(symbol).concat(amount.toFixed(2), " to be sent to ").concat(brand, " account ").concat(paymentAccount);
-      break;
-
-    default:
-      message = "You have requested ".concat(symbol).concat(amount.toFixed(2), " to be sent to ").concat(brand, " account ").concat(paymentAccount);
-  }
-
+  var message = getMessageByKey('requestedPayment', locale, {
+    symbol: symbol,
+    amount: amount.toFixed(2),
+    brand: brand,
+    paymentAccount: paymentAccount
+  });
   return {
     message: message,
     type: 'Payment',
@@ -157,32 +88,10 @@ var applicationYY = function applicationYY(_ref5) {
       accountId = _ref5.accountId,
       belongsTo = _ref5.belongsTo,
       locale = _ref5.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "".concat(brand, " account ").concat(accountId, " has been upgraded to VIP");
-      break;
-
-    case 'es':
-      message = "".concat(brand, " account ").concat(accountId, " has been upgraded to VIP");
-      break;
-
-    case 'it':
-      message = "".concat(brand, " account ").concat(accountId, " has been upgraded to VIP");
-      break;
-
-    case 'pl':
-      message = "".concat(brand, " account ").concat(accountId, " has been upgraded to VIP");
-      break;
-
-    case 'pt':
-      message = "".concat(brand, " account ").concat(accountId, " has been upgraded to VIP");
-      break;
-
-    default:
-      message = "".concat(brand, " account ").concat(accountId, " has been upgraded to VIP");
-  }
-
+  var message = getMessageByKey('applicationYY', locale, {
+    accountId: accountId,
+    brand: brand
+  });
   return {
     message: message,
     type: 'Application',
@@ -195,32 +104,10 @@ var applicationYN = function applicationYN(_ref6) {
       accountId = _ref6.accountId,
       belongsTo = _ref6.belongsTo,
       locale = _ref6.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "".concat(brand, " account ").concat(accountId, " is eligible for cashback but could not be upgraded - please verify and request again");
-      break;
-
-    case 'es':
-      message = "".concat(brand, " account ").concat(accountId, " is eligible for cashback but could not be upgraded - please verify and request again");
-      break;
-
-    case 'it':
-      message = "".concat(brand, " account ").concat(accountId, " is eligible for cashback but could not be upgraded - please verify and request again");
-      break;
-
-    case 'pl':
-      message = "".concat(brand, " account ").concat(accountId, " is eligible for cashback but could not be upgraded - please verify and request again");
-      break;
-
-    case 'pt':
-      message = "".concat(brand, " account ").concat(accountId, " is eligible for cashback but could not be upgraded - please verify and request again");
-      break;
-
-    default:
-      message = "".concat(brand, " account ").concat(accountId, " is eligible for cashback but could not be upgraded - please verify and request again");
-  }
-
+  var message = getMessageByKey('applicationYN', locale, {
+    accountId: accountId,
+    brand: brand
+  });
   return {
     message: message,
     type: 'Application',
@@ -233,32 +120,10 @@ var applicationNN = function applicationNN(_ref7) {
       accountId = _ref7.accountId,
       belongsTo = _ref7.belongsTo,
       locale = _ref7.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "Your application for ".concat(brand, " account ").concat(accountId, " has been rejected");
-      break;
-
-    case 'es':
-      message = "Your application for ".concat(brand, " account ").concat(accountId, " has been rejected");
-      break;
-
-    case 'it':
-      message = "Your application for ".concat(brand, " account ").concat(accountId, " has been rejected");
-      break;
-
-    case 'pl':
-      message = "Your application for ".concat(brand, " account ").concat(accountId, " has been rejected");
-      break;
-
-    case 'pt':
-      message = "Your application for ".concat(brand, " account ").concat(accountId, " has been rejected");
-      break;
-
-    default:
-      message = "Your application for ".concat(brand, " account ").concat(accountId, " has been rejected");
-  }
-
+  var message = getMessageByKey('applicationNN', locale, {
+    accountId: accountId,
+    brand: brand
+  });
   return {
     message: message,
     type: 'Application',
@@ -270,32 +135,9 @@ var accountAdded = function accountAdded(_ref8) {
   var accountId = _ref8.accountId,
       belongsTo = _ref8.belongsTo,
       locale = _ref8.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "Account ".concat(accountId, " has been added to your dashboard and is now eligible");
-      break;
-
-    case 'es':
-      message = "Account ".concat(accountId, " has been added to your dashboard and is now eligible");
-      break;
-
-    case 'it':
-      message = "Account ".concat(accountId, " has been added to your dashboard and is now eligible");
-      break;
-
-    case 'pl':
-      message = "Account ".concat(accountId, " has been added to your dashboard and is now eligible");
-      break;
-
-    case 'pt':
-      message = "Account ".concat(accountId, " has been added to your dashboard and is now eligible");
-      break;
-
-    default:
-      message = "Account ".concat(accountId, " has been added to your dashboard and is now eligible");
-  }
-
+  var message = getMessageByKey('accountAdded', locale, {
+    accountId: accountId
+  });
   return {
     message: message,
     type: 'Account',
@@ -312,46 +154,24 @@ var paymentResult = function paymentResult(_ref9) {
   var paid = {
     en: 'paid',
     de: 'paid',
-    es: 'pagado',
-    it: 'pagado',
-    pl: 'pagado',
-    pt: 'pagado'
+    es: 'paid',
+    it: 'paid',
+    pl: 'paid',
+    pt: 'paid'
   };
   var rejected = {
     en: 'rejected',
-    de: 'paid',
+    de: 'rejected',
     es: 'rechazado',
-    it: 'pagado',
-    pl: 'pagado',
-    pt: 'pagado'
+    it: 'rejected',
+    pl: 'rejected',
+    pt: 'rejected'
   };
-  var statusLocale = status === 'Paid' ? paid[locale] : rejected[locale];
-
-  switch (locale) {
-    case 'de':
-      message = "Your payout request for ".concat(symbol).concat(amount.toFixed(2), " has been ").concat(statusLocale);
-      break;
-
-    case 'es':
-      message = "Su solicitud de pago de ".concat(symbol).concat(amount.toFixed(2), " ha sido ").concat(statusLocale);
-      break;
-
-    case 'it':
-      message = "Your payout request for ".concat(symbol).concat(amount.toFixed(2), " has been ").concat(statusLocale);
-      break;
-
-    case 'pl':
-      message = "Your payout request for ".concat(symbol).concat(amount.toFixed(2), " has been ").concat(statusLocale);
-      break;
-
-    case 'pt':
-      message = "Your payout request for ".concat(symbol).concat(amount.toFixed(2), " has been ").concat(statusLocale);
-      break;
-
-    default:
-      message = "Your payout request for ".concat(symbol).concat(amount.toFixed(2), " has been ").concat(statusLocale);
-  }
-
+  var message = getMessageByKey('paymentResult', locale, {
+    symbol: symbol,
+    amount: amount.toFixed(2),
+    status: status === 'Paid' ? paid[locale] : rejected[locale]
+  });
   return {
     message: message,
     type: 'Payment',
@@ -365,32 +185,9 @@ var newSubPartnerRegistered = function newSubPartnerRegistered(_ref10) {
   var user = _ref10.user,
       referredByPartner = _ref10.referredByPartner,
       locale = _ref10.locale;
-
-  switch (locale) {
-    case 'de':
-      message = "".concat(user.email, " has registered as your subpartner");
-      break;
-
-    case 'es':
-      message = "".concat(user.email, " has registered as your subpartner");
-      break;
-
-    case 'it':
-      message = "".concat(user.email, " has registered as your subpartner");
-      break;
-
-    case 'pl':
-      message = "".concat(user.email, " has registered as your subpartner");
-      break;
-
-    case 'pt':
-      message = "".concat(user.email, " has registered as your subpartner");
-      break;
-
-    default:
-      message = "".concat(user.email, " has registered as your subpartner");
-  }
-
+  var message = getMessageByKey('newSubPartnerRegistered', locale, {
+    email: user.email
+  });
   return {
     message: message,
     type: 'Partner',
@@ -402,33 +199,10 @@ var linksRequested = function linksRequested(_ref11) {
   var locale = _ref11.locale,
       brand = _ref11.brand,
       belongsTo = _ref11.belongsTo;
-
   // remember this is also called from auth router
-  switch (locale) {
-    case 'de':
-      message = "You have requested additional links for ".concat(brand);
-      break;
-
-    case 'es':
-      message = "You have requested additional links for ".concat(brand);
-      break;
-
-    case 'it':
-      message = "You have requested additional links for ".concat(brand);
-      break;
-
-    case 'pl':
-      message = "You have requested additional links for ".concat(brand);
-      break;
-
-    case 'pt':
-      message = "You have requested additional links for ".concat(brand);
-      break;
-
-    default:
-      message = "You have requested additional links for ".concat(brand);
-  }
-
+  var message = getMessageByKey('linksRequested', locale, {
+    brand: brand
+  });
   return {
     message: message,
     type: 'Partner',
@@ -440,33 +214,9 @@ var affAccountAdded = function affAccountAdded(_ref12) {
   var locale = _ref12.locale,
       accountId = _ref12.accountId,
       belongsTo = _ref12.belongsTo;
-
-  // remember this is also called from auth router
-  switch (locale) {
-    case 'de':
-      message = "Account ".concat(accountId, " has been added to your dashboard");
-      break;
-
-    case 'es':
-      message = "Se ha agregado la cuenta ".concat(accountId, " a su panel de control");
-      break;
-
-    case 'it':
-      message = "Account ".concat(accountId, " has been added to your dashboard");
-      break;
-
-    case 'pl':
-      message = "Account ".concat(accountId, " has been added to your dashboard");
-      break;
-
-    case 'pt':
-      message = "Account ".concat(accountId, " has been added to your dashboard");
-      break;
-
-    default:
-      message = "Account ".concat(accountId, " has been added to your dashboard");
-  }
-
+  var message = getMessageByKey('affAccountAdded', locale, {
+    accountId: accountId
+  });
   return {
     message: message,
     type: 'Account',
@@ -480,33 +230,11 @@ var affUpgradeEligible = function affUpgradeEligible(_ref13) {
       level = _ref13.level,
       quarter = _ref13.quarter,
       belongsTo = _ref13.belongsTo;
-
-  // remember this is also called from auth router
-  switch (locale) {
-    case 'de':
-      message = "Account ".concat(accountId, " is eligible for a ").concat(level, " VIP upgrade for ").concat(quarter);
-      break;
-
-    case 'es':
-      message = "Account ".concat(accountId, " is eligible for a ").concat(level, " VIP upgrade for ").concat(quarter);
-      break;
-
-    case 'it':
-      message = "Account ".concat(accountId, " is eligible for a ").concat(level, " VIP upgrade for ").concat(quarter);
-      break;
-
-    case 'pl':
-      message = "Account ".concat(accountId, " is eligible for a ").concat(level, " VIP upgrade for ").concat(quarter);
-      break;
-
-    case 'pt':
-      message = "Account ".concat(accountId, " is eligible for a ").concat(level, " VIP upgrade for ").concat(quarter);
-      break;
-
-    default:
-      message = "Account ".concat(accountId, " is eligible for a ").concat(level, " VIP upgrade for ").concat(quarter);
-  }
-
+  var message = getMessageByKey('affUpgradeEligible', locale, {
+    accountId: accountId,
+    level: level,
+    quarter: quarter
+  });
   return {
     message: message,
     type: 'Account',
@@ -514,33 +242,13 @@ var affUpgradeEligible = function affUpgradeEligible(_ref13) {
   };
 };
 
-var reportsHaveUpdated = function reportsHaveUpdated() {
+var reportsHaveUpdated = function reportsHaveUpdated(_ref14) {
+  var brand = _ref14.brand;
   // remember this is also called from auth router
-  switch (locale) {
-    case 'de':
-      message = "".concat(brand, " data was fetched on ").concat(dayjs().format('LLLL'));
-      break;
-
-    case 'es':
-      message = "".concat(brand, " data was fetched on ").concat(dayjs().format('LLLL'));
-      break;
-
-    case 'it':
-      message = "".concat(brand, " data was fetched on ").concat(dayjs().format('LLLL'));
-      break;
-
-    case 'pl':
-      message = "".concat(brand, " data was fetched on ").concat(dayjs().format('LLLL'));
-      break;
-
-    case 'pt':
-      message = "".concat(brand, " data was fetched on ").concat(dayjs().format('LLLL'));
-      break;
-
-    default:
-      message = "".concat(brand, " data was fetched on ").concat(dayjs().format('LLLL'));
-  }
-
+  var message = getMessageByKey('reportsHaveUpdated', locale, {
+    brand: brand,
+    day: dayjs().format('LLLL')
+  });
   return {
     message: message,
     type: 'Report',
@@ -548,37 +256,13 @@ var reportsHaveUpdated = function reportsHaveUpdated() {
   };
 };
 
-var updatedPaymentDetails = function updatedPaymentDetails(_ref14) {
-  var locale = _ref14.locale,
-      brand = _ref14.brand,
-      belongsTo = _ref14.belongsTo;
-
-  // remember this is also called from auth router
-  switch (locale) {
-    case 'de':
-      message = "You have updated your ".concat(brand, " payment details");
-      break;
-
-    case 'es':
-      message = "You have updated your ".concat(brand, " payment details");
-      break;
-
-    case 'it':
-      message = "You have updated your ".concat(brand, " payment details");
-      break;
-
-    case 'pl':
-      message = "You have updated your ".concat(brand, " payment details");
-      break;
-
-    case 'pt':
-      message = "You have updated your ".concat(brand, " payment details");
-      break;
-
-    default:
-      message = "You have updated your ".concat(brand, " payment details");
-  }
-
+var updatedPaymentDetails = function updatedPaymentDetails(_ref15) {
+  var locale = _ref15.locale,
+      brand = _ref15.brand,
+      belongsTo = _ref15.belongsTo;
+  var message = getMessageByKey('updatedPaymentDetails', locale, {
+    brand: brand
+  });
   return {
     message: message,
     type: 'Account',

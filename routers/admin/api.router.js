@@ -52,6 +52,7 @@ const {
     sibApplicationYN,
     sibApplicationNN,
 } = require('../../utils/sib-transactional-templates')
+const { initialUpgrade } = require('../../config/deals')
 // POST /admin/api/call-daily-functions
 router.post(
     '/call-daily-functions',
@@ -207,13 +208,13 @@ router.post(
                                     // AFFILIATE APPLICATIONS
 
                                     // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE - UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
-                                    if (
-                                        existingAffApplication.brand ===
-                                        'Skrill'
-                                    )
-                                        update[
-                                            'upgradeStatus'
-                                        ] = `Confirmed ${today}`
+                                    // if (
+                                    //     existingAffApplication.brand ===
+                                    //     'Skrill'
+                                    // )
+                                    //     update[
+                                    //         'upgradeStatus'
+                                    //     ] = `Confirmed ${today}`
                                     // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE- UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
 
                                     const aa =
@@ -246,22 +247,18 @@ router.post(
                                                 locale,
                                             })
                                         )
-                                        const { initialUpgrade } =
-                                            await Brand.findOne({ brand })
-                                                .select('initialUpgrade')
-                                                .lean()
-                                        await sendEmail({
-                                            templateId: 65,
-                                            smtpParams: {
-                                                BRAND: brand,
-                                                ACCOUNTID: accountId,
-                                                EMAIL: '-',
-                                                CURRENCY: '-',
-                                                OFFER: initialUpgrade,
-                                            },
-                                            tags: ['Application'],
-                                            email: partner.email,
-                                        })
+                                        // 3/4/22 configired correctly but decided on NOT sending email notifications for affiliate
+                                        // await sendEmail(sibApplicationYY({
+                                        //     locale,
+                                        //     smtpParams: {
+                                        //         BRAND: brand,
+                                        //         ACCOUNTID: accountId,
+                                        //         EMAIL: '-',
+                                        //         CURRENCY: '-',
+                                        //         OFFER: initialUpgrade[brand],
+                                        //     },
+                                        //     email: partner.email,
+                                        // }))
                                     } else if (action === 'YN') {
                                         createAffNotification(
                                             applicationYN({
@@ -271,17 +268,18 @@ router.post(
                                                 locale,
                                             })
                                         )
-                                        await sendEmail({
-                                            templateId: 2,
-                                            smtpParams: {
-                                                BRAND: brand,
-                                                ACCOUNTID: accountId,
-                                                EMAIL: '-',
-                                                CURRENCY: '-',
-                                            },
-                                            tags: ['Application'],
-                                            email: partner.email,
-                                        })
+                                        // 3/4/22 configired correctly but decided on NOT sending email notifications for affiliate
+                                        // await sendEmail(sibApplicationYN({
+                                        //     locale,
+                                        //     smtpParams: {
+                                        //         BRAND: brand,
+                                        //         ACCOUNTID: accountId,
+                                        //         EMAIL: '-',
+                                        //         CURRENCY: '-',
+                                        //         OFFER: initialUpgrade[brand],
+                                        //     },
+                                        //     email: partner.email,
+                                        // }))
                                     } else if (action === 'NN') {
                                         createAffNotification(
                                             applicationNN({
@@ -291,16 +289,6 @@ router.post(
                                                 locale,
                                             })
                                         ) // Do not send email as covering NN below
-                                        await sendEmail({
-                                            templateId: 3,
-                                            smtpParams: {
-                                                BRAND: brand,
-                                                ACCOUNTID: accountId,
-                                                EMAIL: '-',
-                                            },
-                                            tags: ['Application'],
-                                            email: partner.email,
-                                        })
                                     } else null
                                     // /* emails section */
                                     if (action === 'YY' || action === 'YN')
@@ -315,13 +303,13 @@ router.post(
                                     // PERSONAL APPLICATIONS
 
                                     // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE - UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
-                                    if (
-                                        existingDashApplication.brand ===
-                                        'Skrill'
-                                    )
-                                        update[
-                                            'upgradeStatus'
-                                        ] = `Confirmed ${today}`
+                                    // if (
+                                    //     existingDashApplication.brand ===
+                                    //     'Skrill'
+                                    // )
+                                    //     update[
+                                    //         'upgradeStatus'
+                                    //     ] = `Confirmed ${today}`
                                     // THIS SECTION BELOW IS TO BE USED WHILST WE HAVE NO VIP UPGRADE- UPDATING UPDATE OBJECT TO Confirmed instead of Upgraded.
 
                                     const ab =

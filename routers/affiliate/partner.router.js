@@ -16,6 +16,10 @@ const { createAffNotification } = require('../../utils/notifications-functions')
 const { createAdminJob } = require('../../utils/admin-job-functions')
 const { sendEmail } = require('../../utils/sib-helpers')
 const {
+    sibRequestLinks,
+    sibPaymentDetailsUpdate,
+} = require('../../utils/sib-transactional-templates')
+const {
     updatedPaymentDetails,
     linksRequested,
 } = require('../../utils/notifications-list')
@@ -67,16 +71,14 @@ router.post(
                         belongsTo: req.params._id,
                     })
                 )
-
-                sendEmail({
-                    // send email ( doesn't matter if belongsTo or not because it is just submitting );
-                    templateId: 19,
-                    smtpParams: {
-                        NONE: null,
-                    },
-                    tags: ['Account'],
-                    email: partner.email,
-                })
+                sendEmail(
+                    // checked 3-4-22
+                    sibPaymentDetailsUpdate({
+                        locale,
+                        smtpParams: {},
+                        email: partner.email,
+                    })
+                )
                 return res.status(200).send(partner)
             } catch (err) {
                 return res.status(400).send({ success: false })
@@ -114,14 +116,16 @@ router.post(
                     partner: req.params._id,
                     type: 'Links',
                 })
-                sendEmail({
-                    templateId: 44,
-                    smtpParams: {
-                        BRAND: req.body.brand,
-                    },
-                    tags: ['Account'],
-                    email: partner.email,
-                })
+                sendEmail(
+                    // checked 3-4-22
+                    sibRequestLinks({
+                        locale,
+                        email: partner.email,
+                        smtpParams: {
+                            BRAND: req.body.brand,
+                        },
+                    })
+                )
                 return res.status(200).send(
                     msgRequestedLinks({
                         locale,
@@ -137,50 +141,51 @@ router.post(
 )
 
 // POST /affiliate/partner/request-approval/:_id
-router.post(
-    '/request-approval/:_id',
-    passport.authenticate('jwt', {
-        session: false,
-    }),
-    async (req, res) => {
-        const token = getToken(req.headers)
-        if (token) {
-            try {
-                const { brand, accountId, name, _id } = req.body.data
-                const partner = await AffPartner.findByIdAndUpdate(
-                    req.params._id,
-                    { requestedApproval: true, isPermitted: null },
-                    { new: true, select: 'requestedApproval email epi' }
-                )
-                await AffApproval.create({
-                    brand,
-                    accountId,
-                    name,
-                    belongsTo: _id,
-                })
-                createAdminJob({
-                    message: `Partner ${partner.email} / ${partner.epi} requested approval for BD and IN`,
-                    status: 'Pending',
-                    partner: req.params._id,
-                    type: 'Links',
-                })
-                sendEmail({
-                    templateId: 76,
-                    smtpParams: {
-                        NAME: name,
-                        BRAND: brand,
-                        ACCOUNTID: accountId,
-                    },
-                    tags: ['Account'],
-                    email: partner.email,
-                })
-                return res.status(200).send(partner)
-            } catch (err) {
-                return res.status(400).send({ success: false })
-            }
-        } else res.status(403).send({ success: false, msg: 'Unauthorised' })
-    }
-)
+// 2/4/22 - Not active route for VK
+// router.post(
+//     '/request-approval/:_id',
+//     passport.authenticate('jwt', {
+//         session: false,
+//     }),
+//     async (req, res) => {
+//         const token = getToken(req.headers)
+//         if (token) {
+//             try {
+//                 const { brand, accountId, name, _id } = req.body.data
+//                 const partner = await AffPartner.findByIdAndUpdate(
+//                     req.params._id,
+//                     { requestedApproval: true, isPermitted: null },
+//                     { new: true, select: 'requestedApproval email epi' }
+//                 )
+//                 await AffApproval.create({
+//                     brand,
+//                     accountId,
+//                     name,
+//                     belongsTo: _id,
+//                 })
+//                 createAdminJob({
+//                     message: `Partner ${partner.email} / ${partner.epi} requested approval for BD and IN`,
+//                     status: 'Pending',
+//                     partner: req.params._id,
+//                     type: 'Links',
+//                 })
+//                 sendEmail({
+//                     templateId: 76,
+//                     smtpParams: {
+//                         NAME: name,
+//                         BRAND: brand,
+//                         ACCOUNTID: accountId,
+//                     },
+//                     tags: ['Account'],
+//                     email: partner.email,
+//                 })
+//                 return res.status(200).send(partner)
+//             } catch (err) {
+//                 return res.status(400).send({ success: false })
+//             }
+//         } else res.status(403).send({ success: false, msg: 'Unauthorised' })
+//     }
+// )
 
 // POST /affiliate/partner/fetch-notifications?pageSize=${pageSize}&pageIndex=${pageIndex}
 router.post(

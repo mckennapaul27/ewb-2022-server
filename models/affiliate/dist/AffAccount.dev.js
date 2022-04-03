@@ -2,22 +2,19 @@
 
 var mongoose = require('mongoose');
 
-var _require = require('../../utils/sib-helpers'),
-    sendEmail = _require.sendEmail;
-
 var Schema = mongoose.Schema;
 
 var AffNotification = require('./AffNotification');
 
 var AffPartner = require('./AffPartner');
 
-var _require2 = require('../common/index'),
-    User = _require2.User;
+var _require = require('../common/index'),
+    User = _require.User;
 
 var dayjs = require('dayjs');
 
-var _require3 = require('../../utils/notifications-list'),
-    affAccountAdded = _require3.affAccountAdded;
+var _require2 = require('../../utils/notifications-list'),
+    affAccountAdded = _require2.affAccountAdded;
 
 var AffAccount = new Schema({
   brand: String,
@@ -75,15 +72,6 @@ AffAccount.pre('save', function _callee(next) {
           })));
 
         case 13:
-          // await sendEmail({
-          //     templateId: 22,
-          //     smtpParams: {
-          //         BRAND: a.brand,
-          //         ACCOUNTID: a.accountId,
-          //     },
-          //     tags: ['Account'],
-          //     email,
-          // })
           next();
 
         case 14:

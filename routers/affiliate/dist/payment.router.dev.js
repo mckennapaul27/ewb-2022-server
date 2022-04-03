@@ -42,7 +42,10 @@ var _require10 = require('../../utils/error-messages'),
     serverErr = _require10.serverErr;
 
 var _require11 = require('../../utils/success-messages'),
-    msgPaymentRequest = _require11.msgPaymentRequest; // /affiliate/payment/create-payment/:_id
+    msgPaymentRequest = _require11.msgPaymentRequest;
+
+var _require12 = require('../../utils/sib-transactional-templates'),
+    sibPaymentRequest = _require12.sibPaymentRequest; // /affiliate/payment/create-payment/:_id
 
 
 router.post('/create-payment/:_id', passport.authenticate('jwt', {
@@ -50,7 +53,7 @@ router.post('/create-payment/:_id', passport.authenticate('jwt', {
 }), createPayment, updateBalances); // returns activeUser
 
 function createPayment(req, res, next) {
-  var token, balance, locale, newPayment, currency, amount, brand, paymentAccount, belongsTo, email, cryptos;
+  var token, balance, locale, newPayment, currency, amount, brand, paymentAccount, belongsTo, email;
   return regeneratorRuntime.async(function createPayment$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
@@ -58,7 +61,7 @@ function createPayment(req, res, next) {
           token = getToken(req.headers);
 
           if (!token) {
-            _context.next = 27;
+            _context.next = 25;
             break;
           }
 
@@ -115,9 +118,8 @@ function createPayment(req, res, next) {
 
         case 18:
           email = _context.sent.belongsTo.email;
-          sendEmail({
-            // send email ( doesn't matter if belongsTo or not because it is just submitting );
-            templateId: 23,
+          sendEmail(sibPaymentRequest({
+            locale: locale,
             smtpParams: {
               AMOUNT: amount.toFixed(2),
               CURRENCY: currency,
@@ -125,40 +127,21 @@ function createPayment(req, res, next) {
               BRAND: brand,
               ACCOUNT: paymentAccount
             },
-            tags: ['Payment'],
             email: email
-          });
-          cryptos = ['BitCoin'];
-
-          if (cryptos.includes(req.body.brand)) {
-            sendEmail({
-              // send email ( doesn't matter if belongsTo or not because it is just submitting );
-              templateId: 70,
-              smtpParams: {
-                AMOUNT: amount.toFixed(2),
-                CURRENCY: currency,
-                SYMBOL: currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
-                BRAND: brand,
-                ACCOUNT: paymentAccount
-              },
-              tags: ['Payment'],
-              email: email
-            });
-          }
-
+          }));
           req.locale = locale;
           req.newPayment = newPayment; // creates new payment and then adds it to req object before calling return next()
 
           next();
-          _context.next = 28;
+          _context.next = 26;
           break;
 
-        case 27:
+        case 25:
           return _context.abrupt("return", res.status(403).send({
             msg: 'Unauthorised'
           }));
 
-        case 28:
+        case 26:
         case "end":
           return _context.stop();
       }

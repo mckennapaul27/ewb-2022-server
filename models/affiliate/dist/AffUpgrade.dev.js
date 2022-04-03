@@ -5,11 +5,6 @@ var mongoose = require('mongoose');
 var _require = require('../../utils/notifications-list'),
     affUpgradeEligible = _require.affUpgradeEligible;
 
-var _require2 = require('../../utils/sib-helpers'),
-    sendEmail = _require2.sendEmail;
-
-var AffApplication = require('./AffApplication');
-
 var Schema = mongoose.Schema;
 
 var AffNotification = require('./AffNotification');
@@ -67,17 +62,6 @@ AffUpgrade.pre('save', function _callee(next) {
           })));
 
         case 13:
-          // await sendEmail({
-          //     templateId: 73,
-          //     smtpParams: {
-          //         BRAND: brand,
-          //         ACCOUNTID: accountId,
-          //         QUARTER: quarter,
-          //         LEVEL: level,
-          //     },
-          //     tags: ['Application'],
-          //     email,
-          // })
           next();
 
         case 14:

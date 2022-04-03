@@ -1,0 +1,14 @@
+{
+    "sibRequestLinks": 104,
+    "sibPersonalApplicationSubmit": 123,
+    "sibForgotPassword": 142,
+    "sibPaymentDetailsUpdate": 145,
+    "sibPaymentRequest": 147,
+    "sibApplicationYY": 148,
+    "sibApplicationYN": 149,
+    "sibApplicationNN": 150,
+    "sibAccountAdded": 151,
+    "sibPaymentResult-paid": 152,
+    "sibPaymentResult-rejected": 153,
+    "sibActiveLinksFromAdmin": 154
+}

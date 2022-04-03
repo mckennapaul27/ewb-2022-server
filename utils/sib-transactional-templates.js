@@ -1,23 +1,19 @@
+const en = require('../locales/en/email-template-ids.json')
+const es = require('../locales/es/email-template-ids.json')
+
+/* helpers for translations */
+const locales = {
+    en: en,
+    es: es,
+}
+function getTemplateIdByKey(key, locale) {
+    const id = locales[locale] ? locales[locale][key] : locales['en'][key]
+    return id
+}
+/* helpers for translations */
+
 const sibRequestLinks = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 104
-            break
-        case 'es':
-            templateId = 104
-            break
-        case 'it':
-            templateId = 104
-            break
-        case 'pl':
-            templateId = 104
-            break
-        case 'pt':
-            templateId = 104
-            break
-        default:
-            templateId = 104
-    }
+    const templateId = getTemplateIdByKey('sibRequestLinks', locale)
     return {
         templateId,
         smtpParams,
@@ -27,25 +23,11 @@ const sibRequestLinks = ({ locale, smtpParams, email }) => {
 }
 
 const sibPersonalApplicationSubmit = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 123
-            break
-        case 'es':
-            templateId = 123
-            break
-        case 'it':
-            templateId = 123
-            break
-        case 'pl':
-            templateId = 123
-            break
-        case 'pt':
-            templateId = 123
-            break
-        default:
-            templateId = 123
-    }
+    const templateId = getTemplateIdByKey(
+        'sibPersonalApplicationSubmit',
+        locale
+    )
+
     return {
         templateId,
         smtpParams,
@@ -55,25 +37,8 @@ const sibPersonalApplicationSubmit = ({ locale, smtpParams, email }) => {
 }
 
 const sibForgotPassword = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 142
-            break
-        case 'es':
-            templateId = 142
-            break
-        case 'it':
-            templateId = 142
-            break
-        case 'pl':
-            templateId = 142
-            break
-        case 'pt':
-            templateId = 142
-            break
-        default:
-            templateId = 142
-    }
+    const templateId = getTemplateIdByKey('sibForgotPassword', locale)
+
     return {
         templateId,
         smtpParams,
@@ -109,25 +74,8 @@ const sibSupportSubmitted = ({ locale, smtpParams, email }) => {
     }
 }
 const sibPaymentDetailsUpdate = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 145
-            break
-        case 'es':
-            templateId = 145
-            break
-        case 'it':
-            templateId = 145
-            break
-        case 'pl':
-            templateId = 145
-            break
-        case 'pt':
-            templateId = 145
-            break
-        default:
-            templateId = 145
-    }
+    const templateId = getTemplateIdByKey('sibPaymentDetailsUpdate', locale)
+
     return {
         templateId,
         smtpParams,
@@ -136,25 +84,7 @@ const sibPaymentDetailsUpdate = ({ locale, smtpParams, email }) => {
     }
 }
 const sibPaymentRequest = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 147
-            break
-        case 'es':
-            templateId = 147
-            break
-        case 'it':
-            templateId = 147
-            break
-        case 'pl':
-            templateId = 147
-            break
-        case 'pt':
-            templateId = 147
-            break
-        default:
-            templateId = 147
-    }
+    const templateId = getTemplateIdByKey('sibPaymentRequest', locale)
 
     return {
         templateId,
@@ -164,25 +94,7 @@ const sibPaymentRequest = ({ locale, smtpParams, email }) => {
     }
 }
 const sibApplicationYY = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 148
-            break
-        case 'es':
-            templateId = 148
-            break
-        case 'it':
-            templateId = 148
-            break
-        case 'pl':
-            templateId = 148
-            break
-        case 'pt':
-            templateId = 148
-            break
-        default:
-            templateId = 148
-    }
+    const templateId = getTemplateIdByKey('sibApplicationYY', locale)
 
     return {
         templateId,
@@ -192,25 +104,7 @@ const sibApplicationYY = ({ locale, smtpParams, email }) => {
     }
 }
 const sibApplicationYN = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 149
-            break
-        case 'es':
-            templateId = 149
-            break
-        case 'it':
-            templateId = 149
-            break
-        case 'pl':
-            templateId = 149
-            break
-        case 'pt':
-            templateId = 149
-            break
-        default:
-            templateId = 149
-    }
+    const templateId = getTemplateIdByKey('sibApplicationYN', locale)
 
     return {
         templateId,
@@ -220,25 +114,7 @@ const sibApplicationYN = ({ locale, smtpParams, email }) => {
     }
 }
 const sibApplicationNN = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 150
-            break
-        case 'es':
-            templateId = 150
-            break
-        case 'it':
-            templateId = 150
-            break
-        case 'pl':
-            templateId = 150
-            break
-        case 'pt':
-            templateId = 150
-            break
-        default:
-            templateId = 150
-    }
+    const templateId = getTemplateIdByKey('sibApplicationNN', locale)
 
     return {
         templateId,
@@ -248,25 +124,7 @@ const sibApplicationNN = ({ locale, smtpParams, email }) => {
     }
 }
 const sibAccountAdded = ({ locale, smtpParams, email }) => {
-    switch (locale) {
-        case 'de':
-            templateId = 151
-            break
-        case 'es':
-            templateId = 151
-            break
-        case 'it':
-            templateId = 151
-            break
-        case 'pl':
-            templateId = 151
-            break
-        case 'pt':
-            templateId = 151
-            break
-        default:
-            templateId = 151
-    }
+    const templateId = getTemplateIdByKey('sibAccountAdded', locale)
 
     return {
         templateId,
@@ -277,25 +135,21 @@ const sibAccountAdded = ({ locale, smtpParams, email }) => {
 }
 
 const sibPaymentResult = ({ locale, smtpParams, email, status }) => {
-    switch (locale) {
-        case 'de':
-            templateId = status === 'Paid' ? 152 : 153
-            break
-        case 'es':
-            templateId = status === 'Paid' ? 152 : 153
-            break
-        case 'it':
-            templateId = status === 'Paid' ? 152 : 153
-            break
-        case 'pl':
-            templateId = status === 'Paid' ? 152 : 153
-            break
-        case 'pt':
-            templateId = status === 'Paid' ? 152 : 153
-            break
-        default:
-            templateId = status === 'Paid' ? 152 : 153
+    const templateId =
+        status === 'Paid'
+            ? getTemplateIdByKey('sibPaymentResult-paid', locale)
+            : getTemplateIdByKey('sibPaymentResult-rejected', locale)
+
+    return {
+        templateId,
+        smtpParams,
+        tags: ['Payment'],
+        email,
     }
+}
+
+const sibActiveLinksFromAdmin = ({ locale, smtpParams, email }) => {
+    const templateId = getTemplateIdByKey('sibActiveLinksFromAdmin', locale)
 
     return {
         templateId,
@@ -316,4 +170,5 @@ module.exports = {
     sibApplicationNN,
     sibAccountAdded,
     sibPaymentResult,
+    sibActiveLinksFromAdmin,
 }

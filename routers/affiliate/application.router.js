@@ -13,7 +13,6 @@ const { Application } = require('../../models/personal/index')
 const { mapRegexQueryFromObj } = require('../../utils/helper-functions')
 const dayjs = require('dayjs')
 const { createAffNotification } = require('../../utils/notifications-functions')
-const { sendEmail } = require('../../utils/sib-helpers')
 const { Quarter, User } = require('../../models/common')
 const { hasApplied } = require('../../utils/notifications-list')
 
@@ -48,20 +47,6 @@ router.post(
                     )
                 })
 
-                if (applications.length > 1) {
-                    // if greater than 1 then it is a bulk submit
-                    const partner = await AffPartner.findById(
-                        applications[0].belongsTo
-                    ).select('email')
-                    await sendEmail({
-                        templateId: 67,
-                        smtpParams: {
-                            COUNT: applications.length,
-                        },
-                        tags: ['Application'],
-                        email: partner.email,
-                    })
-                }
                 return res.status(201).send(applications)
             } catch (err) {
                 console.log(err)

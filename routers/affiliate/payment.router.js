@@ -19,6 +19,7 @@ const {
     serverErr,
 } = require('../../utils/error-messages')
 const { msgPaymentRequest } = require('../../utils/success-messages')
+const { sibPaymentRequest } = require('../../utils/sib-transactional-templates')
 
 // /affiliate/payment/create-payment/:_id
 router.post(
@@ -71,25 +72,10 @@ async function createPayment(req, res, next) {
                 .select('belongsTo')
                 .populate({ path: 'belongsTo', select: 'email' })
         ).belongsTo.email
-        sendEmail({
-            // send email ( doesn't matter if belongsTo or not because it is just submitting );
-            templateId: 23,
-            smtpParams: {
-                AMOUNT: amount.toFixed(2),
-                CURRENCY: currency,
-                SYMBOL:
-                    currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '$',
-                BRAND: brand,
-                ACCOUNT: paymentAccount,
-            },
-            tags: ['Payment'],
-            email,
-        })
-        const cryptos = ['BitCoin']
-        if (cryptos.includes(req.body.brand)) {
-            sendEmail({
-                // send email ( doesn't matter if belongsTo or not because it is just submitting );
-                templateId: 70,
+
+        sendEmail(
+            sibPaymentRequest({
+                locale,
                 smtpParams: {
                     AMOUNT: amount.toFixed(2),
                     CURRENCY: currency,
@@ -102,10 +88,10 @@ async function createPayment(req, res, next) {
                     BRAND: brand,
                     ACCOUNT: paymentAccount,
                 },
-                tags: ['Payment'],
                 email,
             })
-        }
+        )
+
         req.locale = locale
         req.newPayment = newPayment // creates new payment and then adds it to req object before calling return next()
         next()

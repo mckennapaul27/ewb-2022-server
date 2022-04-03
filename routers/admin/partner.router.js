@@ -30,6 +30,7 @@ const {
     isPopulatedValue,
     mapQueryForAggregate,
     mapQueryForPopulate,
+    getLocaleFromPartnerUser,
 } = require('../../utils/helper-functions')
 const { createAffNotification } = require('../../utils/notifications-functions')
 const {
@@ -43,6 +44,13 @@ const { updateAffiliateBalance } = require('../../utils/balance-helpers')
 const { Brand, Quarter, User } = require('../../models/common')
 const { initialUpgrade } = require('../../config/deals')
 const { sendEmail } = require('../../utils/sib-helpers')
+const {
+    sibActiveLinksFromAdmin,
+    sibApplicationYY,
+    sibApplicationYN,
+    sibApplicationNN,
+    sibPaymentResult,
+} = require('../../utils/sib-transactional-templates')
 
 // POST /admin/partner/get-partner
 router.post(
@@ -82,16 +90,18 @@ router.post(
                     update,
                     { new: true }
                 )
+                const locale = await getLocaleFromPartnerUser(req.params._id)
                 if (update.brandAssets) {
-                    await sendEmail({
-                        // if the update includes brandAssets, send confirmation email
-                        templateId: 45,
-                        smtpParams: {
-                            BRAND: req.query.brand,
-                        },
-                        tags: ['Affiliate'],
-                        email: partner.email,
-                    })
+                    // if the update includes brandAssets, send confirmation email
+                    await sendEmail(
+                        sibActiveLinksFromAdmin({
+                            locale,
+                            smtpParams: {
+                                BRAND: req.query.brand,
+                            },
+                            email: partner.email,
+                        })
+                    )
                 }
                 return res.status(200).send(partner)
             } catch (err) {
@@ -303,47 +313,53 @@ router.post(
                     createAffNotification(
                         applicationYY({ brand, accountId, belongsTo, locale })
                     )
-                    await sendEmail({
-                        templateId: 65,
-                        smtpParams: {
-                            BRAND: brand,
-                            ACCOUNTID: accountId,
-                            EMAIL: '-',
-                            CURRENCY: '-',
-                            OFFER: status ? status : initialUpgrade,
-                        },
-                        tags: ['Application'],
-                        email: partner.email,
-                    })
+                    await sendEmail(
+                        sibApplicationYY({
+                            locale,
+                            smtpParams: {
+                                BRAND: brand,
+                                ACCOUNTID: accountId,
+                                EMAIL: '-',
+                                CURRENCY: '-',
+                                OFFER: status ? status : initialUpgrade[brand],
+                            },
+                            email: partner.email,
+                        })
+                    )
                 } else if (action === 'YN') {
                     createAffNotification(
                         applicationYN({ brand, accountId, belongsTo, locale })
                     )
-                    await sendEmail({
-                        templateId: 2,
-                        smtpParams: {
-                            BRAND: brand,
-                            ACCOUNTID: accountId,
-                            EMAIL: '-',
-                            CURRENCY: '-',
-                        },
-                        tags: ['Application'],
-                        email: partner.email,
-                    })
+                    await sendEmail(
+                        sibApplicationYN({
+                            locale,
+                            smtpParams: {
+                                BRAND: brand,
+                                ACCOUNTID: accountId,
+                                EMAIL: '-',
+                                CURRENCY: '-',
+                                OFFER: status ? status : initialUpgrade[brand],
+                            },
+                            email: partner.email,
+                        })
+                    )
                 } else if (action === 'NN') {
                     createAffNotification(
                         applicationNN({ brand, accountId, belongsTo, locale })
                     ) // Do not send email as covering NN below
-                    await sendEmail({
-                        templateId: 3,
-                        smtpParams: {
-                            BRAND: brand,
-                            ACCOUNTID: accountId,
-                            EMAIL: '-',
-                        },
-                        tags: ['Application'],
-                        email: partner.email,
-                    })
+                    await sendEmail(
+                        sibApplicationNN({
+                            locale,
+                            smtpParams: {
+                                BRAND: brand,
+                                ACCOUNTID: accountId,
+                                EMAIL: '-',
+                                CURRENCY: '-',
+                                OFFER: status ? status : initialUpgrade[brand],
+                            },
+                            email: partner.email,
+                        })
+                    )
                 } else null
 
                 if (action === 'YY' || action === 'YN')
@@ -581,12 +597,12 @@ router.post(
                         amount,
                         status,
                         belongsTo,
-                        locale: 'es',
+                        locale,
                     })
                 )
-                if (status === 'Paid')
-                    sendEmail({
-                        templateId: 68,
+                await sendEmail(
+                    sibPaymentResult({
+                        locale,
                         smtpParams: {
                             AMOUNT: amount.toFixed(2),
                             CURRENCY: currency,
@@ -599,27 +615,11 @@ router.post(
                             BRAND: brand,
                             ACCOUNT: paymentAccount,
                         },
-                        tags: ['Payment'],
                         email: partner.email,
+                        status,
                     })
-                if (status === 'Rejected')
-                    sendEmail({
-                        templateId: 69,
-                        smtpParams: {
-                            AMOUNT: amount.toFixed(2),
-                            CURRENCY: currency,
-                            SYMBOL:
-                                currency === 'USD'
-                                    ? '$'
-                                    : currency === 'EUR'
-                                    ? '€'
-                                    : '$',
-                            BRAND: brand,
-                            ACCOUNT: paymentAccount,
-                        },
-                        tags: ['Payment'],
-                        email: partner.email,
-                    })
+                )
+
                 req.body = updatedPayment
                 req.params._id = updatedPayment.belongsTo // changing req.params._id to belongsTo to keep update balance function consistent
                 next()
@@ -686,75 +686,77 @@ function updateBalances(req, res) {
 }
 
 // POST /admin/partner/toggle-pause-partner { _id, isDisabled }
-router.post(
-    '/toggle-pause-partner',
-    passport.authenticate('admin', {
-        session: false,
-    }),
-    async (req, res) => {
-        try {
-            const partner = await AffPartner.findByIdAndUpdate(
-                req.body._id,
-                {
-                    isDisabled: req.body.isDisabled,
-                },
-                { new: true, select: 'email isDisabled' }
-            )
-            if (req.body.isDisabled) {
-                await sendEmail({
-                    templateId: 29,
-                    tags: ['Application'],
-                    email: partner.email,
-                })
-            }
-            return res.status(201).send({
-                success: true,
-                msg: `${partner.email} has been ${
-                    req.body.isDisabled ? 'disabled' : 're-activated'
-                }`,
-            })
-        } catch (error) {
-            return res.status(400).send(err)
-        }
-    }
-)
+// not currently needed 3-4-22
+// router.post(
+//     '/toggle-pause-partner',
+//     passport.authenticate('admin', {
+//         session: false,
+//     }),
+//     async (req, res) => {
+//         try {
+//             const partner = await AffPartner.findByIdAndUpdate(
+//                 req.body._id,
+//                 {
+//                     isDisabled: req.body.isDisabled,
+//                 },
+//                 { new: true, select: 'email isDisabled' }
+//             )
+//             if (req.body.isDisabled) {
+//                 await sendEmail({
+//                     templateId: 0,
+//                     tags: ['Application'],
+//                     email: partner.email,
+//                 })
+//             }
+//             return res.status(201).send({
+//                 success: true,
+//                 msg: `${partner.email} has been ${
+//                     req.body.isDisabled ? 'disabled' : 're-activated'
+//                 }`,
+//             })
+//         } catch (error) {
+//             return res.status(400).send(err)
+//         }
+//     }
+// )
 
 // POST /admin/partner/toggle-permitted { _id, isPermitted }
-router.post(
-    '/toggle-permitted',
-    passport.authenticate('admin', {
-        session: false,
-    }),
-    async (req, res) => {
-        try {
-            const partner = await AffPartner.findByIdAndUpdate(
-                req.body._id,
-                {
-                    isPermitted: req.body.isPermitted,
-                },
-                { new: true, select: 'email isPermitted' }
-            )
-            if (req.body.isPermitted) {
-                // send email saying referral of IN and BD accounts are permitted
-                await sendEmail({
-                    templateId: 71,
-                    tags: ['Partner'],
-                    email: partner.email,
-                })
-            }
-            return res.status(201).send({
-                success: true,
-                msg: `${partner.email} has been ${
-                    req.body.isPermitted
-                        ? 'made eligible'
-                        : 'refused eligibility'
-                }`,
-            })
-        } catch (error) {
-            return res.status(400).send(err)
-        }
-    }
-)
+// not currently needed 3-4-22
+// router.post(
+//     '/toggle-permitted',
+//     passport.authenticate('admin', {
+//         session: false,
+//     }),
+//     async (req, res) => {
+//         try {
+//             const partner = await AffPartner.findByIdAndUpdate(
+//                 req.body._id,
+//                 {
+//                     isPermitted: req.body.isPermitted,
+//                 },
+//                 { new: true, select: 'email isPermitted' }
+//             )
+//             if (req.body.isPermitted) {
+//                 // send email saying referral of IN and BD accounts are permitted
+//                 await sendEmail({
+//                     templateId: 71,
+//                     tags: ['Partner'],
+//                     email: partner.email,
+//                 })
+//             }
+//             return res.status(201).send({
+//                 success: true,
+//                 msg: `${partner.email} has been ${
+//                     req.body.isPermitted
+//                         ? 'made eligible'
+//                         : 'refused eligibility'
+//                 }`,
+//             })
+//         } catch (error) {
+//             return res.status(400).send(err)
+//         }
+//     }
+// )
 
 // POST /admin/partner/fetch-quarter-data
 router.post(
@@ -862,46 +864,47 @@ router.post(
 // Route to partner manager to set up site links
 
 // POST /admin/partner/update-approval { _id, belongsTo }
-router.post(
-    '/update-approval',
-    passport.authenticate('admin', {
-        session: false,
-    }),
-    async (req, res) => {
-        try {
-            const { decision, _id, belongsTo } = req.body
-            const approval = await AffApproval.findByIdAndUpdate(
-                _id,
-                {
-                    status: decision ? 'Approved' : 'Rejected',
-                },
-                { new: true }
-            )
-            const partner = await AffPartner.findByIdAndUpdate(
-                belongsTo,
-                {
-                    isPermitted: decision ? true : false,
-                },
-                { new: true, select: 'isPermitted email' }
-            )
+// not currently needed - 3/4/22
+// router.post(
+//     '/update-approval',
+//     passport.authenticate('admin', {
+//         session: false,
+//     }),
+//     async (req, res) => {
+//         try {
+//             const { decision, _id, belongsTo } = req.body
+//             const approval = await AffApproval.findByIdAndUpdate(
+//                 _id,
+//                 {
+//                     status: decision ? 'Approved' : 'Rejected',
+//                 },
+//                 { new: true }
+//             )
+//             const partner = await AffPartner.findByIdAndUpdate(
+//                 belongsTo,
+//                 {
+//                     isPermitted: decision ? true : false,
+//                 },
+//                 { new: true, select: 'isPermitted email' }
+//             )
 
-            // send email saying referral of IN and BD accounts are permitted
-            await sendEmail({
-                templateId: decision ? 71 : 80,
-                tags: ['Partner'],
-                email: partner.email,
-            })
+//             // send email saying referral of IN and BD accounts are permitted
+//             await sendEmail({
+//                 templateId: decision ? 71 : 80,
+//                 tags: ['Partner'],
+//                 email: partner.email,
+//             })
 
-            return res.status(201).send({
-                success: decision ? true : false,
-                msg: `${partner.email} has been ${
-                    decision ? 'made eligible' : 'refused eligibility'
-                }`,
-            })
-        } catch (error) {
-            return res.status(400).send(error)
-        }
-    }
-)
+//             return res.status(201).send({
+//                 success: decision ? true : false,
+//                 msg: `${partner.email} has been ${
+//                     decision ? 'made eligible' : 'refused eligibility'
+//                 }`,
+//             })
+//         } catch (error) {
+//             return res.status(400).send(error)
+//         }
+//     }
+// )
 
 module.exports = router

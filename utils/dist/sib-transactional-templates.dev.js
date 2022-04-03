@@ -1,35 +1,28 @@
 "use strict";
 
+var en = require('../locales/en/email-template-ids.json');
+
+var es = require('../locales/es/email-template-ids.json');
+/* helpers for translations */
+
+
+var locales = {
+  en: en,
+  es: es
+};
+
+function getTemplateIdByKey(key, locale) {
+  var id = locales[locale] ? locales[locale][key] : locales['en'][key];
+  return id;
+}
+/* helpers for translations */
+
+
 var sibRequestLinks = function sibRequestLinks(_ref) {
   var locale = _ref.locale,
       smtpParams = _ref.smtpParams,
       email = _ref.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 104;
-      break;
-
-    case 'es':
-      templateId = 104;
-      break;
-
-    case 'it':
-      templateId = 104;
-      break;
-
-    case 'pl':
-      templateId = 104;
-      break;
-
-    case 'pt':
-      templateId = 104;
-      break;
-
-    default:
-      templateId = 104;
-  }
-
+  var templateId = getTemplateIdByKey('sibRequestLinks', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -42,32 +35,7 @@ var sibPersonalApplicationSubmit = function sibPersonalApplicationSubmit(_ref2) 
   var locale = _ref2.locale,
       smtpParams = _ref2.smtpParams,
       email = _ref2.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 123;
-      break;
-
-    case 'es':
-      templateId = 123;
-      break;
-
-    case 'it':
-      templateId = 123;
-      break;
-
-    case 'pl':
-      templateId = 123;
-      break;
-
-    case 'pt':
-      templateId = 123;
-      break;
-
-    default:
-      templateId = 123;
-  }
-
+  var templateId = getTemplateIdByKey('sibPersonalApplicationSubmit', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -80,32 +48,7 @@ var sibForgotPassword = function sibForgotPassword(_ref3) {
   var locale = _ref3.locale,
       smtpParams = _ref3.smtpParams,
       email = _ref3.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 142;
-      break;
-
-    case 'es':
-      templateId = 142;
-      break;
-
-    case 'it':
-      templateId = 142;
-      break;
-
-    case 'pl':
-      templateId = 142;
-      break;
-
-    case 'pt':
-      templateId = 142;
-      break;
-
-    default:
-      templateId = 142;
-  }
-
+  var templateId = getTemplateIdByKey('sibForgotPassword', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -156,32 +99,7 @@ var sibPaymentDetailsUpdate = function sibPaymentDetailsUpdate(_ref5) {
   var locale = _ref5.locale,
       smtpParams = _ref5.smtpParams,
       email = _ref5.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 145;
-      break;
-
-    case 'es':
-      templateId = 145;
-      break;
-
-    case 'it':
-      templateId = 145;
-      break;
-
-    case 'pl':
-      templateId = 145;
-      break;
-
-    case 'pt':
-      templateId = 145;
-      break;
-
-    default:
-      templateId = 145;
-  }
-
+  var templateId = getTemplateIdByKey('sibPaymentDetailsUpdate', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -194,32 +112,7 @@ var sibPaymentRequest = function sibPaymentRequest(_ref6) {
   var locale = _ref6.locale,
       smtpParams = _ref6.smtpParams,
       email = _ref6.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 147;
-      break;
-
-    case 'es':
-      templateId = 147;
-      break;
-
-    case 'it':
-      templateId = 147;
-      break;
-
-    case 'pl':
-      templateId = 147;
-      break;
-
-    case 'pt':
-      templateId = 147;
-      break;
-
-    default:
-      templateId = 147;
-  }
-
+  var templateId = getTemplateIdByKey('sibPaymentRequest', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -232,32 +125,7 @@ var sibApplicationYY = function sibApplicationYY(_ref7) {
   var locale = _ref7.locale,
       smtpParams = _ref7.smtpParams,
       email = _ref7.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 148;
-      break;
-
-    case 'es':
-      templateId = 148;
-      break;
-
-    case 'it':
-      templateId = 148;
-      break;
-
-    case 'pl':
-      templateId = 148;
-      break;
-
-    case 'pt':
-      templateId = 148;
-      break;
-
-    default:
-      templateId = 148;
-  }
-
+  var templateId = getTemplateIdByKey('sibApplicationYY', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -270,32 +138,7 @@ var sibApplicationYN = function sibApplicationYN(_ref8) {
   var locale = _ref8.locale,
       smtpParams = _ref8.smtpParams,
       email = _ref8.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 149;
-      break;
-
-    case 'es':
-      templateId = 149;
-      break;
-
-    case 'it':
-      templateId = 149;
-      break;
-
-    case 'pl':
-      templateId = 149;
-      break;
-
-    case 'pt':
-      templateId = 149;
-      break;
-
-    default:
-      templateId = 149;
-  }
-
+  var templateId = getTemplateIdByKey('sibApplicationYN', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -308,32 +151,7 @@ var sibApplicationNN = function sibApplicationNN(_ref9) {
   var locale = _ref9.locale,
       smtpParams = _ref9.smtpParams,
       email = _ref9.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 150;
-      break;
-
-    case 'es':
-      templateId = 150;
-      break;
-
-    case 'it':
-      templateId = 150;
-      break;
-
-    case 'pl':
-      templateId = 150;
-      break;
-
-    case 'pt':
-      templateId = 150;
-      break;
-
-    default:
-      templateId = 150;
-  }
-
+  var templateId = getTemplateIdByKey('sibApplicationNN', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -346,32 +164,7 @@ var sibAccountAdded = function sibAccountAdded(_ref10) {
   var locale = _ref10.locale,
       smtpParams = _ref10.smtpParams,
       email = _ref10.email;
-
-  switch (locale) {
-    case 'de':
-      templateId = 151;
-      break;
-
-    case 'es':
-      templateId = 151;
-      break;
-
-    case 'it':
-      templateId = 151;
-      break;
-
-    case 'pl':
-      templateId = 151;
-      break;
-
-    case 'pt':
-      templateId = 151;
-      break;
-
-    default:
-      templateId = 151;
-  }
-
+  var templateId = getTemplateIdByKey('sibAccountAdded', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -385,32 +178,20 @@ var sibPaymentResult = function sibPaymentResult(_ref11) {
       smtpParams = _ref11.smtpParams,
       email = _ref11.email,
       status = _ref11.status;
+  var templateId = status === 'Paid' ? getTemplateIdByKey('sibPaymentResult-paid', locale) : getTemplateIdByKey('sibPaymentResult-rejected', locale);
+  return {
+    templateId: templateId,
+    smtpParams: smtpParams,
+    tags: ['Payment'],
+    email: email
+  };
+};
 
-  switch (locale) {
-    case 'de':
-      templateId = status === 'Paid' ? 152 : 153;
-      break;
-
-    case 'es':
-      templateId = status === 'Paid' ? 152 : 153;
-      break;
-
-    case 'it':
-      templateId = status === 'Paid' ? 152 : 153;
-      break;
-
-    case 'pl':
-      templateId = status === 'Paid' ? 152 : 153;
-      break;
-
-    case 'pt':
-      templateId = status === 'Paid' ? 152 : 153;
-      break;
-
-    default:
-      templateId = status === 'Paid' ? 152 : 153;
-  }
-
+var sibActiveLinksFromAdmin = function sibActiveLinksFromAdmin(_ref12) {
+  var locale = _ref12.locale,
+      smtpParams = _ref12.smtpParams,
+      email = _ref12.email;
+  var templateId = getTemplateIdByKey('sibActiveLinksFromAdmin', locale);
   return {
     templateId: templateId,
     smtpParams: smtpParams,
@@ -430,5 +211,6 @@ module.exports = {
   sibApplicationYN: sibApplicationYN,
   sibApplicationNN: sibApplicationNN,
   sibAccountAdded: sibAccountAdded,
-  sibPaymentResult: sibPaymentResult
+  sibPaymentResult: sibPaymentResult,
+  sibActiveLinksFromAdmin: sibActiveLinksFromAdmin
 };

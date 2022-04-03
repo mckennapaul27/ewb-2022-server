@@ -185,7 +185,7 @@ var sendEmail = function sendEmail(_ref2) {
           sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
           sender = {
             name: 'Volume Kings Support',
-            email: 'support@ewalletbooster.com'
+            email: 'support@volumekings.com'
           };
           sendSmtpEmail = {
             sender: sender,

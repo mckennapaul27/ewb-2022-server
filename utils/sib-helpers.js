@@ -126,7 +126,7 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => {
     let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail()
     let sender = {
         name: 'Volume Kings Support',
-        email: 'support@ewalletbooster.com',
+        email: 'support@volumekings.com',
     }
     sendSmtpEmail = {
         sender: sender,

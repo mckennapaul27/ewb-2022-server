@@ -1,35 +1,13 @@
 "use strict";
 
+var _require = require('./helper-functions'),
+    getMessageByKey = _require.getMessageByKey;
+
 var msgRegistered = function msgRegistered(_ref) {
   var token = _ref.token,
       user = _ref.user,
       locale = _ref.locale;
-
-  switch (locale) {
-    case 'de':
-      msg = "Thank you. You have successfully registered.";
-      break;
-
-    case 'es':
-      msg = "Thank you. You have successfully registered.";
-      break;
-
-    case 'it':
-      msg = "Thank you. You have successfully registered.";
-      break;
-
-    case 'pl':
-      msg = "Thank you. You have successfully registered.";
-      break;
-
-    case 'pt':
-      msg = "Thank you. You have successfully registered.";
-      break;
-
-    default:
-      msg = "Thank you. You have successfully registered.";
-  }
-
+  var msg = getMessageByKey('msgRegistered', locale);
   return {
     msg: msg,
     token: token,
@@ -39,32 +17,7 @@ var msgRegistered = function msgRegistered(_ref) {
 
 var msgSubscribed = function msgSubscribed(_ref2) {
   var locale = _ref2.locale;
-
-  switch (locale) {
-    case 'de':
-      msg = "Thank you. You have joined our newsletter and have requested more information on our deals";
-      break;
-
-    case 'es':
-      msg = "Thank you. You have joined our newsletter and have requested more information on our deals";
-      break;
-
-    case 'it':
-      msg = "Thank you. You have joined our newsletter and have requested more information on our deals";
-      break;
-
-    case 'pl':
-      msg = "Thank you. You have joined our newsletter and have requested more information on our deals";
-      break;
-
-    case 'pt':
-      msg = "Thank you. You have joined our newsletter and have requested more information on our deals";
-      break;
-
-    default:
-      msg = "Thank you. You have joined our newsletter and have requested more information on our deals";
-  }
-
+  var msg = getMessageByKey('msgSubscribed', locale);
   return {
     msg: msg
   };
@@ -73,32 +26,7 @@ var msgSubscribed = function msgSubscribed(_ref2) {
 var msgForgotPassword = function msgForgotPassword(_ref3) {
   var locale = _ref3.locale,
       token = _ref3.token;
-
-  switch (locale) {
-    case 'de':
-      msg = "Kindly check your email for further instructions";
-      break;
-
-    case 'es':
-      msg = "Kindly check your email for further instructions";
-      break;
-
-    case 'it':
-      msg = "Kindly check your email for further instructions";
-      break;
-
-    case 'pl':
-      msg = "Kindly check your email for further instructions";
-      break;
-
-    case 'pt':
-      msg = "Kindly check your email for further instructions";
-      break;
-
-    default:
-      msg = "Kindly check your email for further instructions";
-  }
-
+  var msg = getMessageByKey('msgForgotPassword', locale);
   return {
     msg: msg,
     token: token
@@ -108,32 +36,7 @@ var msgForgotPassword = function msgForgotPassword(_ref3) {
 var msgPasswordReset = function msgPasswordReset(_ref4) {
   var locale = _ref4.locale,
       user = _ref4.user;
-
-  switch (locale) {
-    case 'de':
-      msg = "Password successfully reset. Please login";
-      break;
-
-    case 'es':
-      msg = "Password successfully reset. Please login";
-      break;
-
-    case 'it':
-      msg = "Password successfully reset. Please login";
-      break;
-
-    case 'pl':
-      msg = "Password successfully reset. Please login";
-      break;
-
-    case 'pt':
-      msg = "Password successfully reset. Please login";
-      break;
-
-    default:
-      msg = "Password successfully reset. Please login";
-  }
-
+  var msg = getMessageByKey('msgPasswordReset', locale);
   return {
     msg: msg,
     user: user
@@ -142,32 +45,7 @@ var msgPasswordReset = function msgPasswordReset(_ref4) {
 
 var msgSupportSubmitted = function msgSupportSubmitted(_ref5) {
   var locale = _ref5.locale;
-
-  switch (locale) {
-    case 'de':
-      msg = "We have received your support enquiry";
-      break;
-
-    case 'es':
-      msg = "We have received your support enquiry";
-      break;
-
-    case 'it':
-      msg = "We have received your support enquiry";
-      break;
-
-    case 'pl':
-      msg = "We have received your support enquiry";
-      break;
-
-    case 'pt':
-      msg = "We have received your support enquiry";
-      break;
-
-    default:
-      msg = "We have received your support enquiry";
-  }
-
+  var msg = getMessageByKey('msgSupportSubmitted', locale);
   return {
     msg: msg
   };
@@ -177,32 +55,10 @@ var msgVIPRequestSubmitted = function msgVIPRequestSubmitted(_ref6) {
   var locale = _ref6.locale,
       status = _ref6.status,
       accountId = _ref6.accountId;
-
-  switch (locale) {
-    case 'de':
-      msg = "Requested ".concat(status, " for ").concat(accountId);
-      break;
-
-    case 'es':
-      msg = "Requested ".concat(status, " for ").concat(accountId);
-      break;
-
-    case 'it':
-      msg = "Requested ".concat(status, " for ").concat(accountId);
-      break;
-
-    case 'pl':
-      msg = "Requested ".concat(status, " for ").concat(accountId);
-      break;
-
-    case 'pt':
-      msg = "Requested ".concat(status, " for ").concat(accountId);
-      break;
-
-    default:
-      msg = "Requested ".concat(status, " for ").concat(accountId);
-  }
-
+  var msg = getMessageByKey('msgVIPRequestSubmitted', locale, {
+    status: status,
+    accountId: accountId
+  });
   return {
     msg: msg
   };
@@ -211,32 +67,9 @@ var msgVIPRequestSubmitted = function msgVIPRequestSubmitted(_ref6) {
 var msgApplicationSubmitted = function msgApplicationSubmitted(_ref7) {
   var locale = _ref7.locale,
       accountId = _ref7.accountId;
-
-  switch (locale) {
-    case 'de':
-      msg = "You have successfully submitted an application for ".concat(accountId);
-      break;
-
-    case 'es':
-      msg = "You have successfully submitted an application for ".concat(accountId);
-      break;
-
-    case 'it':
-      msg = "You have successfully submitted an application for ".concat(accountId);
-      break;
-
-    case 'pl':
-      msg = "You have successfully submitted an application for ".concat(accountId);
-      break;
-
-    case 'pt':
-      msg = "You have successfully submitted an application for ".concat(accountId);
-      break;
-
-    default:
-      msg = "You have successfully submitted an application for ".concat(accountId);
-  }
-
+  var msg = getMessageByKey('msgApplicationSubmitted', locale, {
+    accountId: accountId
+  });
   return {
     msg: msg
   };
@@ -245,32 +78,7 @@ var msgApplicationSubmitted = function msgApplicationSubmitted(_ref7) {
 var msgPaymentDetailsUpdate = function msgPaymentDetailsUpdate(_ref8) {
   var locale = _ref8.locale,
       activeUser = _ref8.activeUser;
-
-  switch (locale) {
-    case 'de':
-      msg = "Successfully updated payment method";
-      break;
-
-    case 'es':
-      msg = "Successfully updated payment method";
-      break;
-
-    case 'it':
-      msg = "Successfully updated payment method";
-      break;
-
-    case 'pl':
-      msg = "Successfully updated payment method";
-      break;
-
-    case 'pt':
-      msg = "Successfully updated payment method";
-      break;
-
-    default:
-      msg = "Successfully updated payment method";
-  }
-
+  var msg = getMessageByKey('msgPaymentDetailsUpdate', locale);
   return {
     msg: msg,
     activeUser: activeUser
@@ -282,32 +90,10 @@ var msgPaymentRequest = function msgPaymentRequest(_ref9) {
       currency = _ref9.currency,
       amount = _ref9.amount,
       newPayment = _ref9.newPayment;
-
-  switch (locale) {
-    case 'de':
-      msg = "You have requested ".concat(currency, " ").concat(amount);
-      break;
-
-    case 'es':
-      msg = "Este es requested ".concat(currency, " ").concat(amount);
-      break;
-
-    case 'it':
-      msg = "You have requested ".concat(currency, " ").concat(amount);
-      break;
-
-    case 'pl':
-      msg = "You have requested ".concat(currency, " ").concat(amount);
-      break;
-
-    case 'pt':
-      msg = "You have requested ".concat(currency, " ").concat(amount);
-      break;
-
-    default:
-      msg = "You have requested ".concat(currency, " ").concat(amount);
-  }
-
+  var msg = getMessageByKey('msgPaymentRequest', locale, {
+    currency: currency,
+    amount: amount.toFixed(2)
+  });
   return {
     msg: msg,
     newPayment: newPayment
@@ -318,32 +104,9 @@ var msgRequestedLinks = function msgRequestedLinks(_ref10) {
   var locale = _ref10.locale,
       brand = _ref10.brand,
       partner = _ref10.partner;
-
-  switch (locale) {
-    case 'de':
-      msg = "Requested additional links for ".concat(brand);
-      break;
-
-    case 'es':
-      msg = "Requested additional links for ".concat(brand);
-      break;
-
-    case 'it':
-      msg = "Requested additional links for ".concat(brand);
-      break;
-
-    case 'pl':
-      msg = "Requested additional links for ".concat(brand);
-      break;
-
-    case 'pt':
-      msg = "Requested additional links for ".concat(brand);
-      break;
-
-    default:
-      msg = "Requested additional links for ".concat(brand);
-  }
-
+  var msg = getMessageByKey('msgRequestedLinks', locale, {
+    brand: brand
+  });
   return {
     partner: partner,
     msg: msg

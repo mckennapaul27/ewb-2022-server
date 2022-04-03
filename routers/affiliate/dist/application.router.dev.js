@@ -27,21 +27,18 @@ var dayjs = require('dayjs');
 var _require5 = require('../../utils/notifications-functions'),
     createAffNotification = _require5.createAffNotification;
 
-var _require6 = require('../../utils/sib-helpers'),
-    sendEmail = _require6.sendEmail;
+var _require6 = require('../../models/common'),
+    Quarter = _require6.Quarter,
+    User = _require6.User;
 
-var _require7 = require('../../models/common'),
-    Quarter = _require7.Quarter,
-    User = _require7.User;
-
-var _require8 = require('../../utils/notifications-list'),
-    hasApplied = _require8.hasApplied; // POST /affiliate/application/create
+var _require7 = require('../../utils/notifications-list'),
+    hasApplied = _require7.hasApplied; // POST /affiliate/application/create
 
 
 router.post('/create', passport.authenticate('jwt', {
   session: false
 }), function _callee(req, res) {
-  var token, applications, partner, _ref, locale, _partner;
+  var token, applications, partner, _ref, locale;
 
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
@@ -50,7 +47,7 @@ router.post('/create', passport.authenticate('jwt', {
           token = getToken(req.headers);
 
           if (!token) {
-            _context.next = 30;
+            _context.next = 24;
             break;
           }
 
@@ -81,53 +78,32 @@ router.post('/create', passport.authenticate('jwt', {
           }));
 
         case 15:
-          if (!(applications.length > 1)) {
-            _context.next = 21;
-            break;
-          }
-
-          _context.next = 18;
-          return regeneratorRuntime.awrap(AffPartner.findById(applications[0].belongsTo).select('email'));
-
-        case 18:
-          _partner = _context.sent;
-          _context.next = 21;
-          return regeneratorRuntime.awrap(sendEmail({
-            templateId: 67,
-            smtpParams: {
-              COUNT: applications.length
-            },
-            tags: ['Application'],
-            email: _partner.email
-          }));
-
-        case 21:
           return _context.abrupt("return", res.status(201).send(applications));
 
-        case 24:
-          _context.prev = 24;
+        case 18:
+          _context.prev = 18;
           _context.t0 = _context["catch"](2);
           console.log(_context.t0);
           return _context.abrupt("return", res.status(400).send({
             success: false
           }));
 
-        case 28:
-          _context.next = 31;
+        case 22:
+          _context.next = 25;
           break;
 
-        case 30:
+        case 24:
           res.status(403).send({
             success: false,
             msg: 'Unauthorised'
           });
 
-        case 31:
+        case 25:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[2, 24]]);
+  }, null, null, [[2, 18]]);
 }); // GET /affiliate/application/request-upgrade/:_id`
 
 router.get('/request-upgrade/:_id', passport.authenticate('jwt', {

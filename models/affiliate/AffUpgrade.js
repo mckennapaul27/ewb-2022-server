@@ -1,7 +1,5 @@
 const mongoose = require('mongoose')
 const { affUpgradeEligible } = require('../../utils/notifications-list')
-const { sendEmail } = require('../../utils/sib-helpers')
-const AffApplication = require('./AffApplication')
 const Schema = mongoose.Schema
 const AffNotification = require('./AffNotification')
 const AffPartner = require('./AffPartner')
@@ -42,17 +40,7 @@ AffUpgrade.pre('save', async function (next) {
                     belongsTo: a.belongsTo,
                 })
             )
-            // await sendEmail({
-            //     templateId: 73,
-            //     smtpParams: {
-            //         BRAND: brand,
-            //         ACCOUNTID: accountId,
-            //         QUARTER: quarter,
-            //         LEVEL: level,
-            //     },
-            //     tags: ['Application'],
-            //     email,
-            // })
+
             next()
         }
     } catch (error) {
