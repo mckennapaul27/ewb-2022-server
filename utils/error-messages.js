@@ -86,7 +86,7 @@ const errInsufficientFunds = ({ locale }) => {
 }
 
 const errIncorrectPassword = ({ locale }) => {
-    const msg = getMessageByKey('errInsufficientFunds', locale)
+    const msg = getMessageByKey('errIncorrectPassword', locale)
     return {
         msg,
     }

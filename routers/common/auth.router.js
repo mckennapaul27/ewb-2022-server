@@ -77,7 +77,7 @@ async function createUser(req, res, next) {
     let exists = await User.countDocuments({ email: req.body.email })
         .select('email')
         .lean()
-
+    console.log(locale)
     if (!name) return res.status(500).send(err1({ locale }))
     else if (!email) return res.status(500).send(err2({ locale }))
     else if (!password) return res.status(500).send(err3({ locale }))
