@@ -42,6 +42,7 @@
         "express-session": "^1.17.1",
         "helmet": "^4.2.0",
         "jsonwebtoken": "^8.5.1",
+        "lodash.isempty": "^4.4.0",
         "lodash.uniq": "^4.5.0",
         "moment": "^2.27.0",
         "moment-timezone": "^0.5.31",

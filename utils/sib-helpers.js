@@ -9,6 +9,7 @@ const defaultClient = SibApiV3Sdk.ApiClient.instance
 let apiKey = defaultClient.authentications['api-key']
 apiKey.apiKey = process.env.SIBKEY
 
+const isEmpty = require('lodash.isempty')
 // // 1. List functions
 
 // Add contact to list. Pass array of email addresses and listId - This function is to move an EXISTING contact to a new list
@@ -119,7 +120,7 @@ function updateContact(email, attributes, listIds, unlinkListIds) {
 
 // 4. Emails
 
-const sendEmail = async ({ templateId, smtpParams, tags, email }) => {
+const sendEmail = async ({ templateId, smtpParams = {}, tags, email }) => {
     // templateId = ID of SIB template, smtpParams = params object {}, tags = Array, email is who it is sent to
 
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi()
@@ -134,8 +135,11 @@ const sendEmail = async ({ templateId, smtpParams, tags, email }) => {
         replyTo: sender,
         templateId,
         tags,
-        params: smtpParams,
     }
+    if (!isEmpty(smtpParams)) sendSmtpEmail[params] = smtpParams
+
+    console.log(sendSmtpEmail)
+
     try {
         const res = await apiInstance.sendTransacEmail(sendSmtpEmail)
         Promise.resolve(res)
