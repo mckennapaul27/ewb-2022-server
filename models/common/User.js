@@ -9,6 +9,14 @@ const Schema = mongoose.Schema
 
 const User = new Schema({
     name: String,
+    skype: String,
+    telegram: String,
+    phone: String,
+    locale: {
+        type: String,
+        default: 'en',
+    },
+    closeAccountReason: String,
     email: { type: String, unique: true, required: true },
     password: String,
     country: String,
@@ -17,10 +25,7 @@ const User = new Schema({
         unique: true,
     },
     regDate: { type: Number, default: Date.now },
-    locale: {
-        type: String,
-        default: 'en',
-    },
+
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     facebookProvider: {

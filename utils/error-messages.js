@@ -91,6 +91,12 @@ const errIncorrectPassword = ({ locale }) => {
         msg,
     }
 }
+const errExistingEmail = ({ locale, email }) => {
+    const msg = getMessageByKey('errExistingEmail', locale, { email })
+    return {
+        msg,
+    }
+}
 
 module.exports = {
     err1,
@@ -107,4 +113,5 @@ module.exports = {
     errRequestNotSuccess,
     errInsufficientFunds,
     errIncorrectPassword,
+    errExistingEmail,
 }

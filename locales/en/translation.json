@@ -37,5 +37,7 @@
     "affAccountAdded": "A new account ID - {{accountId}} - has been added to your dashboard",
     "affUpgradeEligible": "Account {{accountId}} is eligible for a {{level}} VIP upgrade for {{quarter}}",
     "reportsHaveUpdated": "{{brand}} data was fetched on {{day)}",
-    "updatedPaymentDetails": "You have updated your {{brand}} payment details"
+    "updatedPaymentDetails": "You have updated your {{brand}} payment details",
+    "msgUpdatedDetails": "You have successfully updated your settings.",
+    "errExistingEmail": "Account already exists with email {{email}}"
 }

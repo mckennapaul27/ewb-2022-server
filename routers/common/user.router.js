@@ -4,28 +4,39 @@ const passport = require('passport')
 require('../../auth/passport')(passport)
 const { getToken } = require('../../utils/token.utils')
 const { User, UserNotification } = require('../../models/common/index')
-const { serverErr, errSibContactExists } = require('../../utils/error-messages')
+const {
+    serverErr,
+    errSibContactExists,
+    errExistingEmail,
+} = require('../../utils/error-messages')
 const { createNewSubscriber } = require('../../utils/sib-helpers')
-const { msgSubscribed } = require('../../utils/success-messages')
+const {
+    msgSubscribed,
+    msgUpdatedDetails,
+} = require('../../utils/success-messages')
 
-// /common/user/get-user
+// /common/user/get-user/:_id
 router.get(
-    '/get-user',
+    '/get-user/:_id',
     passport.authenticate('jwt', {
         session: false,
     }),
     (req, res) => {
         const token = getToken(req.headers)
         if (token) {
-            User.findById(req.user._id)
-                .select('name email userId _id activeUser')
-                .lean()
-                .then((user) => res.status(200).send(user))
-                .catch((err) => {
-                    return res
-                        .status(500)
-                        .send({ msg: 'Server error: Please contact support' })
-                })
+            try {
+                User.findById(req.params._id)
+                    .select('name email skype telegram phone locale')
+                    .lean()
+                    .then((user) => res.status(200).send(user))
+                    .catch((err) => {
+                        return res.status(500).send({
+                            msg: 'Server error: Please contact support',
+                        })
+                    })
+            } catch (error) {
+                console.log(error)
+            }
         } else return res.status(403).send({ msg: 'Unauthorised' })
     }
 )
@@ -42,37 +53,49 @@ router.post(
             const { email } = req.body // receives these regardless of any change through
             const { _id } = req.params
             let update = req.body
+
             let exists = false
             if (update['email']) {
                 let count = await User.countDocuments({
                     email: update['email'],
+                    _id: { $ne: { _id } },
                 })
                     .select('email')
                     .lean() // check if user exists
                 if (count > 0) exists = true
+            } //
+            if (exists > 0) {
+                const { locale } = await User.findById(_id).select('locale')
+                return res.status(400).send(
+                    errExistingEmail({
+                        locale,
+                        email: update['email'],
+                    })
+                )
             }
-            if (exists > 0)
-                return res
-                    .status(400)
-                    .send({ msg: `Account already exists with email ${email}` })
+
             User.findByIdAndUpdate(_id, update, { new: true })
-                .select('name email userId _id activeUser partner')
+                .select(
+                    'name email skype telegram phone locale userId _id activeUser partner'
+                )
                 .populate({
                     path: 'partner',
                     select: 'isSubPartner epi siteId referredBy',
                 })
                 .lean()
                 .then((updatedUser) =>
-                    res.status(201).send({
-                        msg: 'You have successfully updated your settings.',
-                        updatedUser,
-                    })
+                    res.status(201).send(
+                        msgUpdatedDetails({
+                            updatedUser,
+                            locale: updatedUser.locale,
+                        })
+                    )
                 )
-                .catch((err) =>
-                    res
+                .catch((err) => {
+                    return res
                         .status(500)
                         .send({ msg: 'Server error: Please contact support' })
-                )
+                })
         } else return res.status(403).send({ msg: 'Unauthorised' })
     }
 )

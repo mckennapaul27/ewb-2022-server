@@ -86,6 +86,15 @@ const msgRequestedLinks = ({ locale, brand, partner }) => {
     }
 }
 
+const msgUpdatedDetails = ({ locale, updatedUser }) => {
+    const msg = getMessageByKey('msgUpdatedDetails', locale)
+
+    return {
+        msg,
+        updatedUser,
+    }
+}
+
 module.exports = {
     msgRegistered,
     msgSubscribed,
@@ -97,4 +106,5 @@ module.exports = {
     msgPaymentDetailsUpdate,
     msgPaymentRequest,
     msgRequestedLinks,
+    msgUpdatedDetails,
 }

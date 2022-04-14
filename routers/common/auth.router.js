@@ -263,6 +263,7 @@ async function createApplication(req, res) {
                     partner,
                     userId,
                     _id,
+                    locale,
                 },
                 locale,
             })
@@ -284,7 +285,9 @@ router.post('/user-login', (req, res) => {
                     if (isMatch && !err) {
                         const token = jwt.sign(user.toJSON(), secret)
                         return User.findById(user._id)
-                            .select('name email userId _id activeUser partner')
+                            .select(
+                                'name email userId _id activeUser partner locale'
+                            )
                             .populate({
                                 path: 'partner',
                                 select: 'isSubPartner epi siteId referredBy',

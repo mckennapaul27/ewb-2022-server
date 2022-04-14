@@ -37,5 +37,7 @@
     "affAccountAdded": "Se ha agregado una nueva ID de cuenta, {{accountId}}, a su panel de control",
     "affUpgradeEligible": "La cuenta {{accountId}} es elegible para una actualización VIP de {{level}} por {{quarter}}",
     "reportsHaveUpdated": "Los datos de {{brand}} se obtuvieron el {{day)}",
-    "updatedPaymentDetails": "Ha actualizado los datos de pago de {{brand}}"
+    "updatedPaymentDetails": "Ha actualizado los datos de pago de {{brand}}",
+    "msgUpdatedDetails": "Ha actualizado con éxito sus ajustes",
+    "errExistingEmail": "Ya existe una cuenta con la dirección de correo electrónico {{email}}"
 }
