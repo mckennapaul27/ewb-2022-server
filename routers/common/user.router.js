@@ -76,7 +76,7 @@ router.post(
 
             User.findByIdAndUpdate(_id, update, { new: true })
                 .select(
-                    'name email skype telegram phone locale userId _id activeUser partner'
+                    'name email skype telegram phone locale userId _id activeUser partner isAffiliate'
                 )
                 .populate({
                     path: 'partner',

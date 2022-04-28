@@ -60,6 +60,10 @@ const User = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'affpartner',
     },
+    isAffiliate: {
+        type: Boolean,
+        default: false,
+    },
 })
 
 // using pre validate instead of pre save otherwise it will fail because activeUser is required: true

@@ -72,12 +72,12 @@ async function createUser(req, res, next) {
         networkCode,
         accountId,
         links,
+        isAffiliate,
     } = req.body // referredByPartner here is the network code such as 566
 
     let exists = await User.countDocuments({ email: req.body.email })
         .select('email')
         .lean()
-    console.log(locale)
     if (!name) return res.status(500).send(err1({ locale }))
     else if (!email) return res.status(500).send(err2({ locale }))
     else if (!password) return res.status(500).send(err3({ locale }))
@@ -115,6 +115,7 @@ async function createUser(req, res, next) {
             referredBy: userId,
             referredByActiveUser: activeUser,
             referredByPartner,
+            isAffiliate,
         })
             .then(async (user) => {
                 if (links.length > 0) {
@@ -160,7 +161,7 @@ async function createUser(req, res, next) {
                 const token = jwt.sign(user.toJSON(), secret)
                 return User.findById(user._id)
                     .select(
-                        'name email userId _id activeUser partner locale regDate country'
+                        'name email userId _id activeUser partner locale regDate country isAffiliate'
                     )
                     .populate({
                         path: 'partner',
@@ -207,6 +208,7 @@ async function createApplication(req, res) {
         brand,
         accountId,
         accountEmail,
+        isAffiliate,
         activeUser,
         locale,
         partner,
@@ -264,6 +266,7 @@ async function createApplication(req, res) {
                     userId,
                     _id,
                     locale,
+                    isAffiliate,
                 },
                 locale,
             })
@@ -286,7 +289,7 @@ router.post('/user-login', (req, res) => {
                         const token = jwt.sign(user.toJSON(), secret)
                         return User.findById(user._id)
                             .select(
-                                'name email userId _id activeUser partner locale'
+                                'name email userId _id activeUser partner locale isAffiliate'
                             )
                             .populate({
                                 path: 'partner',
