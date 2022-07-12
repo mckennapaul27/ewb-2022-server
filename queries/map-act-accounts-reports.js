@@ -49,9 +49,8 @@ const mapAccountReports = async (a, brand, month, date) => {
                 currency = currency ? currency : await setCurrency(brand)
                 let commissionRate =
                     transValue > 0 ? commission / transValue : 0
-                let defaultCashback = earnedFee > 0 ? earnedFee / 5 : 0
-                let defaultCashbackRate =
-                    defaultCashback > 0 ? defaultCashback / transValue : 0
+                let defaultCashback = 0
+                let defaultCashbackRate = 0
                 let defaultRafCashback = 0
                 let defaultProfit =
                     commission - (defaultCashback + defaultRafCashback)

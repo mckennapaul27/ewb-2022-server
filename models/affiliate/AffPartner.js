@@ -160,7 +160,7 @@ const AffPartner = new Schema({
 AffPartner.pre('validate', async function (next) {
     const affPartner = this
     const r = await getNextSequence('partnerid')
-    console.log(r)
+    // console.log(r)
     affPartner.epi = await getNextSequence('partnerid')
 
     affPartner.deals.push(affiliateDealOne('Neteller'))

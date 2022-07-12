@@ -6,6 +6,8 @@ const {
     defaultDealTwo,
     defaultActStats,
     defaultBalances,
+    affiliateDealOne,
+    affiliateDealTwo,
 } = require('../../config/deals')
 
 const ActiveUser = new Schema({
@@ -80,9 +82,10 @@ const ActiveUser = new Schema({
 // pre save hook to generate dealTier's for personal dashboard
 ActiveUser.pre('validate', function (next) {
     const activeUser = this
-    activeUser.deals.push(defaultDealOne('Neteller'))
-    activeUser.deals.push(defaultDealOne('Skrill'))
-    activeUser.deals.push(defaultDealTwo('ecoPayz'))
+    // changed to be same as affiliate deal on 12/7/22 so that personal & affiliate are the same.
+    activeUser.deals.push(affiliateDealOne('Neteller'))
+    activeUser.deals.push(affiliateDealOne('Skrill'))
+    activeUser.deals.push(affiliateDealTwo('ecoPayz'))
     activeUser.balances = defaultBalances
     next()
 })
